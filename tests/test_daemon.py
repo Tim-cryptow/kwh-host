@@ -108,3 +108,8 @@ async def test_unsigned_or_wrong_token_is_refused(cfg, identity, report, mock_en
         with pytest.raises(PlatformError) as e:
             await c.status()
         assert e.value.status == 401
+    # the right key and token: GET is signed over its (empty) body and succeeds
+    async with PlatformClient("http://mock", identity, token=platform.hosts[hid].token, host_id=hid,
+                              transport=transport, clock=clock) as c:
+        s = await c.status()
+        assert s["host_id"] == hid and s["state"] == "registered"

@@ -45,8 +45,11 @@ class PlatformClient:
 
     # -- transport -----------------------------------------------------
     async def _call(self, method: str, path: str, body: Optional[dict] = None) -> dict:
-        raw = canonical_bytes(body if body is not None else {})
-        headers = {"Content-Type": "application/json", "User-Agent": f"kwh-host/{__version__}"}
+        # Sign exactly the bytes that go on the wire: a GET has an empty body, so it signs b"".
+        raw = b"" if method == "GET" else canonical_bytes(body if body is not None else {})
+        headers = {"User-Agent": f"kwh-host/{__version__}"}
+        if method != "GET":
+            headers["Content-Type"] = "application/json"
         headers.update(self.identity.sign_request(raw, timestamp=int(self.clock())))
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
