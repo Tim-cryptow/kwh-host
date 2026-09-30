@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kwh-host"
+version = "0.1.0.dev1"
+description = "kWh Exchange host client: benchmark the rig, prove it is live, run buyer jobs."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = [
+    "kwh-bench @ git+https://github.com/Tim-cryptow/kwh-benchmark@main",
+    "click>=8.1",
+    "httpx>=0.27",
+    "cryptography>=42",
+    "psutil>=5.9",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+kwh-host = "kwh_host.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["kwh_host*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
