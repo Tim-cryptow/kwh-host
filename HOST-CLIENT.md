@@ -1,6 +1,6 @@
 # kWh Host Client — scope (v0)
 
-**Build step:** 2 of 7 (primer §10). **Upstream:** [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark) 1.0.0-rc.3, series I-1.
+**Build step:** 2 of 7 (primer §10). **Upstream:** [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark) 1.0.0-rc.4, series I-1.
 **Definition of done (primer):** Linux + Windows. Docker sandbox, benchmark run, liveness heartbeat, stake deposit, mint. Reports units/hour and reliability.
 
 This document draws the line for the first cut. The host client is the program a GPU owner installs to turn a rig into supply. Everything it does is in service of one rule from the primer: *units are minted only against live capacity*. The client's job is to prove capacity is live, continuously, cheaply, and in a way the platform can check.
@@ -129,9 +129,20 @@ Not in this contract, by design: wallet operations, listing/asks, stake, payouts
 
 **Identity.** An ed25519 keypair generated at `kwh-host init`, private key in the OS keyring where available, else a `0600` file. The public key is the host's durable identity across reinstalls; the token is a session credential the platform can revoke.
 
-## 9. Decisions to make
+## 9. Decisions
 
-These are the calls that shape v0. Each has a recommendation; none is made yet.
+**Decided 2026-09-30.** All five taken as recommended below, plus D6.
+
+| | Decision | Consequence for v0 |
+| --- | --- | --- |
+| D1 | Off-chain ledger with on-chain USDC settlement | Minting, resale, expiry and burn are ledger rows on the platform; one USDC payout per host per day. Whether $KWH becomes a token is a later question the ledger does not foreclose. |
+| D2 | Mint authority is the platform | §6 as written. The primer's "host client mints" is read as "host client causes minting". |
+| D3 | Outbound WebSocket for dispatch | §7 as written. No inbound ports on hosts. |
+| D4 | Docker only for the engine sandbox | Bare-metal mode exists for testing on pods that cannot run Docker and is refused for registration. |
+| D5 | Per-heartbeat accrual, integer mints | §6 as written. |
+| D6 | Platform runs on rented cloud; the exchange owns no hardware | API + ledger on a managed host with managed Postgres (Render/Fly first, AWS when it matters; the client only sees a base URL). One **dedicated** 24 GB GPU rented by the hour (RunPod Secure or equivalent, not a shared community host) as the reference node for challenge canaries and step 6's public endpoint: ~$300–600/month, the platform's largest fixed cost until volume. Seed supply, if needed before real hosts arrive, is the host client itself running on rented cards. Buyer inference never runs on platform-rented GPUs; if it has to, the unit economics have already failed. |
+
+The rationale for each, as recorded before the decision:
 
 **D1 — Unit rails: off-chain ledger with on-chain USDC settlement, or an L2 token from day one.**
 *Recommendation: off-chain ledger for v1.* A 4090 mints ~100 units an hour; one host is ~2,400 mints a day, and resale, expiry and burn are each another event. On an L2 that is either a gas bill or a batching layer that reinvents the ledger anyway. The 72-hour expiry and the no-mint-ahead rule are a few lines in a ledger the platform runs, and the platform is already the trusted verifier and router in v1, so the ledger adds no trust the design does not already assume. Settlement stays on-chain: one USDC payout per host per day. If units later earn their own token, the ledger is the source of truth it mints from. *Affects the client only in §6: the client does not care which, as long as minting is a platform call.*
@@ -152,7 +163,7 @@ These are the calls that shape v0. Each has a recommendation; none is made yet.
 
 | # | Deliverable | Done when |
 | --- | --- | --- |
-| M0 | This document | Pushed; D1–D5 answered in a follow-up commit. |
+| M0 | This document | Pushed; D1–D6 recorded in §9 (2026-09-30). |
 | M1 | Daemon skeleton + mock platform | `kwh-host init → bench → register → run` reaches **live** against the in-repo mock, with challenges answered and accrual ticking, on a RunPod 4090 (bare-metal mode for the test only). |
 | M2 | Jobs | Mock router dispatches jobs over the WebSocket; outputs and verification samples come back; a deliberately wrong-model container fails the challenge. |
 | M3 | Docker sandbox + install | One-line install on Ubuntu; engine container pinned to the lock; resource limits; WSL2 path documented and tested. |
