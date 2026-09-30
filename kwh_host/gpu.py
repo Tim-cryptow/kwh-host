@@ -3,6 +3,7 @@ any compute process other than ours is on the card. Uses nvidia-smi like the ben
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from typing import Iterable, Optional, Set
@@ -29,7 +30,8 @@ def sample(gpu_index: int = 0, own_pids: Optional[Iterable[int]] = None) -> dict
     """One nvidia-smi sample. `own_pids` are the engine's processes; anything else holding the
     GPU counts as foreign. With `own_pids=None` the foreign count is unknown (None), not zero."""
     out = {"available": False, "util_pct": None, "power_w": None, "mem_used_mib": None, "mem_total_mib": None,
-           "temp_c": None, "compute_processes": None, "foreign_processes": None, "foreign_pids": []}
+           "temp_c": None, "compute_processes": None, "foreign_processes": None, "foreign_pids": [],
+           "unattributed_processes": 0}
     if not shutil.which("nvidia-smi"):
         return out
     q = _run(["nvidia-smi", "-i", str(gpu_index), "--query-gpu=utilization.gpu,power.draw,memory.used,memory.total,temperature.gpu",
@@ -51,9 +53,13 @@ def sample(gpu_index: int = 0, own_pids: Optional[Iterable[int]] = None) -> dict
     out["compute_processes"] = len(pids)
     if own_pids is not None:
         own = set(own_pids)
-        foreign = sorted(p for p in pids if p not in own)
+        # Inside a container nvidia-smi reports host-namespace PIDs, which match nothing here.
+        # A PID we cannot see in /proc is unattributable, not foreign; only a visible stranger counts.
+        visible = {p for p in pids if p in own or os.path.exists(f"/proc/{p}")}
+        foreign = sorted(p for p in visible if p not in own)
         out["foreign_processes"] = len(foreign)
         out["foreign_pids"] = foreign
+        out["unattributed_processes"] = len(pids - visible)
     return out
 
 
