@@ -22,7 +22,8 @@ if [ "$(id -u)" -eq 0 ]; then
     useradd -m -s /bin/bash kwh || exit 1
     echo "kwh ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/kwh && chmod 0440 /etc/sudoers.d/kwh
   fi
-  install -o kwh -g kwh -m 0755 "$SELF" /home/kwh/vm-m3.sh || exit 1
+  # a new file, renamed into place: a test already running from the old one keeps reading it intact
+  install -o kwh -g kwh -m 0755 "$SELF" /home/kwh/vm-m3.sh.new && mv -f /home/kwh/vm-m3.sh.new /home/kwh/vm-m3.sh || exit 1
   exec sudo -iu kwh env KWH_REF="$REF" KWH_M3_COPY_TO="$HOME" bash /home/kwh/vm-m3.sh
 fi
 
