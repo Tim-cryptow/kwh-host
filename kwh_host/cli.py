@@ -1,4 +1,4 @@
-"""kwh-host command line: init | bench | register | run | status | mock-platform | submit | experiment."""
+"""kwh-host command line: init | fetch | doctor | bench | register | run | status | service | mock-platform | submit."""
 
 from __future__ import annotations
 
@@ -51,12 +51,19 @@ def main():
 @click.option("--allow-bare-metal", is_flag=True, help="Testing on pods without Docker; the platform must also allow it.")
 @click.option("--max-model-len", type=click.IntRange(ref.MAX_MODEL_LEN_MIN, ref.MAX_MODEL_LEN_MAX), default=8192,
               show_default=True, help="Context length to certify and serve: the longest buyer request this host takes.")
-def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, allow_bare_metal, max_model_len):
+@click.option("--engine-transport", type=click.Choice(["uds", "tcp"]), default="uds", show_default=True,
+              help="uds: the engine has no network, reached through a Unix socket. tcp: a loopback port, for Docker Desktop.")
+@click.option("--engine-memory", default=None, help="Memory limit for the engine container, e.g. 24g (default: 3/4 of RAM).")
+@click.option("--no-gpu", is_flag=True, hidden=True, help="Tests only: run the engine container without a GPU.")
+def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, allow_bare_metal, max_model_len,
+         engine_transport, engine_memory, no_gpu):
     """Create ~/.kwh-host: config + identity keypair."""
     if engine_mode == "bare-metal" and not allow_bare_metal:
         raise click.UsageError("bare-metal is for testing only; pass --allow-bare-metal to confirm (D4)")
     cfg = HostConfig(platform_url=platform_url, engine_mode=engine_mode, docker_image=docker_image, engine_port=port,
-                     gpu_index=gpu_index, hf_cache=hf_cache, bare_metal_ok=allow_bare_metal, max_model_len=max_model_len)
+                     gpu_index=gpu_index, hf_cache=hf_cache, bare_metal_ok=allow_bare_metal, max_model_len=max_model_len,
+                     engine_transport=engine_transport, engine_memory=engine_memory,
+                     extra={"no_gpu": True} if no_gpu else {})
     if cfg.path.exists():
         old = HostConfig.load()
         cfg.host_id, cfg.token = old.host_id, old.token
@@ -65,6 +72,43 @@ def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, all
     click.echo(json.dumps({"dir": str(cfg.dir), "platform": cfg.platform_url, "engine": cfg.engine_mode,
                            "max_model_len": cfg.max_model_len, "public_key": ident.public_key_hex,
                            "registered": cfg.registered}, indent=2))
+
+
+@main.command()
+@click.option("--model", default=None, hidden=True, help="Fetch another model (wrong-model tests); not hash-checked.")
+@click.option("--no-image", is_flag=True, help="Skip pulling the engine image (bare metal, or already pulled).")
+def fetch(model, no_image):
+    """Download the reference checkpoint at the locked revision, check its hashes, pull the engine image."""
+    from kwh_bench.lockfile import load_lock
+    from .fetch import fetch as do_fetch
+    cfg = HostConfig.load()
+    image = None if (no_image or cfg.engine_mode != "docker") else cfg.docker_image
+    try:
+        out = do_fetch(cfg.hf_home, load_lock(), image, log=_log, model=model)
+    except Exception as e:  # noqa: BLE001
+        _log(f"error: {type(e).__name__}: {e}")
+        sys.exit(2)
+    click.echo(json.dumps(out, indent=2))
+
+
+@main.command()
+@click.option("--json", "as_json", is_flag=True, help="Machine-readable output.")
+def doctor(as_json):
+    """Check this machine is ready to host: driver, GPU, Docker, GPU in containers, image, checkpoint."""
+    from kwh_bench.lockfile import load_lock
+    from .doctor import run_checks
+    try:
+        cfg = HostConfig.load()
+    except FileNotFoundError:
+        cfg = HostConfig()
+    checks = run_checks(cfg, load_lock().model_revision)
+    if as_json:
+        click.echo(json.dumps([c.__dict__ for c in checks], indent=2))
+    else:
+        for c in checks:
+            click.echo(c.line())
+    if any(c.status == "fail" for c in checks):
+        sys.exit(1)
 
 
 @main.command()
@@ -176,6 +220,41 @@ def status(remote):
     click.echo(json.dumps(out, indent=2, default=str))
 
 
+@main.group()
+def service():
+    """Run the daemon as a systemd user service (starts with the machine, restarts on failure)."""
+
+
+@service.command("install")
+@click.option("--no-start", is_flag=True, help="Enable it for the next boot without starting it now.")
+def service_install(no_start):
+    from .service import install, lingering
+    cfg = HostConfig.load()
+    if not cfg.registered:
+        raise click.UsageError("not registered; run `kwh-host bench` then `kwh-host register` first")
+    try:
+        for line in install(start=not no_start):
+            click.echo(line)
+    except (RuntimeError, OSError) as e:
+        _log(f"error: {e}")
+        sys.exit(2)
+    if lingering() is False:
+        click.echo("note: the service stops when you log out; to keep it running: sudo loginctl enable-linger $USER")
+
+
+@service.command("uninstall")
+def service_uninstall():
+    from .service import uninstall
+    for line in uninstall() or ["nothing to remove"]:
+        click.echo(line)
+
+
+@service.command("status")
+def service_status():
+    import subprocess
+    subprocess.run(["systemctl", "--user", "status", "--no-pager", "kwh-host.service"])
+
+
 @main.command("mock-platform")
 @click.option("--host", default="127.0.0.1", show_default=True)
 @click.option("--port", type=int, default=9000, show_default=True)
@@ -190,8 +269,10 @@ def status(remote):
 @click.option("--verify-fraction", type=float, default=1.0, show_default=True, help="Share of completed jobs verified (with --verify-url).")
 @click.option("--verify-tau", type=float, default=None, help="Gap in nats above which a position is a confident disagreement.")
 @click.option("--mock-challenges", is_flag=True, hidden=True, help="Challenges from the benchmark's mock engine (GPU-free demos).")
+@click.option("--challenges-from", default=None, hidden=True,
+              help="Challenges scored by the vLLM-compatible server at this URL (tests with a fake engine).")
 def mock_platform(host, port, heartbeat, challenge_every, microbench_every, accept_uncertified, allow_bare_metal,
-                  use_tokenizer, verify_url, verify_fraction, verify_tau, mock_challenges):
+                  use_tokenizer, verify_url, verify_fraction, verify_tau, mock_challenges, challenges_from):
     """Run the in-memory mock platform (HOST-CLIENT.md §8) for local development."""
     import uvicorn
     from .platform.mock import ChallengePool, HFTokenizer, MockPlatform, Router, Settings, create_app
@@ -199,7 +280,10 @@ def mock_platform(host, port, heartbeat, challenge_every, microbench_every, acce
     s = Settings(heartbeat_seconds=heartbeat, challenge_every_seconds=challenge_every, microbench_every_seconds=microbench_every,
                  accept_uncertified=accept_uncertified, allow_bare_metal=allow_bare_metal,
                  verify_fraction=verify_fraction if verify_url else 0.0, verify_tau=verify_tau or DEFAULT_TAU)
-    if mock_challenges:
+    if challenges_from:
+        from kwh_bench.engines import VLLMEngine
+        pool = asyncio.run(ChallengePool.from_engine(VLLMEngine(server_url=challenges_from)))
+    elif mock_challenges:
         from kwh_bench.engines import MockEngine
         pool = asyncio.run(ChallengePool.from_engine(MockEngine(step_ms=0.05, prefill_ms_per_1k=0.1)))
     else:
@@ -216,7 +300,8 @@ def mock_platform(host, port, heartbeat, challenge_every, microbench_every, acce
             _log(f"no tokenizer ({type(e).__name__}); /v1/mock/jobs accepts prompt_token_ids only")
     router = Router(platform, scorer=VLLMScorer(verify_url) if verify_url else None)
     app = create_app(platform, router=router, tokenizer=tokenizer)
-    _log(f"mock platform on http://{host}:{port}  (challenges from the {'mock engine' if mock_challenges else 'public lock'}; not a guard)"
+    source = challenges_from or ("the mock engine" if mock_challenges else "the public lock")
+    _log(f"mock platform on http://{host}:{port}  (challenges from {source}; not a guard)"
          + (f"; verifying greedy outputs against {verify_url}" if verify_url else ""))
     uvicorn.run(app, host=host, port=port, log_level="warning", ws="websockets-sansio")
 

@@ -66,7 +66,18 @@ kwh-host (daemon, Python)
 
 **Language.** Python, importing `kwh_bench` as a library. The benchmark already contains the load generator, the canary scorer, the GPU probe/pre-flight, the report hasher and the verifier; a client in another language would reimplement all of it and drift from the spec. Packaging as a single file (PyInstaller) comes with the tray app, not before.
 
-**Engine sandbox.** One long-lived Docker container per GPU running the certified engine image at the locked version (`vllm/vllm-openai:v0.30.0`; the lock pins the version string, which is what certification checks) with the pinned §5 flags from `kwh_bench.reference`, serving the Grade I reference model and nothing else. Grade I is one model, so a "job" is a batch of OpenAI-compatible requests to that container, not arbitrary code. The sandbox therefore isolates the host from **buyer inputs**, not from buyer programs: no host mounts except a read-only HF cache, no network except the loopback the daemon uses, memory and PID limits, non-root. The daemon itself runs as an ordinary user.
+**Engine sandbox.** One long-lived Docker container per GPU running the certified engine image at the locked version (`vllm/vllm-openai:v0.30.0`; the lock pins the version string, which is what certification checks) with the pinned §5 flags from `kwh_bench.reference`, serving the Grade I reference model and nothing else. Grade I is one model, so a "job" is a batch of OpenAI-compatible requests to that container, not arbitrary code. The sandbox therefore isolates the host from **buyer inputs**, not from buyer programs. As built in M3 (`kwh_host/sandbox.py`):
+
+| | How |
+| --- | --- |
+| No network | `--network none`. The engine serves on a Unix socket (vLLM's `--uds`) in a host directory mounted at `/run/kwh`, and the daemon talks to it there. Nothing reaches it from outside and it reaches nothing. |
+| Read-only | `--read-only` root filesystem; the checkpoint mounted read-only and loaded offline (`HF_HUB_OFFLINE=1`). Writable: `/tmp` (a 4 GB tmpfs) and `/cache` (torch, Triton and CUDA compile caches, so a restart skips recompiling). |
+| No privileges | `--cap-drop ALL`, `no-new-privileges`, and the daemon's own uid; a daemon running as root gets an engine running as `nobody`. |
+| Bounded | `--memory` at 3/4 of RAM (at most 64 GiB, no swap), `--pids-limit 4096`, `--shm-size 2g`, one GPU (`--gpus device=N`). |
+| The checkpoint it certified | `kwh-host fetch` downloads the locked revision and checks every file against the lock's SHA-256 before the engine ever loads it. |
+| The engine it certified | `bench` and `run` use the same launch, and the report records it (with the home directory redacted, since reports are public). |
+
+Docker Desktop (Windows, macOS) runs containers in its own VM, and a Unix socket cannot cross from there to the host. With it, `kwh-host init --engine-transport tcp` publishes the engine on 127.0.0.1 instead: still unreachable from the network, but no longer cut off from it. `kwh-host doctor` says which applies. The daemon itself runs as an ordinary user.
 
 **Why the same image as the benchmark.** The rate the host registered was measured on this exact engine build with these exact flags. Serving on anything else makes the rate a lie. The daemon refuses to go live if the running container's version differs from `reference/lock.json`.
 
@@ -227,7 +238,7 @@ The rationale for D1–D5, as recorded before the decision:
 | M0 | This document | Pushed; D1–D6 recorded in §9 (2026-09-30). |
 | M1 | Daemon skeleton + mock platform | `kwh-host init → bench → register → run` reaches **live** against the in-repo mock, with challenges answered and accrual ticking, on a RunPod 4090 (bare-metal mode for the test only). |
 | M2 | Jobs | Mock router dispatches jobs over the WebSocket to live hosts and re-routes on failure; signed results with token ids come back and greedy outputs are verified after delivery; a wrong-model host fails the challenge and never receives work. **Done 2026-10-02:** built and tested end to end in process, then proven on a RunPod A40 (README, [results/m2-a40-2026-10-02](results/m2-a40-2026-10-02/)). The same run showed that verification must judge hosts over a window, not requests (§7), and led to D8 and D9. |
-| M3 | Docker sandbox + install | One-line install on Ubuntu; engine container pinned to the lock; resource limits; WSL2 path documented and tested. |
+| M3 | Docker sandbox + install | One-line install on Ubuntu; engine container pinned to the lock; resource limits; WSL2 path documented and tested. **Built 2026-10-02:** the sandbox (§3), `fetch`, `doctor`, `service`, `install.sh`; proven end to end without a GPU on every push (CI runs a stand-in engine inside the real sandbox: init, bench, register, live, a buyer job). Left: the same run on a rented GPU machine (`scripts/vm-m3.sh`), then WSL2 on a real Windows PC. |
 | M4 | Reliability telemetry | Every event in §5 reported; `kwh-host status` shows state, rate, accrual, last checks. |
 | M5 | Real platform | Base URL swap when step 4's ledger exists; stake deposit added to `kwh-host register`. |
 
@@ -237,4 +248,11 @@ Multi-GPU rigs (one daemon per GPU is fine, one daemon for many is later); any m
 
 ## 12. Windows
 
-Windows support in v0 means **WSL2 + Docker Desktop with the WSL2 backend and NVIDIA GPU passthrough**. The daemon runs inside the WSL2 distribution exactly as on Linux; the benchmark repo already lists Windows this way. A native tray app that starts the WSL2 daemon and shows status is the first thing after M5, because that is the install experience gamers will judge.
+Windows support in v0 means **WSL2 with Docker Engine installed inside the Ubuntu distribution, plus the NVIDIA Container Toolkit**, the path NVIDIA documents for containers on WSL2. The only driver is the normal NVIDIA driver for Windows; nothing GPU-related is installed inside Linux. The daemon runs inside WSL2 exactly as on Linux, and the one-line installer works there unchanged. Step by step: [docs/windows-wsl2.md](docs/windows-wsl2.md).
+
+Two things differ from Linux:
+
+- **WSL2 stops Ubuntu about a minute after its last window closes**, services or not, and hosting stops with it. Until the tray app exists, a host keeps an Ubuntu window open or starts one at logon (the guide has a scheduled task for it).
+- **`nvidia-smi` lists no processes under WSL2**, so the heartbeat cannot see another program using the GPU. Contention then shows up only as a slower micro-benchmark.
+
+Docker Desktop with its WSL2 integration also works, with `--engine-transport tcp` (§3). A native tray app that starts the WSL2 daemon, keeps it running and shows status is the first thing after M5, because that is the install experience gamers will judge.

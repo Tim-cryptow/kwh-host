@@ -1,18 +1,31 @@
-"""The engine sandbox (HOST-CLIENT.md §3): one long-lived vLLM serving the Grade I reference
-model with the pinned flags, launched and owned by the daemon. Reuses the benchmark's
-`VLLMEngine`, so the flags, version check and inference calls are the certified ones."""
+"""The daemon's engine (HOST-CLIENT.md §3): one long-lived vLLM serving the Grade I reference
+model with the pinned flags, launched and owned by the daemon. Docker mode runs it in the
+sandbox (`sandbox.py`); bare-metal mode, for pods that cannot run Docker, runs `vllm serve`
+directly. Both reuse the benchmark's `VLLMEngine`, so the flags, version check and inference
+calls are the certified ones."""
 
 from __future__ import annotations
 
-import subprocess
 from typing import Optional, Set
 
 import httpx
+from kwh_bench import reference as ref
 from kwh_bench.engines import VLLMEngine
 from kwh_bench.lockfile import Lock, load_lock
 
 from .config import HostConfig
 from .gpu import process_tree
+from .sandbox import SandboxedVLLMEngine, SandboxSpec, docker_is_rootless
+
+
+def sandbox_spec(cfg: HostConfig, model: str, revision: Optional[str]) -> SandboxSpec:
+    rootless = docker_is_rootless()
+    return SandboxSpec(image=cfg.docker_image, name=f"kwh-engine-gpu{cfg.gpu_index}", socket_dir=cfg.dir / "run",
+                       hf_home=cfg.hf_home, cache_dir=cfg.dir / "engine-cache", max_model_len=cfg.max_model_len,
+                       gpu_index=None if cfg.extra.get("no_gpu") else cfg.gpu_index, model=model,
+                       revision=revision, transport=cfg.engine_transport,
+                       port=cfg.engine_port, memory=cfg.engine_memory or "auto",
+                       **({"uid": 0, "gid": 0} if rootless else {}))
 
 
 def make_engine(cfg: HostConfig, log_path: Optional[str] = None, lock: Optional[Lock] = None,
@@ -22,10 +35,11 @@ def make_engine(cfg: HostConfig, log_path: Optional[str] = None, lock: Optional[
     reference model for wrong-model tests only: such an engine fails the platform's challenges
     and never goes live."""
     lock = lock or load_lock()
-    docker = cfg.docker_image if cfg.engine_mode == "docker" else None
-    kwargs = {"model": model, "revision": None} if model else {"revision": lock.model_revision}
-    return VLLMEngine(docker_image=docker, port=cfg.engine_port, log_path=log_path, hf_cache=cfg.hf_cache,
-                      max_model_len=cfg.max_model_len, **kwargs)
+    revision = None if model else lock.model_revision
+    if cfg.engine_mode == "docker":
+        return SandboxedVLLMEngine(sandbox_spec(cfg, model or ref.MODEL_ID, revision), log_path=log_path)
+    return VLLMEngine(model=model or ref.MODEL_ID, revision=revision, port=cfg.engine_port, log_path=log_path,
+                      max_model_len=cfg.max_model_len)
 
 
 def launch_mode(cfg: HostConfig) -> str:
@@ -34,10 +48,10 @@ def launch_mode(cfg: HostConfig) -> str:
 
 async def health(engine: VLLMEngine) -> bool:
     try:
-        async with httpx.AsyncClient(timeout=5.0) as c:
-            r = await c.get(f"{engine.base_url}/health")
+        async with engine.http_client(timeout=5.0) as c:
+            r = await c.get("/health")
             return r.status_code == 200
-    except httpx.HTTPError:
+    except (httpx.HTTPError, OSError):
         return False
 
 
@@ -58,22 +72,13 @@ async def describe(engine: VLLMEngine, cfg: HostConfig) -> dict:
 def own_pids(engine: VLLMEngine, cfg: HostConfig) -> Optional[Set[int]]:
     """PIDs that legitimately hold the GPU: the engine process tree (bare metal) or the
     container's process tree (docker). None when unknown."""
+    if isinstance(engine, SandboxedVLLMEngine):
+        return engine.own_pids()
     proc = getattr(engine, "_proc", None)
     popen = getattr(proc, "proc", None)
     if popen is None or popen.poll() is not None:
         return None
-    if cfg.engine_mode != "docker":
-        return process_tree(popen.pid)
-    try:
-        cid = subprocess.run(["docker", "ps", "-q", "--filter", f"publish={cfg.engine_port}"],
-                             capture_output=True, text=True, timeout=5).stdout.split()
-        if not cid:
-            return None
-        pid = subprocess.run(["docker", "inspect", "-f", "{{.State.Pid}}", cid[0]],
-                             capture_output=True, text=True, timeout=5).stdout.strip()
-        return process_tree(int(pid)) | process_tree(popen.pid) if pid.isdigit() else None
-    except (OSError, subprocess.TimeoutExpired, ValueError):
-        return None
+    return process_tree(popen.pid)
 
 
 def check_version(engine_version: Optional[str], lock: Optional[Lock] = None) -> Optional[str]:

@@ -39,7 +39,7 @@ host_is() {  # python condition on h (the first host)
 wait_host() { for _ in $(seq 1 "${2:-300}"); do host_is "$1" && return 0; sleep 3; done; return 1; }
 
 log "0. install"
-cd /workspace
+cd /workspace || exit 1
 DRIVER_CUDA="$(nvidia-smi | sed -n 's/.*CUDA Version: *\([0-9]*\)\.\([0-9]*\).*/\1.\2/p' | head -1)"
 nvidia-smi --query-gpu=name,driver_version,memory.used,memory.total,utilization.gpu,power.draw --format=csv > "$OUT/gpu.txt"
 if [ -n "$DRIVER_CUDA" ] && [ "${DRIVER_CUDA%%.*}" -lt 13 ]; then

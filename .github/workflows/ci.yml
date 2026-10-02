@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e .[dev]
+      - run: pytest -q
+
+  sandbox:
+    # The engine sandbox for real, without a GPU: the production `docker run` with a fake vLLM inside.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .[dev]
+      - name: fake engine image
+        run: docker build -t kwh-fake-engine:test tests/fake_engine
+      - name: sandbox checks against real Docker
+        run: KWH_TEST_ENGINE_IMAGE=kwh-fake-engine:test pytest -q tests/test_sandbox_docker.py
+      - name: the Docker path end to end (init, bench, register, run, a buyer job)
+        run: scripts/ci-sandbox.sh
+
+  installer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck -S warning install.sh scripts/*.sh
+      - name: installer in check mode (CI runners have no GPU)
+        run: bash install.sh --check --skip-gpu-check

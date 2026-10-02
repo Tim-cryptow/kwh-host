@@ -38,19 +38,19 @@ async def engine_context_len(engine: Engine) -> int:
     """The engine's max_model_len as it reports it (vLLM's /v1/models), else the spec value."""
     if isinstance(engine, VLLMEngine):
         try:
-            async with httpx.AsyncClient(timeout=10.0) as c:
-                r = await c.get(f"{engine.base_url}/v1/models")
+            async with engine.http_client(timeout=10.0) as c:
+                r = await c.get("/v1/models")
                 card = (r.json().get("data") or [{}])[0]
                 if card.get("max_model_len"):
                     return int(card["max_model_len"])
-        except (httpx.HTTPError, ValueError):
+        except (httpx.HTTPError, OSError, ValueError):
             pass
     return ref.MAX_MODEL_LEN
 
 
 def default_executor(engine: Engine, served_model: Optional[str]) -> Executor:
     if isinstance(engine, VLLMEngine):
-        return VLLMExecutor(engine.base_url, served_model or ref.MODEL_ID)
+        return VLLMExecutor(engine.base_url, served_model or ref.MODEL_ID, transport=engine.make_transport())
     return MockExecutor()
 
 

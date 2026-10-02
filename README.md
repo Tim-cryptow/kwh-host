@@ -2,6 +2,25 @@
 
 The program a GPU owner installs to sell work on the kWh Exchange. It benchmarks the rig with [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark), registers the certified rate with the platform, proves the rig is live (heartbeat, platform-issued canaries, micro-benchmarks), and executes buyer jobs in a sandboxed copy of the certified engine. Units are minted by the platform against that liveness; the client never mints on its own.
 
+## Install (Ubuntu, or Windows with WSL2)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/install.sh | bash
+```
+
+It checks for an NVIDIA card with 16 GB or more, asks before installing Docker Engine and the NVIDIA Container Toolkit, and installs `kwh-host` for your user. Then:
+
+```bash
+kwh-host init --platform <platform URL>
+kwh-host doctor            # driver, GPU, Docker, GPU in containers, image, checkpoint
+kwh-host fetch             # the model at the locked revision, hash-checked, and the engine image
+kwh-host bench             # the certified benchmark, in the sandbox
+kwh-host register
+kwh-host service install   # runs in the background, restarts on failure
+```
+
+On Windows, start with [docs/windows-wsl2.md](docs/windows-wsl2.md). The engine runs in a locked-down container: no network (the daemon reaches it through a Unix socket), read-only, no privileges, bounded memory and processes (HOST-CLIENT.md §3).
+
 Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle, liveness, minting, jobs and their verification, the platform API contract, decisions D1–D6, D8 (context length) and D9 (challenge format), and the open one (D7 metering).
 
 ## Status
@@ -9,7 +28,7 @@ Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle,
 - [x] M0 — scope document, decisions recorded
 - [x] M1 — daemon skeleton + mock platform: `init → bench → register → run` reaches **live**, answers challenges, mints, micro-benchmarks. Proven on a RunPod RTX 3090 on 2026-09-30 (see below).
 - [x] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Proven on a RunPod A40 on 2026-10-02 (see below).
-- [ ] M3 — Docker sandbox hardening, one-line install, WSL2 path
+- [ ] M3 — Docker sandbox, one-line install, WSL2 path. Built, and proven end to end without a GPU on every push: CI runs a stand-in engine inside the real sandbox through init, bench, register, live and a buyer job. Left: the same on a rented GPU machine (`scripts/vm-m3.sh`), then WSL2 on a real Windows PC.
 - [ ] M4 — reliability telemetry, `kwh-host status`
 - [ ] M5 — real platform (step 4), stake deposit
 
@@ -59,8 +78,13 @@ What it settled:
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 51 tests: signing, envelope, execution, the vLLM stream parser, verifier,
-                             # platform state machine, and jobs end to end over a real local server
+python -m pytest -q          # 63 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+                             # platform state machine, sandbox, and jobs end to end over a real local server
+
+# the sandbox for real, with a stand-in engine (needs Docker; what CI runs on every push)
+docker build -t kwh-fake-engine:test tests/fake_engine
+KWH_TEST_ENGINE_IMAGE=kwh-fake-engine:test python -m pytest -q tests/test_sandbox_docker.py
+scripts/ci-sandbox.sh        # init, bench, register, run and a buyer job, all through the sandbox
 
 # terminal 1: the mock platform; --mock-challenges lets a mock-engine host pass its challenges
 kwh-host mock-platform --port 9000 --heartbeat 5 --challenge-every 10 --microbench-every 300 \
@@ -100,7 +124,7 @@ Docker mode (`--engine docker`, the default and the only mode the real platform 
 ## What talks to what
 
 ```
-kwh-host run ──▶ engine (vLLM, pinned flags)            ← kwh_bench.engines.VLLMEngine
+kwh-host run ──▶ engine in the sandbox, over a Unix socket ← kwh_host.sandbox (vLLM, pinned flags)
       │  ├── heartbeat: engine health + GPU sample       POST /v1/hosts/{id}/heartbeat
       │  ├── challenge: score 4 platform continuations   POST /v1/hosts/{id}/liveness
       │  ├── micro-benchmark when idle (1/8 job)         POST /v1/hosts/{id}/microbench
@@ -122,6 +146,10 @@ kwh_host/
   config.py             ~/.kwh-host: config, identity, report, state
   identity.py           ed25519 keypair; request, report and result signing
   engine.py             daemon-owned vLLM (docker | bare-metal), health, own PIDs
+  sandbox.py            the engine container: no network, read-only, no privileges, bounded
+  fetch.py              the checkpoint at the locked revision, hash-checked; the engine image
+  doctor.py             readiness checks with a fix for each failure
+  service.py            systemd user service
   gpu.py                nvidia-smi sample + foreign-process detection
   bench.py              full run, micro-benchmark, challenge scoring (all via kwh_bench)
   jobspec.py            job envelope, validation, provisional metering (shared with the platform)
@@ -132,9 +160,11 @@ kwh_host/
   platform/client.py    the §8 contract, client side
   platform/mock.py      the §8 contract, server side (in memory, FastAPI), router
   platform/verifier.py  teacher-forced greedy verification (step 3 prototype)
-  cli.py                init | bench | register | run | status | mock-platform | submit | experiment
-tests/                  identity, jobs, verifier, platform state machine, router end to end
-scripts/                pod bootstraps for the real-GPU milestone runs (pod-m1.sh, pod-m2.sh)
+  cli.py                init | fetch | doctor | bench | register | run | status | service | mock-platform | submit
+install.sh              the one-line installer (Ubuntu, WSL2)
+docs/windows-wsl2.md    hosting on Windows
+tests/                  identity, jobs, verifier, platform state machine, router, sandbox (+ fake_engine/ for Docker)
+scripts/                real-GPU milestone runs (pod-m1.sh, pod-m2.sh, vm-m3.sh) and ci-sandbox.sh
 results/                what those runs wrote, one folder per run
 ```
 

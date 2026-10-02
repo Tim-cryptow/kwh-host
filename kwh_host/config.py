@@ -31,7 +31,9 @@ class HostConfig:
     # It is the longest buyer request this host can take; the rate does not depend on it.
     max_model_len: int = 8192
     gpu_index: int = 0
-    hf_cache: Optional[str] = None              # host dir mounted read-only into the container
+    hf_cache: Optional[str] = None              # HF_HOME for the engine, mounted read-only (default ~/.kwh-host/hf)
+    engine_transport: str = "uds"               # "uds": engine has no network; "tcp": loopback port (Docker Desktop)
+    engine_memory: Optional[str] = None         # docker --memory for the engine; None = 3/4 of RAM, max 64 GiB
     host_id: Optional[str] = None
     token: Optional[str] = None
     bare_metal_ok: bool = False                 # set by `init --allow-bare-metal` for pod testing
@@ -57,6 +59,10 @@ class HostConfig:
     @property
     def state_path(self) -> Path:
         return self.dir / "state.json"
+
+    @property
+    def hf_home(self) -> Path:
+        return Path(self.hf_cache).expanduser() if self.hf_cache else self.dir / "hf"
 
     @property
     def registered(self) -> bool:
