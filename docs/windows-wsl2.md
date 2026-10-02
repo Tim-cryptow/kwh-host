@@ -25,7 +25,7 @@ Restart if Windows asks you to, then open **Ubuntu** from the Start menu and cre
 In the Ubuntu window:
 
 ```bash
-nvidia-smi                       # must show your card; it comes from the Windows driver
+nvidia-smi                       # must show your card, and "CUDA Version" 12.8 or newer; it comes from the Windows driver
 systemctl is-system-running      # "running" or "degraded" is fine
 ```
 
@@ -52,7 +52,7 @@ The installer checks the card, then asks before each system change: Docker Engin
 ```bash
 kwh-host init --platform <platform URL>
 kwh-host doctor            # every line should say ok
-kwh-host fetch             # the model (about 9 GB, checked against the published hashes) and the engine (about 10 GB)
+kwh-host fetch             # the model (about 9 GB, checked against the published hashes) and the engine (about 9 GB)
 kwh-host bench             # the certified benchmark, about 10 minutes
 kwh-host register
 kwh-host service install   # hosting starts, and restarts on its own if it crashes

@@ -44,6 +44,18 @@ warn() { printf '    WARN %s\n' "$*"; }
 die()  { printf '    FAIL %s\n' "$*" >&2; exit 1; }
 need_change=()
 failed=()
+APT=(sudo apt-get -o DPkg::Lock::Timeout=300)
+
+# wait_for_apt: a freshly booted machine runs its automatic updates first, holding apt for minutes
+wait_for_apt() {
+  command -v systemctl >/dev/null 2>&1 || return 0
+  local i
+  for i in $(seq 1 120); do
+    systemctl is-active --quiet apt-daily.service apt-daily-upgrade.service 2>/dev/null || return 0
+    [ "$i" = 1 ] && ok "waiting for the system's automatic updates to finish"
+    sleep 5
+  done
+}
 
 # ask "question": yes with --yes; no in --check mode or with no terminal to ask on
 ask() {
@@ -84,10 +96,19 @@ if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
   line="$(nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader,nounits | head -1)"
   gpu_name="$(echo "$line" | cut -d, -f1 | xargs)"
   vram="$(echo "$line" | cut -d, -f2 | xargs)"
-  ok "$gpu_name, $((vram / 1024)) GB, driver $(echo "$line" | cut -d, -f3 | xargs)"
+  cuda="$(nvidia-smi | sed -n 's/.*CUDA Version: *\([0-9][0-9.]*\).*/\1/p' | head -1)"
+  ok "$gpu_name, $(((vram + 512) / 1024)) GB, driver $(echo "$line" | cut -d, -f3 | xargs)${cuda:+ (CUDA $cuda)}"
   if [ "${vram%.*}" -lt "$MIN_VRAM_MIB" ]; then
     [ "$SKIP_GPU" = 1 ] && warn "under 16 GB: this card cannot serve the reference model" \
-      || die "the reference model needs a GPU with 16 GB or more (this one has $((vram / 1024)) GB)"
+      || die "the reference model needs a GPU with 16 GB or more (this one has $(((vram + 512) / 1024)) GB)"
+  fi
+  # the engine is built for CUDA 13, and for CUDA 12.9 for older drivers; kwh-host init picks the build
+  if [ -n "$cuda" ] && [ "${cuda%%.*}" -lt 12 ]; then
+    where=""; [ "$WSL" = 1 ] && where=" for Windows"
+    [ "$SKIP_GPU" = 1 ] && warn "this driver supports CUDA $cuda; the engine needs 12.8 or newer" \
+      || die "this driver supports CUDA $cuda; the engine needs 12.8 or newer. Update the NVIDIA driver$where to 570 or newer, then run this again"
+  elif [ "${cuda%%.*}" = 12 ]; then
+    ok "the engine will run its CUDA 12.9 build (a 580 or newer driver runs the main build)"
   fi
 elif [ "$SKIP_GPU" = 1 ]; then
   warn "no NVIDIA GPU visible (continuing: --skip-gpu-check)"
@@ -111,7 +132,7 @@ has_systemd() { command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system
 start_docker() { if has_systemd; then sudo systemctl enable --now docker; else sudo service docker start; fi; }
 restart_docker() { if has_systemd; then sudo systemctl restart docker; else sudo service docker restart; fi; }
 if ! command -v docker >/dev/null 2>&1; then
-  install_docker() { curl -fsSL https://get.docker.com | sudo sh; }
+  install_docker() { wait_for_apt; curl -fsSL https://get.docker.com | sudo sh; }
   change "Install Docker Engine (Docker's official script, needs sudo)" install_docker && ok "Docker installed" || true
 fi
 DESKTOP=""
@@ -144,13 +165,14 @@ if command -v docker >/dev/null 2>&1; then
       ok "Docker can hand the GPU to containers"
     else
       install_toolkit() {
+        wait_for_apt
         curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
           | sudo gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg &&
         curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
           | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
           | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null &&
-        sudo apt-get update -q &&
-        sudo apt-get install -y -q nvidia-container-toolkit &&
+        "${APT[@]}" update -q &&
+        "${APT[@]}" install -y -q nvidia-container-toolkit &&
         sudo nvidia-ctk runtime configure --runtime=docker &&
         restart_docker
       }
@@ -169,7 +191,7 @@ command -v python3 >/dev/null 2>&1 || missing+=(python3)
 python3 -c 'import venv, ensurepip' >/dev/null 2>&1 || missing+=(python3-venv)
 command -v git >/dev/null 2>&1 || missing+=(git)
 if [ ${#missing[@]} -gt 0 ]; then
-  install_py() { sudo apt-get update -q && sudo apt-get install -y -q "${missing[@]}"; }
+  install_py() { wait_for_apt; "${APT[@]}" update -q && "${APT[@]}" install -y -q "${missing[@]}"; }
   change "Install ${missing[*]} (apt, needs sudo)" install_py || true
 fi
 if command -v python3 >/dev/null 2>&1; then
@@ -213,7 +235,7 @@ say "Ready. Next:"
 cat <<EOF
     kwh-host init --platform <platform URL>${DESKTOP:+ --engine-transport tcp}
     kwh-host doctor            # every check should say ok
-    kwh-host fetch             # the model (~9 GB, hash-checked) and the engine image (~10 GB)
+    kwh-host fetch             # the model (~9 GB, hash-checked) and the engine image (~9 GB, ~14 GB for CUDA 12 drivers)
     kwh-host bench             # the certified benchmark, ~10 minutes
     kwh-host register
     kwh-host service install   # runs in the background from now on, restarts on failure

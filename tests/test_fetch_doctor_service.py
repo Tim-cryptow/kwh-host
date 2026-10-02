@@ -9,7 +9,7 @@ from kwh_bench import reference as ref
 from kwh_bench.lockfile import Lock
 
 from kwh_host import doctor, fetch, service
-from kwh_host.config import HostConfig
+from kwh_host.config import CUDA12_DOCKER_IMAGE, DEFAULT_DOCKER_IMAGE, HostConfig, engine_image_for
 
 
 def fake_snapshot(hf_home: Path, revision: str, files: dict) -> Path:
@@ -56,6 +56,44 @@ def test_doctor_reads_the_gpu_and_names_the_fix(home):
     assert small.status == "fail" and "16 GB" in small.detail
     none = doctor.check_gpu(cfg, runner({}))
     assert none.status == "fail" and none.fix
+
+
+SMI_BANNER = ("+-----------------------------------------------------------------------------------------+\n"
+              "| NVIDIA-SMI {drv}             Driver Version: {drv}     CUDA Version: {cuda}     |\n"
+              "+-----------------------------------------+------------------------+----------------------+\n")
+
+
+def smi(drv, cuda):
+    return runner({"nvidia-smi --query-gpu": (0, f"0, NVIDIA GeForce RTX 4090, 24564, {drv}\n", ""),
+                   "nvidia-smi": (0, SMI_BANNER.format(drv=drv, cuda=cuda), "")})
+
+
+def test_the_engine_build_follows_the_driver(home, monkeypatch):
+    assert engine_image_for("13.0") == engine_image_for("13.2") == DEFAULT_DOCKER_IMAGE
+    assert engine_image_for("12.8") == engine_image_for("12.2") == CUDA12_DOCKER_IMAGE
+    assert engine_image_for(None) == DEFAULT_DOCKER_IMAGE                    # no driver to read (CI): the default
+    default, cu12 = HostConfig(), HostConfig(docker_image=CUDA12_DOCKER_IMAGE)
+    assert doctor.check_engine_build(default, smi("595.84", "13.2")).status == "ok"
+    assert doctor.check_engine_build(cu12, smi("595.84", "13.2")).status == "ok"   # the 12.9 build on a newer driver
+    old = doctor.check_engine_build(default, smi("570.195.03", "12.8"))         # would die with "driver too old"
+    assert old.status == "fail" and CUDA12_DOCKER_IMAGE in old.fix
+    assert doctor.check_engine_build(cu12, smi("570.195.03", "12.8")).status == "ok"
+    assert doctor.check_engine_build(cu12, smi("535.288.01", "12.2")).status == "warn"
+    assert doctor.check_engine_build(cu12, smi("470.256.02", "11.4")).status == "fail"
+    assert doctor.check_engine_build(HostConfig(docker_image="kwh-fake-engine:test"), smi("595.84", "13.2")).status == "warn"
+    assert "engine build" in [c.name for c in doctor.run_checks(default, "024e24c", smi("595.84", "13.2"))]
+    # init picks the build from the driver unless an image is given
+    import kwh_bench.hardware as hw
+    from click.testing import CliRunner
+    from kwh_host import cli
+    monkeypatch.setattr(hw, "probe_cuda_version", lambda: "12.8")
+    out = json.loads(CliRunner().invoke(cli.main, ["init"]).output)
+    assert out["engine_image"] == CUDA12_DOCKER_IMAGE == HostConfig.load().docker_image and out["driver_cuda"] == "12.8"
+    monkeypatch.setattr(hw, "probe_cuda_version", lambda: "13.0")
+    CliRunner().invoke(cli.main, ["init"])
+    assert HostConfig.load().docker_image == DEFAULT_DOCKER_IMAGE
+    CliRunner().invoke(cli.main, ["init", "--docker-image", "kwh-fake-engine:test"])
+    assert HostConfig.load().docker_image == "kwh-fake-engine:test"
 
 
 def test_doctor_on_docker_desktop_flags_the_socket_and_offers_tcp(home):

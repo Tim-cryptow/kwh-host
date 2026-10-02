@@ -1,9 +1,9 @@
 """`kwh-host doctor`: is this machine ready to host? One line per check, a fix for each failure.
 
-The checks are what the sandboxed engine needs: an NVIDIA driver with a big enough card,
-Docker reachable without sudo, Docker able to hand the GPU to a container (NVIDIA Container
-Toolkit), Docker Engine rather than Docker Desktop when the engine talks over a Unix socket,
-and the image and the checkpoint already fetched.
+The checks are what the sandboxed engine needs: an NVIDIA driver with a big enough card and new
+enough for the engine image's CUDA build, Docker reachable without sudo, Docker able to hand the
+GPU to a container (NVIDIA Container Toolkit), Docker Engine rather than Docker Desktop when the
+engine talks over a Unix socket, and the image and the checkpoint already fetched.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from typing import Callable, List, Optional
 
 from kwh_bench import reference as ref
 
-from .config import HostConfig
+from .config import IMAGE_CUDA, TESTED_CUDA12, HostConfig, cuda_tuple, engine_image_for
 from .fetch import snapshot_dir
 
 MIN_VRAM_MIB = 16 * 1024 - 512           # "16 GB" cards report a little under 16384 MiB
@@ -82,6 +82,41 @@ def check_gpu(cfg: HostConfig, run: Run = _run) -> Check:
     if mib < MIN_VRAM_MIB:
         return Check("NVIDIA driver", "fail", detail + "; the reference model needs a 16 GB card or larger", None)
     return Check("NVIDIA driver", "ok", detail)
+
+
+def driver_cuda(run: Run = _run) -> Optional[str]:
+    """The newest CUDA the driver supports, from nvidia-smi's banner ("CUDA Version: 13.0")."""
+    r = run(["nvidia-smi"])
+    if r.returncode == 0:
+        for line in r.stdout.splitlines():
+            if "CUDA Version:" in line:
+                return line.split("CUDA Version:")[1].split("|")[0].strip()
+    return None
+
+
+def check_engine_build(cfg: HostConfig, run: Run = _run) -> Check:
+    """The engine image is built for a CUDA version; the driver has to support it. The default
+    build needs CUDA 13 (driver 580 or newer); the cu129 build runs on CUDA 12.x drivers."""
+    name, image = "engine build", cfg.docker_image
+    cuda_s = driver_cuda(run)
+    cuda = cuda_tuple(cuda_s)
+    driver_fix = "update the NVIDIA driver" + (" for Windows" if is_wsl() else "")
+    if cuda is None:
+        return Check(name, "warn", f"{image}; could not read the driver's CUDA version from nvidia-smi")
+    if cuda[0] < 12:
+        return Check(name, "fail", f"the driver supports CUDA {cuda_s}; the engine needs CUDA 12.8 or newer",
+                     driver_fix + " to version 570 or newer")
+    need = IMAGE_CUDA.get(image)
+    if need is None:
+        return Check(name, "warn", f"{image} is not a published build of the engine; cannot tell which CUDA it needs")
+    if cuda < need:
+        return Check(name, "fail", f"{image} needs a CUDA {need[0]} driver (580 or newer); this one supports CUDA {cuda_s}",
+                     f"run kwh-host init again with the same options (it picks {engine_image_for(cuda_s)}), "
+                     f"or {driver_fix} to 580 or newer")
+    if cuda[0] == 12 and cuda < TESTED_CUDA12:
+        return Check(name, "warn", f"{image} on a CUDA {cuda_s} driver; it has run on 12.8 and newer",
+                     f"if the engine does not start, {driver_fix} to 570 or newer")
+    return Check(name, "ok", f"{image}, on a driver that supports CUDA {cuda_s}")
 
 
 def docker_info(run: Run = _run) -> Optional[dict]:
@@ -152,8 +187,11 @@ def check_mode(cfg: HostConfig) -> Check:
 
 
 def run_checks(cfg: HostConfig, revision: Optional[str], run: Run = _run) -> List[Check]:
-    checks = [check_platform(), check_gpu(cfg, run), check_mode(cfg)]
+    gpu = check_gpu(cfg, run)
+    checks = [check_platform(), gpu, check_mode(cfg)]
     if cfg.engine_mode == "docker":
+        if gpu.status != "fail":
+            checks.append(check_engine_build(cfg, run))
         info = docker_info(run) if shutil.which("docker") else None
         checks += [check_docker(info, run), check_gpu_runtime(info), check_transport(cfg, info)]
         if info is not None:

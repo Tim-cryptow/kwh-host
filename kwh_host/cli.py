@@ -12,7 +12,7 @@ import click
 from kwh_bench import reference as ref
 
 from . import __version__
-from .config import DEFAULT_DOCKER_IMAGE, HostConfig, read_state
+from .config import CUDA12_DOCKER_IMAGE, DEFAULT_DOCKER_IMAGE, HostConfig, engine_image_for, read_state
 from .identity import Identity
 
 
@@ -44,7 +44,8 @@ def main():
 @main.command()
 @click.option("--platform", "platform_url", default="http://127.0.0.1:9000", show_default=True, help="Platform base URL.")
 @click.option("--engine", "engine_mode", type=click.Choice(["docker", "bare-metal"]), default="docker", show_default=True)
-@click.option("--docker-image", default=DEFAULT_DOCKER_IMAGE, show_default=True)
+@click.option("--docker-image", default=None,
+              help=f"Engine image. Default: {DEFAULT_DOCKER_IMAGE} for CUDA 13 drivers, {CUDA12_DOCKER_IMAGE} for CUDA 12.x.")
 @click.option("--port", type=int, default=8000, show_default=True, help="Engine port.")
 @click.option("--gpu", "gpu_index", type=int, default=0, show_default=True)
 @click.option("--hf-cache", default=None, help="Host HF cache dir to mount into the container.")
@@ -60,6 +61,11 @@ def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, all
     """Create ~/.kwh-host: config + identity keypair."""
     if engine_mode == "bare-metal" and not allow_bare_metal:
         raise click.UsageError("bare-metal is for testing only; pass --allow-bare-metal to confirm (D4)")
+    driver_cuda = None
+    if docker_image is None:
+        from kwh_bench.hardware import probe_cuda_version
+        driver_cuda = probe_cuda_version()
+        docker_image = engine_image_for(driver_cuda)
     cfg = HostConfig(platform_url=platform_url, engine_mode=engine_mode, docker_image=docker_image, engine_port=port,
                      gpu_index=gpu_index, hf_cache=hf_cache, bare_metal_ok=allow_bare_metal, max_model_len=max_model_len,
                      engine_transport=engine_transport, engine_memory=engine_memory,
@@ -69,9 +75,13 @@ def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, all
         cfg.host_id, cfg.token = old.host_id, old.token
     cfg.save()
     ident = Identity.load_or_create(cfg.identity_path)
-    click.echo(json.dumps({"dir": str(cfg.dir), "platform": cfg.platform_url, "engine": cfg.engine_mode,
-                           "max_model_len": cfg.max_model_len, "public_key": ident.public_key_hex,
-                           "registered": cfg.registered}, indent=2))
+    out = {"dir": str(cfg.dir), "platform": cfg.platform_url, "engine": cfg.engine_mode,
+           "max_model_len": cfg.max_model_len, "public_key": ident.public_key_hex, "registered": cfg.registered}
+    if cfg.engine_mode == "docker":
+        out["engine_image"] = cfg.docker_image
+        if driver_cuda:
+            out["driver_cuda"] = driver_cuda
+    click.echo(json.dumps(out, indent=2))
 
 
 @main.command()

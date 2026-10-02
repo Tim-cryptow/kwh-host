@@ -67,7 +67,7 @@ def verify_model(snapshot: Path, lock: Lock, log: Log = lambda s: None) -> List[
 
 def pull_image(image: str, log: Log) -> Optional[str]:
     """`docker pull`, progress on the terminal; returns the image's repo digest."""
-    log(f"pulling {image} (about 10 GB the first time)")
+    log(f"pulling {image} (about {14 if 'cu129' in image else 9} GB the first time)")
     subprocess.run(["docker", "pull", image], check=True)
     out = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", image],
                          capture_output=True, text=True, timeout=30)

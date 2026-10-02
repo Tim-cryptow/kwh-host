@@ -3,15 +3,55 @@
 # the one-line installer, then the Docker path for real. Fetch (hash-checked), a certified
 # benchmark in the sandbox, registration with a platform that accepts Docker hosts only, the
 # daemon live with buyer jobs, the sandbox inspected from outside, a 4-bit substitute caught,
-# and the systemd service. Run it as the machine's normal sudo user (not root):
+# and the systemd service.
 #
 #   curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/scripts/vm-m3.sh -o vm-m3.sh && bash vm-m3.sh
 #
-# Everything lands in ~/m3 (summary.json last, m3-out.tgz with all of it).
+# As root (Vast.ai logs you in as root) it creates a normal user, kwh, with passwordless sudo and
+# runs everything as that user, the way a host runs the client; as a normal user it needs
+# passwordless sudo. The test runs in the background and the command follows its output: if the
+# connection drops, the test carries on, and the same command picks up following it again.
+# Everything lands in ~/m3 of the user running it (summary.json last); m3-out.tgz, with all of
+# it, also goes to the login user's home.
 set -uo pipefail
-OUT="$HOME/m3"
-mkdir -p "$OUT"
 REF="${KWH_REF:-main}"
+SELF="$(readlink -f "$0")"
+
+if [ "$(id -u)" -eq 0 ]; then
+  if ! id kwh >/dev/null 2>&1; then
+    useradd -m -s /bin/bash kwh || exit 1
+    echo "kwh ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/kwh && chmod 0440 /etc/sudoers.d/kwh
+  fi
+  install -o kwh -g kwh -m 0755 "$SELF" /home/kwh/vm-m3.sh || exit 1
+  exec sudo -iu kwh env KWH_REF="$REF" KWH_M3_COPY_TO="$HOME" bash /home/kwh/vm-m3.sh
+fi
+
+OUT="$HOME/m3"
+if [ "${KWH_M3_RUN:-}" != 1 ]; then
+  sudo -n true 2>/dev/null || { echo "this needs passwordless sudo; run it as root and it sets up a user that has it"; exit 1; }
+  mkdir -p "$OUT"
+  running() { [ -n "$1" ] && grep -qs vm-m3 "/proc/$1/cmdline"; }    # a zombie or a reused pid is not the test
+  pid="$(cat "$OUT/pid" 2>/dev/null)"
+  if running "$pid"; then
+    echo "the test is already running; following it (Ctrl+C stops following, not the test)"
+  elif [ -f "$HOME/m3-out.tgz" ]; then
+    tail -n 30 "$OUT/console.log"; echo "the test has finished: ~/m3-out.tgz"; exit 0
+  else
+    if [ -s "$OUT/console.log" ]; then           # an earlier attempt that stopped part way: keep it aside
+      mv "$OUT" "$OUT.stopped-$(date +%s)" && mkdir -p "$OUT"
+      rm -f "$HOME/.kwh-host/config.json" "$HOME/.kwh-host/state.json"
+    fi
+    rm -f "$OUT/pid"
+    KWH_M3_RUN=1 setsid nohup bash "$SELF" > "$OUT/console.log" 2>&1 < /dev/null &
+    for _ in $(seq 1 20); do [ -s "$OUT/pid" ] && break; sleep 0.5; done
+    echo "started; following it (Ctrl+C stops following, not the test; the same command follows it again)"
+  fi
+  pid="$(cat "$OUT/pid" 2>/dev/null)"
+  [ -n "$pid" ] || { cat "$OUT/console.log"; echo "the test did not start"; exit 1; }
+  tail -n +1 --pid="$pid" -f "$OUT/console.log"
+  exit 0
+fi
+echo $$ > "$OUT/pid"
 AWQ=hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4
 PORT=9000
 PLATFORM="http://127.0.0.1:$PORT"
@@ -25,8 +65,13 @@ wait_host() { for _ in $(seq 1 "${2:-300}"); do host_is "$1" && return 0; sleep 
 wait_http() { for _ in $(seq 1 120); do curl -fs "$1" >/dev/null 2>&1 && return 0; sleep 1; done; return 1; }
 stop_pid() { kill -TERM "$1" 2>/dev/null; for _ in $(seq 1 120); do kill -0 "$1" 2>/dev/null || return 0; sleep 1; done; kill -KILL "$1" 2>/dev/null; }
 
-[ "$(id -u)" -ne 0 ] || { echo "run as the normal sudo user, not root"; exit 1; }
+# leftovers of an earlier attempt, if any: its platform, daemon and engine container
+pkill -f "kwh-host mock-platform" 2>/dev/null; pkill -f "kwh-host run" 2>/dev/null
+as_docker docker rm -f kwh-engine-gpu0 >/dev/null 2>&1
 nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv | tee "$OUT/gpu.txt"
+nvidia-smi > "$OUT/nvidia-smi.txt" 2>&1
+grep -o "CUDA Version: [0-9.]*" "$OUT/nvidia-smi.txt" | tee -a "$OUT/gpu.txt"
+df -h / "$HOME" | tee "$OUT/disk.txt"; free -g | tee -a "$OUT/disk.txt"
 
 log "0. installer (--yes: Docker, NVIDIA Container Toolkit, kwh-host as needed)"
 curl -fsSL "https://raw.githubusercontent.com/Tim-cryptow/kwh-host/$REF/install.sh" | bash -s -- --yes --ref "$REF" 2>&1 | tee "$OUT/install.log"
@@ -130,7 +175,8 @@ jobs = {n: [{k: r.get(k) for k in ("status", "units", "latency_ms", "reason")} |
             for r in (load(f"jobs-{n}.json") if isinstance(load(f"jobs-{n}.json"), list) else [])]
         for n in ("greedy", "sampled", "long", "too-long")}
 print(json.dumps({
-    "gpu": text("gpu.txt").strip().splitlines()[-1:],
+    "gpu": text("gpu.txt").strip().splitlines()[1:],
+    "engine_image": load("init.json").get("engine_image"),
     "fetch": load("fetch.json"),
     "doctor": text("doctor.txt").strip().splitlines(),
     "bench": {"units_per_hour": (rep.get("score") or {}).get("units_per_hour"), "certified": rep.get("certified"),
@@ -143,4 +189,8 @@ print(json.dumps({
     "service": text("service.txt").strip().splitlines(),
 }, indent=1))
 PY
-tar czf "$HOME/m3-out.tgz" -C "$OUT" . && log "done: ~/m3 and ~/m3-out.tgz"
+tar czf "$HOME/m3-out.tgz.part" -C "$OUT" .
+if [ -n "${KWH_M3_COPY_TO:-}" ] && [ "$KWH_M3_COPY_TO" != "$HOME" ]; then
+  sudo cp "$HOME/m3-out.tgz.part" "$KWH_M3_COPY_TO/m3-out.tgz" && log "copied to $KWH_M3_COPY_TO/m3-out.tgz"
+fi
+mv "$HOME/m3-out.tgz.part" "$HOME/m3-out.tgz" && log "done: ~/m3 and ~/m3-out.tgz"

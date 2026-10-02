@@ -14,7 +14,28 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Optional
 
-DEFAULT_DOCKER_IMAGE = "vllm/vllm-openai:v0.30.0"   # same version the lock pins
+# The certified engine (the version the lock pins) is published in two builds. The default one is
+# built on CUDA 13 and will not start under an older driver ("driver too old"); the cu129 build of
+# the same version runs on CUDA 12.x drivers. `kwh-host init` picks by the driver (engine_image_for).
+DEFAULT_DOCKER_IMAGE = "vllm/vllm-openai:v0.30.0"            # CUDA 13: driver 580 or newer
+CUDA12_DOCKER_IMAGE = "vllm/vllm-openai:v0.30.0-cu129"       # CUDA 12.9: drivers that support CUDA 12.x
+IMAGE_CUDA = {DEFAULT_DOCKER_IMAGE: (13, 0), CUDA12_DOCKER_IMAGE: (12, 0)}   # oldest driver CUDA each build runs on
+TESTED_CUDA12 = (12, 8)       # oldest 12.x driver the cu129 build has run on (RTX 3090, driver 570, bare metal, 2026-09-30)
+
+
+def cuda_tuple(version: Optional[str]) -> Optional[tuple]:
+    """'12.8' -> (12, 8); None or unparseable -> None."""
+    try:
+        major, _, minor = (version or "").strip().partition(".")
+        return int(major), int(minor or 0)
+    except ValueError:
+        return None
+
+
+def engine_image_for(driver_cuda: Optional[str]) -> str:
+    """The engine build for a driver that supports `driver_cuda` (nvidia-smi's "CUDA Version")."""
+    cuda = cuda_tuple(driver_cuda)
+    return CUDA12_DOCKER_IMAGE if cuda is not None and cuda[0] == 12 else DEFAULT_DOCKER_IMAGE
 
 
 def home() -> Path:

@@ -78,7 +78,7 @@ What it settled:
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 63 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+python -m pytest -q          # 64 tests: signing, envelope, execution, the vLLM stream parser, verifier,
                              # platform state machine, sandbox, and jobs end to end over a real local server
 
 # the sandbox for real, with a stand-in engine (needs Docker; what CI runs on every push)
@@ -119,7 +119,7 @@ kwh-host submit --prompt "Explain photosynthesis in two sentences."     # as a b
 
 On a pod the mock platform finds the reference tokenizer (transformers comes with vLLM), so `submit --prompt` works with plain text; `--verify-url http://127.0.0.1:8000` on the mock platform verifies every delivered greedy output against a reference engine.
 
-Docker mode (`--engine docker`, the default and the only mode the real platform accepts, D4) launches `vllm/vllm-openai:v0.30.0` with the pinned flags. Hosts with a CUDA 12.x driver need the cu129 build in bare-metal mode; see the benchmark's `scripts/runpod.sh`.
+Docker mode (`--engine docker`, the default and the only mode the real platform accepts, D4) launches `vllm/vllm-openai:v0.30.0` with the pinned flags. That build needs a CUDA 13 driver (580 or newer); on an older driver `init` picks the same version's `v0.30.0-cu129` build, and `doctor` flags a mismatch. In bare-metal mode the same applies to the vLLM wheel; see the benchmark's `scripts/runpod.sh`.
 
 ## What talks to what
 
