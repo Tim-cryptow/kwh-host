@@ -65,17 +65,17 @@ def idle_gpu(*_):
 
 
 async def challenge_from(engine, prompt_id=0, continuation=None):
-    """A fresh challenge whose reference value comes from the engine under test (the real
+    """A fresh continuation whose reference value comes from the engine under test (the real
     platform's reference node does the same with the real model)."""
     from kwh_bench import reference as ref
     from kwh_bench.prompts import canonical_prompts
-    from kwh_host.platform.mock import Challenge
+    from kwh_host.platform.mock import Continuation
     prompt = canonical_prompts()[prompt_id]
     continuation = continuation or list(range(100, 100 + ref.CANARY_TOKENS))
     async with engine as e:
         ids = (await e.tokenize(prompt.text))[:ref.PROMPT_TOKENS]
         lps = await e.score_continuation(ids, continuation)
-    return Challenge(f"fresh-{prompt_id}", prompt.text, ref.PROMPT_TOKENS, continuation, sum(lps) / len(lps))
+    return Continuation(f"fresh-{prompt_id}", prompt.text, ref.PROMPT_TOKENS, continuation, sum(lps) / len(lps))
 
 
 async def unsigned_mock_report():

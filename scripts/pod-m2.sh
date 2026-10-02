@@ -77,7 +77,7 @@ out = sys.argv[1]
 burst = [{"requests": [{"messages": [{"role": "user", "content": CHAT_PROMPTS[(4 * j + k) % len(CHAT_PROMPTS)]}],
                         "max_tokens": 64, "temperature": 0.0} for k in range(4)]} for j in range(12)]
 json.dump(burst, open(f"{out}/burst.json", "w"))
-json.dump({"requests": [{"prompt_token_ids": [128000] + [791] * 999, "max_tokens": 100, "temperature": 0.0}]},
+json.dump({"requests": [{"prompt_token_ids": [128000] + [791] * 8191, "max_tokens": 100, "temperature": 0.0}]},
           open(f"{out}/too-long.json", "w"))
 PY
 kwh-host submit --platform "$PLATFORM" --max-tokens 128 --temperature 0 \
@@ -96,7 +96,7 @@ log "raw-text job: exit $?"
 kwh-host submit --platform "$PLATFORM" --file "$OUT/burst.json" --concurrent 6 --out "$OUT/jobs-burst.json" > "$OUT/jobs-burst.txt" 2>&1
 log "burst (12 jobs x 4 requests, 6 at a time): exit $?"
 kwh-host submit --platform "$PLATFORM" --file "$OUT/too-long.json" --timeout 10 --out "$OUT/jobs-too-long.json" > "$OUT/jobs-too-long.txt" 2>&1
-log "too-long job (expected to fail: 1,100 tokens > 1,024): exit $?"
+log "too-long job (expected to fail: 8,292 tokens > the 8,192 the host serves, D8): exit $?"
 sleep 15
 host_json > "$OUT/hosts-after-jobs.json"
 kill -TERM "$RUN"; for _ in $(seq 1 90); do kill -0 "$RUN" 2>/dev/null || break; sleep 1; done; wait_gpu_free

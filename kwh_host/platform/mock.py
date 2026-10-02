@@ -38,10 +38,16 @@ from .verifier import DEFAULT_TAU, Scorer, verify_greedy_outputs
 STATES = ("registered", "live", "degraded", "offline")
 
 
-# --- challenges -----------------------------------------------------------
+# --- challenges (§4, D9) ---------------------------------------------------
+
+CHALLENGE_CONTINUATIONS = 4    # per challenge; the challenge passes on their mean delta
+RECOVERY_PASSES = 2            # passes in a row a host needs after a failed challenge
+
 
 @dataclass
-class Challenge:
+class Continuation:
+    """One scored continuation in the platform's pool: a prompt, the 32 tokens the reference
+    node produced after it, and the reference's mean logprob for them (never sent to a host)."""
     id: str
     prompt_text: str
     prompt_tokens: int
@@ -49,15 +55,42 @@ class Challenge:
     reference_mean_logprob: float          # server-side only
 
     def to_wire(self) -> dict:
-        return {"challenge_id": self.id, "prompt_text": self.prompt_text, "prompt_tokens": self.prompt_tokens,
+        return {"prompt_text": self.prompt_text, "prompt_tokens": self.prompt_tokens,
                 "continuation_token_ids": list(self.continuation_token_ids)}
 
 
+@dataclass
+class Challenge:
+    """What a host is asked to score: several continuations, judged together on the mean of
+    their deltas, so one noisy continuation does not decide (D9)."""
+    id: str
+    items: List[Continuation]
+
+    def to_wire(self) -> dict:
+        return {"challenge_id": self.id, "items": [c.to_wire() for c in self.items]}
+
+
+def judge_challenge(ch: Challenge, mean_logprobs: Any, tolerance: float) -> dict:
+    """Per-continuation deltas and the verdict. An answer of the wrong shape, or any
+    continuation left unscored, fails: the mean is only defined over all of them."""
+    got = mean_logprobs if isinstance(mean_logprobs, list) and len(mean_logprobs) == len(ch.items) \
+        else [None] * len(ch.items)
+    deltas: List[Optional[float]] = []
+    for g, c in zip(got, ch.items):
+        try:
+            deltas.append(None if g is None else round(abs(float(g) - c.reference_mean_logprob), 5))
+        except (TypeError, ValueError):
+            deltas.append(None)
+    mean = None if any(d is None for d in deltas) else round(sum(deltas) / len(deltas), 5)
+    return {"pass": mean is not None and mean <= tolerance, "delta": mean, "deltas": deltas}
+
+
 class ChallengePool:
-    def __init__(self, challenges: List[Challenge], seed: int = 0):
-        if not challenges:
+    def __init__(self, continuations: List[Continuation], seed: int = 0, per_challenge: int = CHALLENGE_CONTINUATIONS):
+        if not continuations:
             raise ValueError("empty challenge pool")
-        self.challenges = list(challenges)
+        self.continuations = list(continuations)
+        self.per_challenge = per_challenge
         self._rng = random.Random(seed)
         self._n = 0
 
@@ -67,12 +100,12 @@ class ChallengePool:
         if not lock.is_locked:
             raise RuntimeError("kwh-bench lock is incomplete; cannot build a challenge pool from it")
         text = {p.id: p.text for p in canonical_prompts()}
-        return cls([Challenge(f"lock-{c.prompt_id}", text[c.prompt_id], ref.PROMPT_TOKENS,
-                              c.expected_token_ids, c.reference_mean_logprob) for c in lock.canaries])
+        return cls([Continuation(f"lock-{c.prompt_id}", text[c.prompt_id], ref.PROMPT_TOKENS,
+                                 c.expected_token_ids, c.reference_mean_logprob) for c in lock.canaries])
 
     @classmethod
-    async def from_engine(cls, engine, n: int = 4) -> "ChallengePool":
-        """Challenges scored by `engine` itself: what the real platform's reference node does
+    async def from_engine(cls, engine, n: int = CHALLENGE_CONTINUATIONS) -> "ChallengePool":
+        """Continuations scored by `engine` itself: what the real platform's reference node does
         with the reference model. With the benchmark's mock engine this lets a GPU-free demo
         host go live; it proves nothing about a model."""
         text = {p.id: p.text for p in canonical_prompts()}
@@ -82,15 +115,14 @@ class ChallengePool:
                 ids = (await e.tokenize(text[pid]))[:ref.PROMPT_TOKENS]
                 cont = list(range(100 + pid, 100 + pid + ref.CANARY_TOKENS))
                 lps = await e.score_continuation(ids, cont)
-                out.append(Challenge(f"engine-{pid}", text[pid], ref.PROMPT_TOKENS, cont, sum(lps) / len(lps)))
+                out.append(Continuation(f"engine-{pid}", text[pid], ref.PROMPT_TOKENS, cont, sum(lps) / len(lps)))
         return cls(out)
 
     def issue(self) -> Challenge:
-        base = self._rng.choice(self.challenges)
+        picks = self._rng.sample(self.continuations, min(self.per_challenge, len(self.continuations)))
         self._n += 1
         # Fresh id per issue so a host cannot replay an earlier answer.
-        return Challenge(f"{base.id}-{self._n}-{secrets.token_hex(4)}", base.prompt_text, base.prompt_tokens,
-                         base.continuation_token_ids, base.reference_mean_logprob)
+        return Challenge(f"ch-{self._n}-{secrets.token_hex(4)}", picks)
 
 
 # --- settings / records ---------------------------------------------------
@@ -102,7 +134,8 @@ class Settings:
     microbench_every_seconds: float = 1800.0
     offline_after_seconds: float = 90.0
     max_failures: int = 5
-    tolerance: float = ref.CANARY_MAX_LOGPROB_DELTA
+    tolerance: float = ref.CANARY_MAX_LOGPROB_DELTA    # on a challenge's mean delta, like the benchmark's canaries
+    recovery_passes: int = RECOVERY_PASSES
     microbench_tolerance: float = 0.10
     accept_uncertified: bool = False       # tests only: mock-engine reports
     allow_bare_metal: bool = False         # pod testing only (D4)
@@ -142,6 +175,7 @@ class HostRecord:
     pending: Optional[Challenge] = None
     last_challenge_at: Optional[float] = None
     last_challenge: Optional[dict] = None
+    passes_needed: int = 0                 # passes in a row still owed after a failed challenge (D9)
     microbench_misses: int = 0
     last_microbench: Optional[dict] = None
     rebench_required: bool = False
@@ -337,25 +371,33 @@ class MockPlatform:
         ch = rec.pending
         if ch is None or body.get("challenge_id") != ch.id:
             raise Rejected(400, "no such pending challenge")
-        mean = body.get("mean_logprob")
-        delta = None if mean is None else round(abs(float(mean) - ch.reference_mean_logprob), 5)
-        passed = delta is not None and delta <= self.s.tolerance
+        verdict = judge_challenge(ch, body.get("mean_logprobs"), self.s.tolerance)
+        passed, delta = verdict["pass"], verdict["delta"]
         rec.pending = None
         rec.last_challenge_at = now
-        rec.last_challenge = {"id": ch.id, "pass": passed, "delta": delta, "elapsed_ms": body.get("elapsed_ms"), "t": now}
+        rec.last_challenge = {"id": ch.id, "pass": passed, "delta": delta, "deltas": verdict["deltas"],
+                              "continuations": [c.id for c in ch.items], "elapsed_ms": body.get("elapsed_ms"), "t": now}
         rec.event(now, "liveness", id=ch.id, passed=passed, delta=delta)
         if passed:
             rec.failures = 0
+            rec.passes_needed = max(0, rec.passes_needed - 1)
             healthy_now = rec.last_accepted_beat_at is not None and rec.last_accepted_beat_at == rec.last_beat_at
             if rec.state != "live" and healthy_now:
-                self._set_state(rec, now, "live", [])
+                if rec.passes_needed:
+                    # After a failed challenge one pass is not enough: a substitute model can get lucky
+                    # once; it does not get lucky twice in a row (D9).
+                    self._set_state(rec, now, "degraded", [f"challenge passed (mean delta {delta}); "
+                                                           f"{rec.passes_needed} more in a row before live"])
+                else:
+                    self._set_state(rec, now, "live", [])
         else:
             rec.failures += 1
+            rec.passes_needed = self.s.recovery_passes
             if rec.failures >= self.s.max_failures:
                 self._set_state(rec, now, "offline", [f"canary failed, {rec.failures} consecutive failures"])
             else:
-                self._set_state(rec, now, "degraded", [f"canary failed (delta {delta})"])
-        return {"pass": passed, "delta": delta, "state": rec.state}
+                self._set_state(rec, now, "degraded", [f"canary failed (mean delta {delta})"])
+        return {**verdict, "state": rec.state, "passes_needed": rec.passes_needed}
 
     def microbench(self, host_id: str, body: dict) -> dict:
         now = self.clock()

@@ -49,19 +49,22 @@ def main():
 @click.option("--gpu", "gpu_index", type=int, default=0, show_default=True)
 @click.option("--hf-cache", default=None, help="Host HF cache dir to mount into the container.")
 @click.option("--allow-bare-metal", is_flag=True, help="Testing on pods without Docker; the platform must also allow it.")
-def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, allow_bare_metal):
+@click.option("--max-model-len", type=click.IntRange(ref.MAX_MODEL_LEN_MIN, ref.MAX_MODEL_LEN_MAX), default=8192,
+              show_default=True, help="Context length to certify and serve: the longest buyer request this host takes.")
+def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, allow_bare_metal, max_model_len):
     """Create ~/.kwh-host: config + identity keypair."""
     if engine_mode == "bare-metal" and not allow_bare_metal:
         raise click.UsageError("bare-metal is for testing only; pass --allow-bare-metal to confirm (D4)")
     cfg = HostConfig(platform_url=platform_url, engine_mode=engine_mode, docker_image=docker_image, engine_port=port,
-                     gpu_index=gpu_index, hf_cache=hf_cache, bare_metal_ok=allow_bare_metal)
+                     gpu_index=gpu_index, hf_cache=hf_cache, bare_metal_ok=allow_bare_metal, max_model_len=max_model_len)
     if cfg.path.exists():
         old = HostConfig.load()
         cfg.host_id, cfg.token = old.host_id, old.token
     cfg.save()
     ident = Identity.load_or_create(cfg.identity_path)
     click.echo(json.dumps({"dir": str(cfg.dir), "platform": cfg.platform_url, "engine": cfg.engine_mode,
-                           "public_key": ident.public_key_hex, "registered": cfg.registered}, indent=2))
+                           "max_model_len": cfg.max_model_len, "public_key": ident.public_key_hex,
+                           "registered": cfg.registered}, indent=2))
 
 
 @main.command()
@@ -122,6 +125,11 @@ def run(engine_log, beats, no_version_check, mock_engine, model, no_jobs):
     cfg, ident = _load()
     if not cfg.registered:
         raise click.UsageError("not registered; run `kwh-host bench` then `kwh-host register`")
+    if cfg.report_path.exists() and not mock_engine:
+        from .bench import context_mismatch, load_report
+        problem = context_mismatch(load_report(cfg.report_path), cfg.max_model_len)
+        if problem:
+            raise click.UsageError(problem)
     engine = _engine(cfg, str(engine_log) if engine_log else str(cfg.dir / "engine.log"), mock_engine, model)
     no_version_check = no_version_check or mock_engine
 

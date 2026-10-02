@@ -42,6 +42,17 @@ def load_report(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def context_mismatch(report: dict, max_model_len: int) -> Optional[str]:
+    """Why the engine may not serve at `max_model_len` with this report, or None. A host serves
+    at the context length it certified with (D8); a report from a non-vLLM engine says nothing."""
+    from kwh_bench.report import launch_max_model_len
+    certified = launch_max_model_len((report.get("engine") or {}).get("launch_args") or [])
+    if certified is None or certified == max_model_len:
+        return None
+    return (f"the report was certified at --max-model-len {certified} and the config serves {max_model_len}; "
+            f"run `kwh-host bench` again (or `kwh-host init --max-model-len {certified}`)")
+
+
 async def prepare_micro_prompts(engine: Engine) -> List[PreparedPrompt]:
     """The first 32 canonical prompts, tokenized by the running engine. Done once per engine start."""
     return await prepare_prompts(engine, canonical_prompts()[:MICRO_REQUESTS])
@@ -57,12 +68,17 @@ async def micro_benchmark(engine: Engine, prepared: List[PreparedPrompt]) -> dic
 
 
 async def score_challenge(engine: Engine, challenge: dict) -> dict:
-    """Teacher-forced mean logprob of the platform's continuation, exactly as the benchmark's canary."""
+    """Teacher-forced mean logprob of each of the platform's continuations, exactly as the
+    benchmark scores its canaries: one request at a time, so the batch is the same shape the
+    reference node scored them in. The platform judges the mean of the deltas (D9)."""
     t0 = time.perf_counter()
-    ids = await engine.tokenize(challenge["prompt_text"])
-    n = int(challenge.get("prompt_tokens") or ref.PROMPT_TOKENS)
-    if len(ids) < n:
-        raise ValueError(f"challenge prompt tokenizes to {len(ids)} < {n}")
-    lps = await engine.score_continuation(ids[:n], list(challenge["continuation_token_ids"]))
-    return {"challenge_id": challenge["challenge_id"], "mean_logprob": round(sum(lps) / len(lps), 5),
+    means: List[float] = []
+    for item in challenge["items"]:
+        ids = await engine.tokenize(item["prompt_text"])
+        n = int(item.get("prompt_tokens") or ref.PROMPT_TOKENS)
+        if len(ids) < n:
+            raise ValueError(f"challenge prompt tokenizes to {len(ids)} < {n}")
+        lps = await engine.score_continuation(ids[:n], list(item["continuation_token_ids"]))
+        means.append(round(sum(lps) / len(lps), 5))
+    return {"challenge_id": challenge["challenge_id"], "mean_logprobs": means,
             "elapsed_ms": int((time.perf_counter() - t0) * 1000)}

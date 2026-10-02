@@ -9,7 +9,7 @@ from kwh_bench.prompts import canonical_prompts
 
 from kwh_host.daemon import Daemon
 from kwh_host.platform.client import PlatformClient, PlatformError
-from kwh_host.platform.mock import Challenge, ChallengePool, MockPlatform, Settings, create_app
+from kwh_host.platform.mock import ChallengePool, Continuation, MockPlatform, Settings, create_app
 
 
 def idle_gpu(*_):
@@ -18,21 +18,21 @@ def idle_gpu(*_):
 
 
 async def challenge_from(engine, prompt_id=0, continuation=None):
-    """A fresh challenge whose reference value comes from the engine under test (the real platform's
+    """A fresh continuation whose reference value comes from the engine under test (the real platform's
     reference node does the same thing with the real model)."""
     prompt = canonical_prompts()[prompt_id]
     continuation = continuation or list(range(100, 100 + ref.CANARY_TOKENS))
     async with engine as e:
         ids = (await e.tokenize(prompt.text))[:ref.PROMPT_TOKENS]
         lps = await e.score_continuation(ids, continuation)
-    return Challenge(f"fresh-{prompt_id}", prompt.text, ref.PROMPT_TOKENS, continuation, sum(lps) / len(lps))
+    return Continuation(f"fresh-{prompt_id}", prompt.text, ref.PROMPT_TOKENS, continuation, sum(lps) / len(lps))
 
 
 async def test_daemon_reaches_live_mints_and_microbenches(cfg, identity, report, mock_engine, clock):
-    ch = await challenge_from(mock_engine)
+    pool = ChallengePool([await challenge_from(mock_engine, prompt_id=i) for i in range(6)])
     settings = Settings(heartbeat_seconds=30, challenge_every_seconds=60, microbench_every_seconds=90,
                         accept_uncertified=True, allow_bare_metal=True, require_engine_version=None)
-    platform = MockPlatform(ChallengePool([ch]), settings, clock=clock)
+    platform = MockPlatform(pool, settings, clock=clock)
     app = create_app(platform)
     log = []
     sleeps = []
@@ -53,6 +53,7 @@ async def test_daemon_reaches_live_mints_and_microbenches(cfg, identity, report,
     rec = platform.hosts[client.host_id]
     assert final["state"] == "stopped" and final["beats"] == 8 and final["accepted_beats"] == 8
     assert final["last_challenge"]["pass"] and final["last_challenge"]["delta"] <= 1e-4
+    assert len(final["last_challenge"]["mean_logprobs"]) == 4 == len(final["last_challenge"]["deltas"])   # D9
     assert rec.state == "live" and rec.balance + rec.accrual > 0 and final["minted_total"] == rec.balance
     assert final["last_microbench"] is not None and final["last_microbench"]["accepted"]
     assert final["last_microbench"]["generated_tokens"] == 32 * ref.GENERATED_TOKENS

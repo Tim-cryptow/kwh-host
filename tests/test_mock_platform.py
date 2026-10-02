@@ -2,13 +2,13 @@
 
 import pytest
 
-from kwh_host.platform.mock import Challenge, ChallengePool, MockPlatform, Rejected, Settings
+from kwh_host.platform.mock import ChallengePool, Continuation, MockPlatform, Rejected, Settings
 
 REF = -1.2345
 
 
-def pool():
-    return ChallengePool([Challenge("c1", "word " * 800, 512, list(range(32)), REF)])
+def pool(n=1):
+    return ChallengePool([Continuation(f"c{i}", "word " * 800, 512, list(range(32)), REF) for i in range(n)])
 
 
 def settings(**kw):
@@ -32,9 +32,13 @@ def register(platform, identity, report):
     return out["host_id"]
 
 
-def answer(platform, host_id, resp, mean=REF):
+def answer(platform, host_id, resp, mean=REF, means=None):
+    """Answer the challenge in `resp`: every continuation scored `mean`, or the given list."""
     assert resp["challenge"], "expected a challenge"
-    return platform.liveness(host_id, {"challenge_id": resp["challenge"]["challenge_id"], "mean_logprob": mean, "elapsed_ms": 5})
+    n = len(resp["challenge"]["items"])
+    body = {"challenge_id": resp["challenge"]["challenge_id"], "mean_logprobs": means if means is not None else [mean] * n,
+            "elapsed_ms": 5}
+    return platform.liveness(host_id, body)
 
 
 def test_register_requires_signed_verified_report(identity, report, clock):
@@ -122,14 +126,14 @@ def test_failed_challenge_degrades_and_wrong_model_never_goes_live(identity, rep
     hid = register(p, identity, report)
     r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
     v = answer(p, hid, r, mean=REF - 0.2)        # a 4-bit substitute: far outside 0.05
-    assert not v["pass"] and v["state"] == "degraded" and v["delta"] == 0.2
+    assert not v["pass"] and v["state"] == "degraded" and v["delta"] == 0.2 and v["passes_needed"] == 2
     clock.advance(30)
     r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
     assert r["state"] == "degraded" and r["minted"] == 0 and r["challenge"] is not None
     assert not answer(p, hid, r, mean=None)["pass"]           # scoring failed counts as a failure
     # a replayed / unknown challenge id is refused
     with pytest.raises(Rejected):
-        p.liveness(hid, {"challenge_id": "nope", "mean_logprob": REF})
+        p.liveness(hid, {"challenge_id": "nope", "mean_logprobs": [REF]})
 
 
 def test_engine_version_enforced_when_strict(identity, report, clock):
@@ -173,3 +177,69 @@ def test_engine_restart_requires_a_new_challenge(identity, report, clock):
     assert r["state"] == "degraded" and r["minted"] == 0 and r["challenge"] is not None   # nothing routed or minted until re-proven
     assert "engine restarted" in r["reasons"][0]
     assert answer(p, hid, r)["state"] == "live"
+
+
+def test_challenge_carries_four_continuations_and_passes_on_their_mean(identity, report, clock):
+    """D9: one noisy continuation does not decide; a substitute's mean does."""
+    p = MockPlatform(pool(8), settings(), clock=clock)
+    hid = register(p, identity, report)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    items = r["challenge"]["items"]
+    assert len(items) == 4 and "reference_mean_logprob" not in items[0]           # the reference stays server-side
+    assert len({c.id for c in p.hosts[hid].pending.items}) == 4                    # four distinct continuations
+    v = answer(p, hid, r, means=[REF, REF, REF, REF - 0.15])                        # one off by 0.15, mean 0.0375
+    assert v["pass"] and v["delta"] == 0.0375 and v["deltas"] == [0.0, 0.0, 0.0, 0.15] and v["state"] == "live"
+    clock.advance(300)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    a40 = [0.02521, 0.04788, 0.01496, 0.00524]                                      # honest A40 canaries: pass
+    assert answer(p, hid, r, means=[REF + d for d in a40])["pass"]
+    clock.advance(300)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    awq = [0.03582, 0.094, 0.05838, 0.16482]                                        # the 4-bit control: fail
+    v = answer(p, hid, r, means=[REF - d for d in awq])
+    assert not v["pass"] and v["delta"] == round(sum(awq) / 4, 5) and v["state"] == "degraded"
+
+
+def test_unscored_or_malformed_answers_fail(identity, report, clock):
+    p = MockPlatform(pool(8), settings(), clock=clock)
+    hid = register(p, identity, report)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    v = answer(p, hid, r, means=[REF, REF, None, REF])                              # one continuation not scored
+    assert not v["pass"] and v["delta"] is None and v["deltas"][2] is None
+    clock.advance(30)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert not answer(p, hid, r, means=[REF])["pass"]                              # wrong length: nothing judged
+    clock.advance(30)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert not answer(p, hid, r, means=["x", REF, REF, REF])["pass"]
+
+
+def test_after_a_failed_challenge_two_passes_in_a_row_restore_live(identity, report, clock):
+    """D9: a substitute can get lucky once; recovery needs two passes in a row."""
+    p = MockPlatform(pool(8), settings(), clock=clock)
+    hid = register(p, identity, report)
+    assert answer(p, hid, p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()}))["state"] == "live"
+    clock.advance(300)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert answer(p, hid, r, mean=REF + 0.2)["state"] == "degraded"                # failed: two passes owed
+    clock.advance(30)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    v = answer(p, hid, r)
+    assert v["pass"] and v["state"] == "degraded" and v["passes_needed"] == 1      # one pass is not enough
+    assert "1 more in a row" in p.hosts[hid].reasons[0]
+    clock.advance(30)
+    r = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert r["challenge"] is not None and r["minted"] == 0                         # re-challenged on the next beat
+    v = answer(p, hid, r, mean=REF + 0.2)                                           # fails again: back to two
+    assert v["passes_needed"] == 2 and v["state"] == "degraded"
+    for owed in (1, 0):
+        clock.advance(30)
+        v = answer(p, hid, p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()}))
+        assert v["passes_needed"] == owed
+    assert v["state"] == "live"
+    # an engine restart is not a failed challenge: one pass restores live
+    clock.advance(30)
+    p.heartbeat(hid, {"engine": {**healthy(), "instance": "a"}, "gpu_sample": idle_gpu()})
+    clock.advance(30)
+    r = p.heartbeat(hid, {"engine": {**healthy(), "instance": "b"}, "gpu_sample": idle_gpu()})
+    assert r["state"] == "degraded" and answer(p, hid, r)["state"] == "live"

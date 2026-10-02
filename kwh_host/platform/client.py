@@ -10,7 +10,7 @@ body. The mock platform in `mock.py` implements the other side; the real platfor
 from __future__ import annotations
 
 import time
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
@@ -97,9 +97,10 @@ class PlatformClient:
             "wants_mint": wants_mint, "client_version": __version__,
         })
 
-    async def liveness(self, challenge_id: str, mean_logprob: Optional[float], elapsed_ms: int) -> dict:
+    async def liveness(self, challenge_id: str, mean_logprobs: List[Optional[float]], elapsed_ms: int) -> dict:
+        """One mean logprob per continuation of the challenge, in the order they were sent."""
         return await self._call("POST", self._hp("/liveness"), {
-            "challenge_id": challenge_id, "mean_logprob": mean_logprob, "elapsed_ms": elapsed_ms,
+            "challenge_id": challenge_id, "mean_logprobs": list(mean_logprobs), "elapsed_ms": elapsed_ms,
         })
 
     async def microbench(self, units_per_hour: float, job_seconds: float, gpu_sample: dict) -> dict:

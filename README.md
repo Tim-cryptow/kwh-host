@@ -2,7 +2,7 @@
 
 The program a GPU owner installs to sell work on the kWh Exchange. It benchmarks the rig with [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark), registers the certified rate with the platform, proves the rig is live (heartbeat, platform-issued canaries, micro-benchmarks), and executes buyer jobs in a sandboxed copy of the certified engine. Units are minted by the platform against that liveness; the client never mints on its own.
 
-Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle, liveness, minting, jobs and their verification, the platform API contract, decisions D1–D6 and the open ones (D7 metering, D8 context length, D9 challenge format).
+Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle, liveness, minting, jobs and their verification, the platform API contract, decisions D1–D6, D8 (context length) and D9 (challenge format), and the open one (D7 metering).
 
 ## Status
 
@@ -51,15 +51,15 @@ What it settled:
 - **The job path works on a real engine.** Token ids in, signed token ids out, metered, nothing lost or retried.
 - **A wrong model got no work.** The restart rule held the host in `degraded` before any challenge, the challenge failed at more than three times the tolerance, and the buyer's job found no host.
 - **Per-request verification cannot be the rule.** The reference model, scoring its own greedy output on the same card and engine, disagrees with 2.9% of the tokens, so 13 of the 14 honest jobs verified at τ = 0.1 would have failed, and two jobs with identical prompts produced different text. Judged over a window of requests, the honest host and a 4-bit substitute separate cleanly. HOST-CLIENT.md §7 has the numbers and the rule.
-- **The canary margin is thin on this card.** Its deltas reach 0.048 against a 0.05 tolerance, where the 3090, 4090 and A5000 scored 0.0000. The substitute still failed, but D9 proposes judging challenges on the mean of several continuations.
-- **Context length does not change the rate (D8):** 60.230 units/hour at 1,024, 60.228 at 8,192.
+- **The canary margin is thin on this card.** Its deltas reach 0.048 against a 0.05 tolerance, where the 3090, 4090 and A5000 scored 0.0000. The substitute still failed. Since D9 a challenge carries four continuations and passes on their mean delta, and the benchmark judges its canaries the same way (rc.6).
+- **Context length does not change the rate (D8):** 60.230 units/hour at 1,024, 60.228 at 8,192. Hosts now certify and serve at 8,192 by default.
 - One install snag: Ubuntu 24.04 ships `cryptography` 41.0.7 through apt, which pip cannot upgrade; kwh-host now accepts it.
 
 ## Try it without a GPU
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 45 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+python -m pytest -q          # 51 tests: signing, envelope, execution, the vLLM stream parser, verifier,
                              # platform state machine, and jobs end to end over a real local server
 
 # terminal 1: the mock platform; --mock-challenges lets a mock-engine host pass its challenges
@@ -86,8 +86,8 @@ Without `--mock-challenges` the mock platform serves the real lock canaries, the
 ```bash
 pip install git+https://github.com/Tim-cryptow/kwh-host           # pulls kwh-bench
 kwh-host mock-platform --port 9000 --allow-bare-metal &            # stand-in until step 4
-kwh-host init --platform http://127.0.0.1:9000 --engine bare-metal --allow-bare-metal
-kwh-host bench          # kwh-bench run, signed; ~5 min on a 4090
+kwh-host init --platform http://127.0.0.1:9000 --engine bare-metal --allow-bare-metal   # serves 8,192-token context (D8)
+kwh-host bench          # kwh-bench run at that context, signed; ~5 min on a 4090
 kwh-host register       # certified report -> host_id, rate, bucket
 kwh-host run            # engine up, heartbeat every 30 s, challenges, micro-benchmark every 30 min, jobs
 kwh-host submit --prompt "Explain photosynthesis in two sentences."     # as a buyer, from another shell
@@ -102,7 +102,7 @@ Docker mode (`--engine docker`, the default and the only mode the real platform 
 ```
 kwh-host run ──▶ engine (vLLM, pinned flags)            ← kwh_bench.engines.VLLMEngine
       │  ├── heartbeat: engine health + GPU sample       POST /v1/hosts/{id}/heartbeat
-      │  ├── challenge: score platform continuation      POST /v1/hosts/{id}/liveness
+      │  ├── challenge: score 4 platform continuations   POST /v1/hosts/{id}/liveness
       │  ├── micro-benchmark when idle (1/8 job)         POST /v1/hosts/{id}/microbench
       │  └── jobs: token ids in, signed token ids out    WS   /v1/hosts/{id}/jobs
       ▼

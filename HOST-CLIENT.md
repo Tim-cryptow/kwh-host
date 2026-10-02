@@ -1,6 +1,6 @@
 # kWh Host Client — scope (v0)
 
-**Build step:** 2 of 7 (primer §10). **Upstream:** [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark) 1.0.0-rc.5, series I-1.
+**Build step:** 2 of 7 (primer §10). **Upstream:** [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark) 1.0.0-rc.6, series I-1.
 **Definition of done (primer):** Linux + Windows. Docker sandbox, benchmark run, liveness heartbeat, stake deposit, mint. Reports units/hour and reliability.
 
 This document draws the line for the first cut. The host client is the program a GPU owner installs to turn a rig into supply. Everything it does is in service of one rule from the primer: *units are minted only against live capacity*. The client's job is to prove capacity is live, continuously, cheaply, and in a way the platform can check.
@@ -39,10 +39,10 @@ installed ─▶ benchmarked ─▶ registered ─▶ live ⇄ degraded ─▶ o
 | benchmarked → registered | platform accepts the signed report, issues `host_id` + token |
 | registered → live | first accepted heartbeat with the engine healthy and a passed challenge |
 | live → degraded | failed challenge, micro-benchmark outside tolerance, foreign process on the GPU, engine unhealthy, engine restarted (a new instance id in the heartbeat: a restarted engine could be serving anything, so it is re-challenged before it gets more work) |
-| degraded → live | next passed challenge with a clean GPU sample |
+| degraded → live | next passed challenge with a clean GPU sample; after a failed challenge, two passed challenges in a row (D9) |
 | degraded → offline | N consecutive failures (platform config, default 5) |
 | live/degraded → offline | no accepted heartbeat within the timeout (default 90 s) |
-| offline → live | accepted heartbeat + passed challenge; accrual restarts from zero |
+| offline → live | accepted heartbeat + passed challenge (two in a row if the last one failed); accrual restarts from zero |
 
 - **installed**: binary present, keypair generated, Docker reachable, GPU visible.
 - **benchmarked**: a certified `kwh-bench` report exists for this GPU (UUID-bound). Re-done on a schedule (§5) and whenever the driver, engine image or GPU changes.
@@ -77,12 +77,12 @@ The primer asks for "continuous heartbeat plus periodic micro-benchmarks". Three
 | Check | Cadence | Cost | What it catches |
 | --- | --- | --- | --- |
 | **Heartbeat** with a GPU sample (util, power, VRAM, foreign compute processes) and engine `/health` | every 30 s | ~0 | offline, engine down, another tenant on the GPU |
-| **Challenge canary** issued by the platform | every 5 min, and on every recovery | 1 forward pass (~0.2 s) | engine serving a different/cheaper model, host faking the engine |
+| **Challenge** issued by the platform: four fresh continuations | every 5 min, and on every recovery | 4 prefills, one at a time (~2 s on an A40) | engine serving a different/cheaper model, host faking the engine |
 | **Micro-benchmark**: 1/8 of a reference job (32 requests, 512→256, concurrency 32), timed | every 30 min, only when idle | ~5 s on a 4090 | throttling, thermal decay, background load, VRAM contention |
 
-**Challenge canaries, not the locked ones.** `reference/lock.json` is public: its eight canaries and their reference log-probabilities are known, so a host could answer them from a table without running a model. For liveness the platform sends **fresh** canaries: a prompt and a 32-token continuation the platform's own reference node scored moments ago, never seen by this host. The host scores it under teacher forcing (the same `score_continuation` call the benchmark uses) and returns the mean log-probability; the platform compares under the §7 tolerance. The host cannot precompute, and the check costs one forward pass. This is also the first job for the platform reference node that step 6 needs anyway.
+**Challenge canaries, not the locked ones.** `reference/lock.json` is public: its eight canaries and their reference log-probabilities are known, so a host could answer them from a table without running a model. For liveness the platform sends **fresh** continuations: each a prompt and the 32 tokens the platform's own reference node produced after it, scored there moments ago and never seen by this host. A challenge carries **four** of them (D9). The host scores each under teacher forcing, one request at a time (the same `score_continuation` call the benchmark uses), and returns the four mean log-probabilities; the platform takes each one's delta to its reference value and passes the challenge when the **mean of the four deltas** is within the benchmark's tolerance (0.05 nats, the same rule as the benchmark's canaries since rc.6). An unscored continuation fails the challenge. The host cannot precompute, and the check costs four prefills. This is also the first job for the platform reference node that step 6 needs anyway.
 
-**What the first real cards say (M2, 2026-10-02).** Three certified cards score the locked canaries at delta 0.0000. The A40 scores them at 0.005–0.048, and a 4-bit substitute at 0.036–0.219, so canary by canary the honest and substitute ranges overlap. Under a one-continuation challenge at 0.05, that substitute would clear about one challenge in eight (it clears one of the eight locked canaries), and since a degraded host is re-challenged on every heartbeat until it passes, it would keep finding its way back to live, five minutes at a time. Two changes close this (D9): a challenge carries several fresh continuations and is judged on their mean delta (on the locked eight: A40 0.023, the substitute 0.108 on a 4090), and a host that failed a challenge needs two passes in a row to return to live.
+**Why four, and why the mean (M2, 2026-10-02).** Three certified cards score the locked canaries at delta 0.0000. The A40 scores them at 0.005–0.048, and a 4-bit substitute at 0.036–0.219, so continuation by continuation the honest and substitute ranges overlap. Under the first draft's one-continuation challenge at 0.05, that substitute would clear about one challenge in eight (it clears one of the eight locked canaries), and since a degraded host is re-challenged on every heartbeat until it passes, it would keep finding its way back to live, five minutes at a time. The means do not overlap (on the locked eight: A40 0.023, the substitute 0.108 on a 4090), and a host that failed a challenge now needs two passes in a row to return to live: a substitute can get lucky once, not twice running.
 
 **Micro-benchmark rule.** Run only when no jobs are in flight; skipped, not failed, when busy (a host delivering jobs is proving liveness the expensive way). A micro-benchmark that a job arrived during is discarded and retried later, since the number would describe the job, not the rig. Result must be within 10% of the registered rate; outside it twice in a row → degraded, and a full re-benchmark is scheduled.
 
@@ -171,8 +171,8 @@ Base URL from config; JSON bodies; semantic versioning on the path. Every reques
 | Method | Path | Body → Response | Notes |
 | --- | --- | --- | --- |
 | `POST` | `/v1/hosts` | `{report, public_key, client_version}` → `{host_id, token, rate_units_per_hour, bucket, config}` | `report` is a certified kwh-bench report with `signature` filled (the schema already reserves the field). Platform runs `kwh-bench verify` on ingest. A report registers one host only: reports are public, and signing one proves who signed it, not who ran it. |
-| `POST` | `/v1/hosts/{id}/heartbeat` | `{engine, gpu_sample, in_flight, wants_mint, client_version}` → `{state, challenge?, accrual, balance, config}` | 30 s. `state` is the platform's verdict (live/degraded/offline). `challenge` is a fresh canary when one is due. |
-| `POST` | `/v1/hosts/{id}/liveness` | `{challenge_id, mean_logprob, elapsed_ms}` → `{pass, delta}` | Answer to a challenge. |
+| `POST` | `/v1/hosts/{id}/heartbeat` | `{engine, gpu_sample, in_flight, wants_mint, client_version}` → `{state, challenge?, accrual, balance, config}` | 30 s. `state` is the platform's verdict (live/degraded/offline). `challenge` is `{challenge_id, items: [{prompt_text, prompt_tokens, continuation_token_ids}] × 4}` when one is due (§4). |
+| `POST` | `/v1/hosts/{id}/liveness` | `{challenge_id, mean_logprobs: [4], elapsed_ms}` → `{pass, delta, deltas, state, passes_needed}` | Answer to a challenge, one mean log-probability per continuation in the order sent. `delta` is the mean of `deltas`; `passes_needed` counts the passes still owed after a failure. |
 | `POST` | `/v1/hosts/{id}/microbench` | `{units_per_hour, job_seconds, gpu_sample}` → `{accepted, within_tolerance}` | |
 | `POST` | `/v1/hosts/{id}/reports` | `{report}` → `{rate_units_per_hour, bucket}` | Re-benchmark upload. |
 | `WS` | `/v1/hosts/{id}/jobs` | server → `job`, `cancel`; client → `hello` (once), `result` | Outbound from the host; handshake signed as a GET. §7. Reconnect with backoff; jobs in flight at a disconnect are re-routed by the platform and cancelled by the host. |
@@ -184,7 +184,7 @@ Not in this contract, by design: wallet operations, listing/asks, stake, payouts
 
 ## 9. Decisions
 
-**Decided 2026-09-30.** All five taken as recommended below, plus D6.
+**Decided 2026-09-30.** All five taken as recommended below, plus D6. **Decided 2026-10-02:** D8 and D9, as recommended after the M2 run.
 
 | | Decision | Consequence for v0 |
 | --- | --- | --- |
@@ -194,14 +194,14 @@ Not in this contract, by design: wallet operations, listing/asks, stake, payouts
 | D4 | Docker only for the engine sandbox | Bare-metal mode exists for testing on pods that cannot run Docker and is refused for registration. |
 | D5 | Per-heartbeat accrual, integer mints | §6 as written. |
 | D6 | Platform runs on rented cloud; the exchange owns no hardware | API + ledger on a managed host with managed Postgres (Render/Fly first, AWS when it matters; the client only sees a base URL). One **dedicated** 24 GB GPU rented by the hour (RunPod Secure or equivalent, not a shared community host) as the reference node for challenge canaries and step 6's public endpoint: ~$300–600/month, the platform's largest fixed cost until volume. Seed supply, if needed before real hosts arrive, is the host client itself running on rented cards. Buyer inference never runs on platform-rented GPUs; if it has to, the unit economics have already failed. |
+| D8 | Serving context length: 1024 to 8192, the host's choice, default 8192 | Benchmark rc.6 certifies any `--max-model-len` from 1024 to 8192 and records it. The host client certifies and serves at `max_model_len` from its config (`kwh-host init --max-model-len`, default 8192), so a host takes buyer requests up to 8,192 tokens instead of 1,024. The unit is unchanged: the A40 ran the reference job at 60.230 units/hour at 1,024 and 60.228 at 8,192 in the same session. The canary deltas do move with the setting (largest 0.048 at 1,024, 0.035 at 8,192), which is why a host serves at the value it certified with and is challenged by the engine it serves with. |
+| D9 | Challenges carry four continuations and pass on the mean; two passes in a row after a failure | §4 and §2 as written. The benchmark's canary check judges the mean of its eight canaries the same way since rc.6. |
 
 **Open (2026-10-02).**
 
 | | Question | Recommendation |
 | --- | --- | --- |
 | D7 | Metering: how much a prompt token counts against a unit | Keep the provisional prefill weight of 1/16 (§7) until a calibration run measures it: a prefill-heavy and a decode-heavy variant of the reference job on the table cards. It is a platform constant, not part of the I-1 spec, so changing it never changes the unit; it only moves price between prompt-heavy and output-heavy buyers. |
-| D8 | Serving context length | The certified engine runs `--max-model-len 1024` because the reference job needs 768 tokens, which caps every buyer request at prompt + output ≤ 1,024 tokens: too short for most chat. **Measured on the A40 (2026-10-02), same session:** the reference job runs at 60.230 units/hour at 1,024 and 60.228 at 8,192, a 0.003% difference, well inside run-to-run noise. Recommendation: the benchmark's next rc certifies with `--max-model-len` up to 8192; the job, and so the unit, are unchanged. The same runs found one catch: every canary delta moved with the setting (largest 0.048 at 1,024, 0.035 at 8,192), so the tolerance has to hold at every allowed setting, and a host's challenges must be scored by the engine it actually serves with, which they are. The host client already reads the context length from the engine, so nothing changes on this side. |
-| D9 | Challenge format and recovery | On the A40 the honest engine's canary deltas reach 0.048 against the 0.05 tolerance, while a 4-bit substitute's smallest is 0.036 (§4). Recommendation: a challenge carries four fresh continuations and passes on their mean delta (on the locked canaries: A40 0.023, the substitute 0.108 on a 4090), and a host that failed a challenge returns to live only after two passes in a row. Four continuations cost four prefills instead of one; the A40 answered a single one in 0.4–0.7 s. The benchmark's certification rule can move the same way in its next rc: the mean over the eight canaries instead of six of eight under the tolerance. |
 
 The rationale for D1–D5, as recorded before the decision:
 
@@ -226,7 +226,7 @@ The rationale for D1–D5, as recorded before the decision:
 | --- | --- | --- |
 | M0 | This document | Pushed; D1–D6 recorded in §9 (2026-09-30). |
 | M1 | Daemon skeleton + mock platform | `kwh-host init → bench → register → run` reaches **live** against the in-repo mock, with challenges answered and accrual ticking, on a RunPod 4090 (bare-metal mode for the test only). |
-| M2 | Jobs | Mock router dispatches jobs over the WebSocket to live hosts and re-routes on failure; signed results with token ids come back and greedy outputs are verified after delivery; a wrong-model host fails the challenge and never receives work. **Done 2026-10-02:** built and tested end to end in process, then proven on a RunPod A40 (README, [results/m2-a40-2026-10-02](results/m2-a40-2026-10-02/)). The same run showed that verification must judge hosts over a window, not requests (§7), and opened D9. |
+| M2 | Jobs | Mock router dispatches jobs over the WebSocket to live hosts and re-routes on failure; signed results with token ids come back and greedy outputs are verified after delivery; a wrong-model host fails the challenge and never receives work. **Done 2026-10-02:** built and tested end to end in process, then proven on a RunPod A40 (README, [results/m2-a40-2026-10-02](results/m2-a40-2026-10-02/)). The same run showed that verification must judge hosts over a window, not requests (§7), and led to D8 and D9. |
 | M3 | Docker sandbox + install | One-line install on Ubuntu; engine container pinned to the lock; resource limits; WSL2 path documented and tested. |
 | M4 | Reliability telemetry | Every event in §5 reported; `kwh-host status` shows state, rate, accrual, last checks. |
 | M5 | Real platform | Base URL swap when step 4's ledger exists; stake deposit added to `kwh-host register`. |

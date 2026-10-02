@@ -123,13 +123,16 @@ class Daemon:
             try:
                 ans = await bench.score_challenge(self.engine, ch)
             except Exception as e:  # noqa: BLE001
-                ans = {"challenge_id": ch["challenge_id"], "mean_logprob": None, "elapsed_ms": 0}
+                ans = {"challenge_id": ch["challenge_id"], "mean_logprobs": [None] * len(ch.get("items") or []),
+                       "elapsed_ms": 0}
                 self.log(f"challenge scoring failed: {type(e).__name__}: {e}")
             verdict = await self.client.liveness(**ans)
             self.state["last_challenge"] = {**ans, **verdict}
             self.state["state"] = verdict.get("state", self.state["state"])
+            owed = verdict.get("passes_needed") or 0
             self.log(f"challenge {ch['challenge_id']}: {'pass' if verdict['pass'] else 'FAIL'} "
-                     f"(delta {verdict['delta']}, {ans['elapsed_ms']} ms) -> {self.state['state']}")
+                     f"(mean delta {verdict['delta']} over {len(ans['mean_logprobs'])}, {ans['elapsed_ms']} ms) "
+                     f"-> {self.state['state']}" + (f", {owed} more pass(es) in a row needed" if owed else ""))
 
         every = float(self.platform_config.get("microbench_every_seconds") or 1800.0)
         due = self._last_micro_at is None or self.clock() - self._last_micro_at >= every

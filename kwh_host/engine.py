@@ -17,12 +17,15 @@ from .gpu import process_tree
 
 def make_engine(cfg: HostConfig, log_path: Optional[str] = None, lock: Optional[Lock] = None,
                 model: Optional[str] = None) -> VLLMEngine:
-    """The certified engine. `model` overrides the reference model for wrong-model tests only:
-    such an engine fails the platform's challenges and never goes live."""
+    """The certified engine, at the context length in the config (the benchmark certifies the
+    same value, so the rate is measured on the engine that serves). `model` overrides the
+    reference model for wrong-model tests only: such an engine fails the platform's challenges
+    and never goes live."""
     lock = lock or load_lock()
     docker = cfg.docker_image if cfg.engine_mode == "docker" else None
     kwargs = {"model": model, "revision": None} if model else {"revision": lock.model_revision}
-    return VLLMEngine(docker_image=docker, port=cfg.engine_port, log_path=log_path, hf_cache=cfg.hf_cache, **kwargs)
+    return VLLMEngine(docker_image=docker, port=cfg.engine_port, log_path=log_path, hf_cache=cfg.hf_cache,
+                      max_model_len=cfg.max_model_len, **kwargs)
 
 
 def launch_mode(cfg: HostConfig) -> str:

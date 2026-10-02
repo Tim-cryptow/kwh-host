@@ -27,6 +27,9 @@ class HostConfig:
     engine_mode: str = "docker"                 # "docker" (D4) | "bare-metal" (testing only; refused for registration)
     docker_image: str = DEFAULT_DOCKER_IMAGE
     engine_port: int = 8000
+    # Context length the engine serves and is certified at (D8; the benchmark certifies 1024-8192).
+    # It is the longest buyer request this host can take; the rate does not depend on it.
+    max_model_len: int = 8192
     gpu_index: int = 0
     hf_cache: Optional[str] = None              # host dir mounted read-only into the container
     host_id: Optional[str] = None
