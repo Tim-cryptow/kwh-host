@@ -7,10 +7,14 @@ and looking at each position's rank and gap:
 
     gap = logprob(reference top-1) - logprob(token the host produced)      (>= 0)
 
-An honest host's gaps are 0, except where two tokens were nearly tied and kernel noise
-picked the other one; those gaps are tiny. A substitute model picks its own favourites
-and some of them the reference model ranks well below its top choice. Positions with
-gap > tau are "confident disagreements"; an honest output has none.
+A substitute model picks its own favourites and some of them the reference model ranks
+well below its top choice. Positions with gap > tau are "confident disagreements".
+
+The first draft assumed an honest output has none. Measured on an A40 (2026-10-02,
+results/m2-a40-2026-10-02/), the reference model scoring its own greedy output on the
+same card disagrees with 2.9% of the tokens, with gaps up to 1.1 nats on natural text,
+so one request's verdict is evidence, never a ruling: the platform judges a host over
+a window of its verified requests (HOST-CLIENT.md §7).
 
 Cost: one prefill over prompt + output on the reference node, no decoding. Prefill is a
 small fraction of generation work (the metering weight assumes 1/16 per token), so
@@ -28,7 +32,7 @@ import httpx
 
 from ..mockmodel import ToyLM
 
-DEFAULT_TAU = 0.1            # nats; provisional until the honest-vs-substitute experiment on real cards
+DEFAULT_TAU = 1.0            # nats. A40, natural-text prompts: honest 2/32 requests over it, AWQ-INT4 24/32
 
 
 class Scorer(Protocol):

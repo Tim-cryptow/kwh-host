@@ -1,0 +1,102 @@
+[
+  {
+    "job_id": "j_e614b2b5315243ed",
+    "status": "completed",
+    "host_id": "h_3da628a7cbe8",
+    "attempts": [
+      {
+        "job_id": "j_e614b2b5315243ed.1",
+        "host_id": "h_3da628a7cbe8",
+        "latency_ms": 856.0,
+        "outcome": "completed"
+      }
+    ],
+    "units": 0.000656,
+    "units_reserved": 0.000656,
+    "usage": {
+      "prompt_tokens": 6,
+      "completion_tokens": 48
+    },
+    "latency_ms": 858.0,
+    "result_sha256": "1156fd9d09a3cfa51e0c1181950fa1868fc21acc0dfc9ce561e5ec2eb9d67cb8",
+    "outputs": [
+      {
+        "index": 0,
+        "text": " red, blue and yellow. These colours are called primary because they can't be made by mixing other colours together. They are the base colours that all other colours are derived from.\nThe three primary colours are:\nRed is a warm colour that",
+        "token_ids": [
+          2579,
+          11,
+          6437,
+          323,
+          14071,
+          13,
+          4314,
+          27230,
+          527,
+          2663,
+          6156,
+          1606,
+          814,
+          649,
+          956,
+          387,
+          1903,
+          555,
+          27890,
+          1023,
+          27230,
+          3871,
+          13,
+          2435,
+          527,
+          279,
+          2385,
+          27230,
+          430,
+          682,
+          1023,
+          27230,
+          527,
+          14592,
+          505,
+          627,
+          791,
+          2380,
+          6156,
+          27230,
+          527,
+          512,
+          6161,
+          374,
+          264,
+          8369,
+          12745,
+          430
+        ],
+        "finish_reason": "length",
+        "stop_reason": null,
+        "ttft_ms": 45.4,
+        "total_ms": 853.7
+      }
+    ],
+    "verification": {
+      "checked": 1,
+      "pass": true,
+      "inconclusive": 0,
+      "tau": 0.1,
+      "requests": [
+        {
+          "index": 0,
+          "positions": 48,
+          "top1": 48,
+          "top1_rate": 1.0,
+          "max_gap": 0.0,
+          "mean_logprob": -0.53811,
+          "confident_disagreements": 0,
+          "tau": 0.1,
+          "pass": true
+        }
+      ]
+    }
+  }
+]

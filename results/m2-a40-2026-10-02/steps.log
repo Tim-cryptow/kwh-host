@@ -1,0 +1,368 @@
+[11:29:03] 0. install
+vllm 0.30.0 kwh-bench 1.0.0rc5 kwh-host 0.2.0.dev1
+[11:29:15] 1. mock platform (lock canaries, reference tokenizer, verifier against the host's own engine)
+{"ok":true,"hosts":0,"job_channels":0,"tokenizer":true,"verifier":true}[11:29:25] 2. host: init, certified benchmark, register
+[11:36:04] bench exit 0
+[11:36:06] register: {"host_id":"h_3da628a7cbe8","rate_units_per_hour":60.187,"bucket":"I-1/60"}
+[11:36:06] 3. daemon with the reference model
+[11:36:45] live, job channel open
+[11:36:45] 4. jobs
+[11:36:53] greedy job: exit 0
+[11:36:54] sampled job: exit 0
+[11:36:56] raw-text job: exit 0
+[11:37:00] burst (12 jobs x 4 requests, 6 at a time): exit 0
+[11:37:00] too-long job (expected to fail: 1,100 tokens > 1,024): exit 1
+[11:37:16] daemon stopped
+[11:37:16] 5. the same host, now serving a 4-bit substitute
+[11:38:29] substitute failed its challenge
+[11:38:29] job while only the substitute is connected (expected to fail): exit 1
+[11:38:30] daemon stopped
+[11:38:30] 6. verifier calibration: reference vs substitute, scored by the reference
+generating 64 greedy outputs on RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 at concurrency 32
+wrote /workspace/m2/gen-ref.json (64 outputs, 7981 tokens)
+RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 scored by RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8: 7981 positions, top-1 0.97106, max gap 3.0
+  tau 0.01: 202 positions over, 51/64 requests flagged
+  tau 0.05: 198 positions over, 50/64 requests flagged
+  tau 0.1: 193 positions over, 49/64 requests flagged
+  tau 0.25: 86 positions over, 35/64 requests flagged
+  tau 0.5: 40 positions over, 18/64 requests flagged
+  tau 1.0: 11 positions over, 6/64 requests flagged
+generating 64 greedy outputs on hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4 at concurrency 32
+wrote /workspace/m2/gen-awq.json (64 outputs, 7977 tokens)
+hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4 scored by RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8: 7977 positions, top-1 0.94697, max gap 5.625
+  tau 0.01: 393 positions over, 62/64 requests flagged
+  tau 0.05: 389 positions over, 62/64 requests flagged
+  tau 0.1: 377 positions over, 61/64 requests flagged
+  tau 0.25: 252 positions over, 57/64 requests flagged
+  tau 0.5: 161 positions over, 46/64 requests flagged
+  tau 1.0: 66 positions over, 32/64 requests flagged
+[11:40:53] 7. D8: reference job rate at --max-model-len 1024 vs 8192 (attached, so uncertified; same session)
+[11:45:36] max-model-len 1024: units/hour: 60.23   median job: 59.7704 s   stability: 0.00121
+[11:50:41] max-model-len 8192: units/hour: 60.228   median job: 59.7727 s   stability: 0.00113
+[11:50:42] 8. summary
+{
+ "bench": {
+  "units_per_hour": 60.187,
+  "certified": true,
+  "canary_max_delta": 0.04788,
+  "report_sha256": "a803772184291d0c38aaf4a2e01493491780145e5888abb6b9d60d7b159f3d8b"
+ },
+ "jobs": {
+  "greedy": [
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.007101,
+    "ms": 7261.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 512,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.625
+   }
+  ],
+  "sampled": [
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.00085,
+    "ms": 759.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 57,
+    "verified": null,
+    "checked": 0,
+    "max_gap": null
+   }
+  ],
+  "raw": [
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.000656,
+    "ms": 858.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 48,
+    "verified": true,
+    "checked": 1,
+    "max_gap": 0
+   }
+  ],
+  "burst": [
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.00364,
+    "ms": 1373.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.875
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.00363,
+    "ms": 1388.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.625
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.003031,
+    "ms": 1392.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 212,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.625
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.003627,
+    "ms": 1393.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.75
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.003629,
+    "ms": 1391.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 1.125
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.003627,
+    "ms": 1391.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.625
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.003632,
+    "ms": 1352.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.25
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.00332,
+    "ms": 1370.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 233,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.25
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.00364,
+    "ms": 1373.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.875
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.00363,
+    "ms": 1396.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.625
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.003031,
+    "ms": 1395.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 212,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 0.625
+   },
+   {
+    "status": "completed",
+    "host": "h_3da628a7cbe8",
+    "units": 0.003627,
+    "ms": 1425.0,
+    "attempts": [
+     "completed"
+    ],
+    "reason": null,
+    "tokens": 256,
+    "verified": false,
+    "checked": 4,
+    "max_gap": 1.125
+   }
+  ],
+  "too-long": [
+   {
+    "status": "failed",
+    "host": null,
+    "units": null,
+    "ms": 0.0,
+    "attempts": [],
+    "reason": "no live host with capacity for this job",
+    "tokens": null,
+    "verified": null,
+    "checked": null,
+    "max_gap": null
+   }
+  ],
+  "wrong-model": [
+   {
+    "status": "failed",
+    "host": null,
+    "units": null,
+    "ms": 0.0,
+    "attempts": [],
+    "reason": "no live host with capacity for this job",
+    "tokens": null,
+    "verified": null,
+    "checked": null,
+    "max_gap": null
+   }
+  ]
+ },
+ "host_after_jobs": [
+  {
+   "host_id": "h_3da628a7cbe8",
+   "state": "live",
+   "jobs": {
+    "completed": 15,
+    "failed": 0,
+    "bad_results": 0,
+    "delivered_units": 0.050672,
+    "verifications_failed": 13
+   },
+   "balance": 0
+  }
+ ],
+ "host_wrong_model": [
+  {
+   "host_id": "h_3da628a7cbe8",
+   "state": "degraded",
+   "reasons": [
+    "canary failed (delta 0.16455)"
+   ],
+   "last_challenge": {
+    "id": "lock-208-2-7f8af1f3",
+    "pass": false,
+    "delta": 0.16455,
+    "elapsed_ms": 649,
+    "t": 1790941107.5638134
+   },
+   "jobs": {
+    "completed": 15,
+    "failed": 0,
+    "bad_results": 0,
+    "delivered_units": 0.050672,
+    "verifications_failed": 13
+   }
+  }
+ ],
+ "verifier": {
+  "reference": {
+   "generated_by": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+   "scored_by": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+   "all": {
+    "requests": 64,
+    "positions": 7981,
+    "top1_rate": 0.97106,
+    "max_gap": 3.0,
+    "by_tau": {
+     "0.01": {
+      "positions_over": 202,
+      "requests_flagged": 51
+     },
+     "0.05": {
+      "positions_over": 198,
+      "requests_flagged": 50
+     },
+     "0.1": {
+      "positions_over": 193,
+      "requests_flagged": 49
+     },
+     "0.25": {
+      "positions_over": 86,
+      "requests_flagged": 35
+     },
+     "0.5": {
+      "positions_over": 40,
+      "requests_flagged": 18
+     },
+     "1.0": {
+      "positions_over": 11,
+      "requ
+[11:50:42] done

@@ -2,13 +2,13 @@
 
 The program a GPU owner installs to sell work on the kWh Exchange. It benchmarks the rig with [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark), registers the certified rate with the platform, proves the rig is live (heartbeat, platform-issued canaries, micro-benchmarks), and executes buyer jobs in a sandboxed copy of the certified engine. Units are minted by the platform against that liveness; the client never mints on its own.
 
-Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle, liveness, minting, jobs and their verification, the platform API contract, decisions D1–D6 and the open ones (D7 metering, D8 context length).
+Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle, liveness, minting, jobs and their verification, the platform API contract, decisions D1–D6 and the open ones (D7 metering, D8 context length, D9 challenge format).
 
 ## Status
 
 - [x] M0 — scope document, decisions recorded
 - [x] M1 — daemon skeleton + mock platform: `init → bench → register → run` reaches **live**, answers challenges, mints, micro-benchmarks. Proven on a RunPod RTX 3090 on 2026-09-30 (see below).
-- [ ] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Built and tested end to end in process (45 tests); the real-GPU run is what closes it.
+- [x] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Proven on a RunPod A40 on 2026-10-02 (see below).
 - [ ] M3 — Docker sandbox hardening, one-line install, WSL2 path
 - [ ] M4 — reliability telemetry, `kwh-host status`
 - [ ] M5 — real platform (step 4), stake deposit
@@ -27,6 +27,33 @@ minted 1 unit(s), balance 1 … balance 3          (12 heartbeats at 15 s, 3 cha
 ```
 
 The certified report it produced is the RTX 3090 row in the benchmark's `results/`, signed by the host's key. Two things the run taught: inside a container `nvidia-smi` reports host-namespace PIDs, so the GPU sample now treats a PID it cannot see in `/proc` as *unattributable* rather than *foreign* (a foreign process is one that is visible and not ours); and `kwh-host status` signed `{}` for a GET whose body is empty, which the platform correctly rejected — fixed, with a test.
+
+## M2 on real hardware (A40, RunPod, 2026-10-02)
+
+`scripts/pod-m2.sh` on a RunPod Secure A40 (48 GB, driver 580, CUDA 13; no 3090 or 4090 was available), bare-metal engine, mock platform on the same pod, its verifier pointed at the host's own engine. Everything it wrote is in [results/m2-a40-2026-10-02](results/m2-a40-2026-10-02/).
+
+```
+units/hour: 60.187   median job: 59.8132 s   stability: 0.00163   canary: PASS (8/8, largest delta 0.0479)   certified: YES
+registered: host h_3da628a7cbe8, bucket I-1/60
+challenge lock-208-1-41f63a90: pass (delta 0.02227, 433 ms) -> live              39 s after `kwh-host run`
+micro-benchmark discarded: a job arrived while it ran
+15 jobs completed (greedy, sampled, raw text, 12 × 4 requests six at a time), 0 failed, 3,578 tokens, 0.0507 units
+job of 1,100 tokens against a 1,024-token engine: refused, no host fits
+micro-benchmark: 59.81 u/h equivalent in 7.52s -> within tolerance
+--- same host, engine restarted on a 4-bit substitute (AWQ-INT4) ---
+platform: degraded (engine restarted; awaiting a challenge)
+challenge lock-208-2-7f8af1f3: FAIL (delta 0.16455, 649 ms) -> degraded
+buyer job while only the substitute is connected: failed, no live host
+```
+
+What it settled:
+
+- **The job path works on a real engine.** Token ids in, signed token ids out, metered, nothing lost or retried.
+- **A wrong model got no work.** The restart rule held the host in `degraded` before any challenge, the challenge failed at more than three times the tolerance, and the buyer's job found no host.
+- **Per-request verification cannot be the rule.** The reference model, scoring its own greedy output on the same card and engine, disagrees with 2.9% of the tokens, so 13 of the 14 honest jobs verified at τ = 0.1 would have failed, and two jobs with identical prompts produced different text. Judged over a window of requests, the honest host and a 4-bit substitute separate cleanly. HOST-CLIENT.md §7 has the numbers and the rule.
+- **The canary margin is thin on this card.** Its deltas reach 0.048 against a 0.05 tolerance, where the 3090, 4090 and A5000 scored 0.0000. The substitute still failed, but D9 proposes judging challenges on the mean of several continuations.
+- **Context length does not change the rate (D8):** 60.230 units/hour at 1,024, 60.228 at 8,192.
+- One install snag: Ubuntu 24.04 ships `cryptography` 41.0.7 through apt, which pip cannot upgrade; kwh-host now accepts it.
 
 ## Try it without a GPU
 
@@ -107,6 +134,8 @@ kwh_host/
   platform/verifier.py  teacher-forced greedy verification (step 3 prototype)
   cli.py                init | bench | register | run | status | mock-platform | submit | experiment
 tests/                  identity, jobs, verifier, platform state machine, router end to end
+scripts/                pod bootstraps for the real-GPU milestone runs (pod-m1.sh, pod-m2.sh)
+results/                what those runs wrote, one folder per run
 ```
 
 Apache-2.0, same as the benchmark.

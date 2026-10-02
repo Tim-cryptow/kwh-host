@@ -1,0 +1,19 @@
+kwh-host 0.2.0.dev1 starting engine (bare-metal)
+engine 0.30.0 serving hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4 (subprocess)
+job channel open (concurrency 32, context 1024)
+platform: degraded (engine restarted; awaiting a challenge)
+challenge lock-208-2-7f8af1f3: FAIL (delta 0.16455, 649 ms) -> degraded
+{
+  "state": "stopped",
+  "beats": 1,
+  "accepted_beats": 1,
+  "minted_total": 0,
+  "balance": 0,
+  "jobs": {
+    "completed": 0,
+    "failed": 0,
+    "rejected": 0,
+    "undelivered": 0,
+    "completion_tokens": 0
+  }
+}

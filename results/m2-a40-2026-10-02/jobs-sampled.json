@@ -1,0 +1,107 @@
+[
+  {
+    "job_id": "j_1d68ea354d55747b",
+    "status": "completed",
+    "host_id": "h_3da628a7cbe8",
+    "attempts": [
+      {
+        "job_id": "j_1d68ea354d55747b.1",
+        "host_id": "h_3da628a7cbe8",
+        "latency_ms": 758.0,
+        "outcome": "completed"
+      }
+    ],
+    "units": 0.00085,
+    "units_reserved": 0.002681,
+    "usage": {
+      "prompt_tokens": 91,
+      "completion_tokens": 57
+    },
+    "latency_ms": 759.0,
+    "result_sha256": "5cdac6cfef62ccb2d0d69db535d48e9a0f70291872ab1f0ec18fa37abc1964ce",
+    "outputs": [
+      {
+        "index": 0,
+        "text": "Raindrops on asphalt\nLagos streets become a river\nUrban stormy night",
+        "token_ids": [
+          60139,
+          91612,
+          389,
+          46362,
+          198,
+          43,
+          81707,
+          14708,
+          3719,
+          264,
+          15140,
+          198,
+          94368,
+          13766,
+          88,
+          3814,
+          128009
+        ],
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "ttft_ms": 73.2,
+        "total_ms": 338.4
+      },
+      {
+        "index": 1,
+        "text": "There once was a cat named Pete,\nWhose love for coffee was so neat.\nHe'd drink it with flair,\nAnd show off his hair,\nAnd purr with joy at the treat.",
+        "token_ids": [
+          3947,
+          3131,
+          574,
+          264,
+          8415,
+          7086,
+          37373,
+          345,
+          1671,
+          974,
+          3021,
+          369,
+          11033,
+          574,
+          779,
+          29585,
+          627,
+          1548,
+          4265,
+          7172,
+          433,
+          449,
+          69665,
+          345,
+          3112,
+          1501,
+          1022,
+          813,
+          7013,
+          345,
+          3112,
+          4087,
+          81,
+          449,
+          16267,
+          520,
+          279,
+          4322,
+          13,
+          128009
+        ],
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "ttft_ms": 76.7,
+        "total_ms": 751.1
+      }
+    ],
+    "verification": {
+      "checked": 0,
+      "pass": null,
+      "note": "no greedy requests; sampled outputs need a statistical test (step 3)"
+    }
+  }
+]

@@ -1,0 +1,35 @@
+kwh-host 0.2.0.dev1 starting engine (bare-metal)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (subprocess)
+job channel open (concurrency 32, context 1024)
+challenge lock-208-1-41f63a90: pass (delta 0.02227, 433 ms) -> live
+micro-benchmark discarded: a job arrived while it ran
+job j_7f7736b4b9f22c01.1: completed (4 request(s), 512 tokens)
+job j_1d68ea354d55747b.1: completed (2 request(s), 57 tokens)
+job j_e614b2b5315243ed.1: completed (1 request(s), 48 tokens)
+job j_e96648e572460b32.1: completed (4 request(s), 256 tokens)
+job j_013bc98636bbbddf.1: completed (4 request(s), 256 tokens)
+job j_07fa0eef01aaeba2.1: completed (4 request(s), 212 tokens)
+job j_980d06ea115d7c0d.1: completed (4 request(s), 256 tokens)
+job j_9f6429a0a9e5089f.1: completed (4 request(s), 256 tokens)
+job j_492c1706e10f8890.1: completed (4 request(s), 256 tokens)
+job j_f4a8cdb66a3f0d76.1: completed (4 request(s), 256 tokens)
+job j_66b2e551a966c473.1: completed (4 request(s), 233 tokens)
+job j_f8b68e4691ad45c8.1: completed (4 request(s), 256 tokens)
+job j_70f54dde0c246468.1: completed (4 request(s), 256 tokens)
+job j_0264612a254b8a9c.1: completed (4 request(s), 212 tokens)
+job j_cc52df84d25b90c1.1: completed (4 request(s), 256 tokens)
+micro-benchmark: 59.81 u/h equivalent in 7.52s -> within tolerance
+{
+  "state": "stopped",
+  "beats": 2,
+  "accepted_beats": 2,
+  "minted_total": 0,
+  "balance": 0,
+  "jobs": {
+    "completed": 15,
+    "failed": 0,
+    "rejected": 0,
+    "undelivered": 0,
+    "completion_tokens": 3578
+  }
+}

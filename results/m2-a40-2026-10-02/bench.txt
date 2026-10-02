@@ -1,0 +1,28 @@
+probing hardware
+pre-flight: 100% VRAM free, GPU 0.0% busy, 47.1 W -> idle
+starting engine vllm
+engine vllm 0.30.0 model=RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 mode=subprocess
+tokenizing prompt set
+warm-up job
+  warm-up 59.76s  1097 tok/s  failures=0
+  run 1/3  59.74s  1097 tok/s  failures=0
+  run 2/3  59.81s  1096 tok/s  failures=0
+  run 3/3  59.83s  1095 tok/s  failures=0
+canary check
+  canary 16: mean logprob -1.1403 (reference -1.1655)
+  canary 48: mean logprob -1.1332 (reference -1.1124)
+  canary 80: mean logprob -1.3784 (reference -1.3479)
+  canary 112: mean logprob -1.2932 (reference -1.2453)
+  canary 144: mean logprob -1.1817 (reference -1.1668)
+  canary 176: mean logprob -1.1602 (reference -1.1766)
+  canary 208: mean logprob -1.5716 (reference -1.5939)
+  canary 240: mean logprob -1.6060 (reference -1.6008)
+kWh Grade I  series I-1  spec 1.0.0-rc.5
+GPU: NVIDIA A40   engine: vllm 0.30.0 (subprocess)
+units/hour: 60.187   median job: 59.8132 s   stability: 0.00163
+mean power: 296.4 W   units per electric kWh: 203.06
+run 1: 1097.09 tok/s   TTFT p50 775.1ms p95 1229.7ms   TPOT p50 26.5ms p95 28.1ms
+canary: PASS (8/8)
+certified: YES
+report sha256: a803772184291d0c38aaf4a2e01493491780145e5888abb6b9d60d7b159f3d8b
+report: /workspace/kwh-host-home/report.json
