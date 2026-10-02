@@ -38,7 +38,7 @@ installed ─▶ benchmarked ─▶ registered ─▶ live ⇄ degraded ─▶ o
 | installed → benchmarked | certified `kwh-bench` report written and verified locally |
 | benchmarked → registered | platform accepts the signed report, issues `host_id` + token |
 | registered → live | first accepted heartbeat with the engine healthy and a passed challenge |
-| live → degraded | failed challenge, micro-benchmark outside tolerance, foreign process on the GPU, engine unhealthy |
+| live → degraded | failed challenge, micro-benchmark outside tolerance, foreign process on the GPU, engine unhealthy, engine restarted (a new instance id in the heartbeat: a restarted engine could be serving anything, so it is re-challenged before it gets more work) |
 | degraded → live | next passed challenge with a clean GPU sample |
 | degraded → offline | N consecutive failures (platform config, default 5) |
 | live/degraded → offline | no accepted heartbeat within the timeout (default 90 s) |
@@ -58,7 +58,7 @@ kwh-host (daemon, Python)
 ├── engine/      start/stop/health the vLLM container; OpenAI-compatible client to it
 ├── bench/       thin wrapper over kwh_bench: full run, micro-benchmark, canary scoring
 ├── liveness/    heartbeat loop, challenge scoring, GPU sampling
-├── jobs/        WebSocket consumer, request execution, result + sample upload
+├── jobs/        WebSocket consumer, request execution, signed results
 ├── platform/    API client (signed requests), mock server for local dev
 ├── identity/    keypair, token storage
 └── cli          kwh-host init | bench | register | run | status
@@ -82,7 +82,7 @@ The primer asks for "continuous heartbeat plus periodic micro-benchmarks". Three
 
 **Challenge canaries, not the locked ones.** `reference/lock.json` is public: its eight canaries and their reference log-probabilities are known, so a host could answer them from a table without running a model. For liveness the platform sends **fresh** canaries: a prompt and a 32-token continuation the platform's own reference node scored moments ago, never seen by this host. The host scores it under teacher forcing (the same `score_continuation` call the benchmark uses) and returns the mean log-probability; the platform compares under the §7 tolerance. The host cannot precompute, and the check costs one forward pass. This is also the first job for the platform reference node that step 6 needs anyway.
 
-**Micro-benchmark rule.** Run only when no jobs are in flight; skipped, not failed, when busy (a host delivering jobs is proving liveness the expensive way). Result must be within 10% of the registered rate; outside it twice in a row → degraded, and a full re-benchmark is scheduled.
+**Micro-benchmark rule.** Run only when no jobs are in flight; skipped, not failed, when busy (a host delivering jobs is proving liveness the expensive way). A micro-benchmark that a job arrived during is discarded and retried later, since the number would describe the job, not the rig. Result must be within 10% of the registered rate; outside it twice in a row → degraded, and a full re-benchmark is scheduled.
 
 **Contention.** The heartbeat's GPU sample is `kwh_bench.hardware`'s pre-flight sampler adapted for a running engine: our container's VRAM is expected, anything else holding VRAM or driving utilization is a foreign process. The Saturday RTX 5090 in the benchmark's field notes is exactly this case.
 
@@ -105,27 +105,72 @@ The client's part is small: the heartbeat carries `wants_mint: true` and the eng
 
 ## 7. Jobs
 
-- **Transport.** Hosts are residential and behind NAT, so dispatch is **pull**: the daemon keeps an outbound WebSocket to the platform and receives job envelopes on it. No inbound ports, no port forwarding, works on CGNAT.
-- **Envelope.** `{job_id, unit_count, requests: [OpenAI chat/completions bodies], deadline, sample_spec}`. The daemon executes the requests against the sandbox container at the spec's concurrency and returns `{job_id, outputs, timings, samples}`.
-- **Samples for verification.** `sample_spec` names a random subset of (request, token position) pairs; the daemon returns the top-k logprobs at those positions from its own output. Step 3's verifier re-executes the same shards elsewhere and compares. The client cannot know in advance which positions will be checked.
-- **Failure.** A job the daemon cannot complete by the deadline is returned as `failed` with a reason; the platform re-routes. The client never retries silently.
-- **Capacity.** In-flight units per host are capped by the platform at the registered rate × a window, so a host cannot accept more work than it can deliver.
+**Transport.** Hosts are residential and behind NAT, so dispatch is **pull** (D3): the daemon keeps an outbound WebSocket to the platform and receives job envelopes on it. No inbound ports, no port forwarding, works on CGNAT. The handshake is signed like every other request (§8). After it, the host sends `hello` with its concurrency (32) and its engine's context length, and the platform routes it nothing that does not fit.
+
+**The platform owns tokenization.** A buyer's chat or text request is turned into prompt token ids by the platform, with the reference model's tokenizer and chat template, before it is dispatched; hosts run completions on token ids. This is what makes the rest checkable: the platform, the host and the verifier agree on exactly which tokens were the prompt, a host cannot alter it, and metering counts tokens the platform counted itself.
+
+**Envelope (platform → host).**
+
+```json
+{"type": "job", "job": {
+  "job_id": "j_9f2c41a0b7d3e815.1",
+  "timeout_s": 59.5,
+  "units_reserved": 0.0123,
+  "requests": [{
+    "prompt_token_ids": [128000, 9906],  "max_tokens": 256,
+    "temperature": 0.0, "top_p": 1.0, "top_k": 0, "min_p": 0.0, "repetition_penalty": 1.0,
+    "seed": null, "stop": [], "stop_token_ids": [], "ignore_eos": false, "logprobs": null
+  }]}}
+```
+
+`.1` is the first attempt; a re-route is `.2`. `timeout_s` is relative to receipt, so host clock skew does not matter. `units_reserved` is the upper bound at `max_tokens`, for the host's information. Every sampling field is present: vLLM fills any field a request leaves unset from the model's `generation_config` (Llama 3.1 Instruct ships temperature 0.6 and top_p 0.9), which would silently turn the buyer's job into something else, so the host rejects an envelope with a missing field rather than let that happen.
+
+**Result (host → platform),** one per job:
+
+```json
+{"type": "result", "result": {
+  "job_id": "j_9f2c41a0b7d3e815.1", "job_sha256": "…", "host_id": "h_…",
+  "status": "completed", "reason": null,
+  "outputs": [{"index": 0, "token_ids": [9906, 1917, 128009], "text": "Hello world",
+               "finish_reason": "stop", "stop_reason": 128009, "ttft_ms": 41.2, "total_ms": 380.5, "error": null}],
+  "usage": {"prompt_tokens": 2, "completion_tokens": 3},
+  "engine": {"version": "0.30.0", "served_model": "RedHatAI/…", "launch_mode": "docker"},
+  "received_at": 1790812345.1, "finished_at": 1790812345.5,
+  "result_sha256": "…", "signature": {"alg": "ed25519", "signed": "kwh-result-v1:result_sha256", "…": "…"}}}
+```
+
+`status` is `completed` (every request finished), `failed` (deadline, or a request errored) or `rejected` (invalid envelope, or it does not fit this engine; nothing ran). Generated **token ids** come back, not just text: text cannot be re-tokenized reliably, and the verifier scores the exact tokens the host produced. The vLLM call uses `return_token_ids`, so logprobs are computed only when the buyer asked for them. `job_sha256` (of the canonical envelope) and the signature make the output non-repudiable: what the verifier later finds in it is attributable to this host and this job, which is what step 3 slashes against.
+
+**What the platform checks on every result, without a model:** signed by the registered key; bound to the dispatched job; one output per request, with token ids; none longer than its `max_tokens`; usage equal to what the platform counts. A result that fails any of these is a protocol violation (`bad_result`), counted apart from honest failures.
+
+**Verification.** The first draft of this section put a `sample_spec` in the envelope naming the positions whose logprobs the host should return. That told the host in advance which outputs would be checked: it could have run the reference model on those and something cheaper on the rest. It is gone. The platform now decides **after delivery**, on its own, which requests to verify, and the host never learns which:
+
+- *Greedy requests* are verified by teacher forcing. The reference node runs one prefill over prompt + delivered output with `prompt_logprobs=1` and reads, at every position, the rank of the token the host produced and its gap to the reference's top choice. An honest host's gaps are zero, except at near-ties that kernel noise can flip, where they are tiny; a substitute model makes choices the reference ranks well below its top. Positions with gap > τ are confident disagreements, and an honest output has none. One prefill costs a few percent of the generation it checks (the metering weight assumes 1/16 per token), not the 100% of re-running it. τ is provisional (0.1 nats) until the honest-versus-substitute measurement on real cards (`kwh-host experiment`).
+- *Sampled requests* (temperature > 0) cannot be checked token by token. They need a statistical test over many tokens: the delivered tokens' log-likelihood under the reference against what sampling from the reference would give. That is step 3.
+
+The prototype is `kwh_host/platform/verifier.py`, and the mock router can run it inline (`--verify-url`). On the real platform it runs asynchronously, after the buyer has the response.
+
+**Failure, re-routing, cancellation.** The envelope gives the host half a second less than the router waits, so a slow host reports `failed: deadline` instead of going silent. On `failed`, `rejected`, a bad result or a dropped connection, the router re-routes to the next live host, up to three attempts; the buyer sees a failure only if no host could deliver in time. If the router gives up on a host anyway it sends `cancel`, and the host stops the work. If the WebSocket drops, the host cancels everything in flight, since the platform has already re-routed it. The client never retries silently.
+
+**Capacity and admission.** The router offers a job only to live hosts whose engine context fits every request (`prompt + max_tokens ≤ max_model_len`), whose in-flight requests stay within twice their concurrency, and whose in-flight units stay within `rate × 5 min`. An idle host always takes one job. Least-loaded first; score-based routing comes with step 3.
+
+**Metering (provisional, D7).** `units = (completion_tokens + prompt_tokens / 16) / 73,728`. One reference job (65,536 generated + 131,072 prompt tokens) is exactly 1.0 unit under any prefill weight, so the weight only moves price between prompt-heavy and output-heavy buyers. Units are reserved at `max_tokens` when a job is dispatched and burned at the actual count when it completes; the delivering host is credited with what was burned.
 
 ## 8. Platform API contract (v0)
 
-Base URL from config; all requests carry `Authorization: Bearer <token>` after registration and an `X-Kwh-Signature` (ed25519 over the body) always. JSON bodies. Semantic versioning on the path.
+Base URL from config; JSON bodies; semantic versioning on the path. Every request carries `X-Kwh-Timestamp`, `X-Kwh-Public-Key` and `X-Kwh-Signature`, an ed25519 signature over `kwh-req-v1\n{timestamp}\n{METHOD}\n{path}\n{sha256(body)}`, plus `Authorization: Bearer <token>` after registration. GETs and the WebSocket handshake sign an empty body. Binding the method and path means a captured request cannot be replayed against another endpoint inside the five-minute clock window, and the purpose prefix means no request signature can pass as a result signature.
 
 | Method | Path | Body → Response | Notes |
 | --- | --- | --- | --- |
-| `POST` | `/v1/hosts` | `{report, public_key, client_version}` → `{host_id, token, rate_units_per_hour, bucket, config}` | `report` is a certified kwh-bench report with `signature` filled (the schema already reserves the field). Platform runs `kwh-bench verify` on ingest. |
+| `POST` | `/v1/hosts` | `{report, public_key, client_version}` → `{host_id, token, rate_units_per_hour, bucket, config}` | `report` is a certified kwh-bench report with `signature` filled (the schema already reserves the field). Platform runs `kwh-bench verify` on ingest. A report registers one host only: reports are public, and signing one proves who signed it, not who ran it. |
 | `POST` | `/v1/hosts/{id}/heartbeat` | `{engine, gpu_sample, in_flight, wants_mint, client_version}` → `{state, challenge?, accrual, balance, config}` | 30 s. `state` is the platform's verdict (live/degraded/offline). `challenge` is a fresh canary when one is due. |
 | `POST` | `/v1/hosts/{id}/liveness` | `{challenge_id, mean_logprob, elapsed_ms}` → `{pass, delta}` | Answer to a challenge. |
 | `POST` | `/v1/hosts/{id}/microbench` | `{units_per_hour, job_seconds, gpu_sample}` → `{accepted, within_tolerance}` | |
 | `POST` | `/v1/hosts/{id}/reports` | `{report}` → `{rate_units_per_hour, bucket}` | Re-benchmark upload. |
-| `WS` | `/v1/hosts/{id}/jobs` | server → `job envelope`; client → `job result` | Outbound from the host. Reconnect with backoff; jobs in flight at disconnect are returned as failed. |
+| `WS` | `/v1/hosts/{id}/jobs` | server → `job`, `cancel`; client → `hello` (once), `result` | Outbound from the host; handshake signed as a GET. §7. Reconnect with backoff; jobs in flight at a disconnect are re-routed by the platform and cancelled by the host. |
 | `GET` | `/v1/hosts/{id}` | → `{state, rate, bucket, accrual, balance, last_challenge, last_microbench}` | For `kwh-host status`. |
 
-Not in this contract, by design: wallet operations, listing/asks, stake, payouts, anything a buyer does. Those are steps 4 and 5 and get their own contracts.
+Not in this contract, by design: wallet operations, listing/asks, stake, payouts, anything a buyer does. Those are steps 4 and 5 and get their own contracts. The mock platform also serves `POST /v1/mock/jobs` and `GET /v1/mock/hosts` as a stand-in for the buyer API; they are not part of the host contract.
 
 **Identity.** An ed25519 keypair generated at `kwh-host init`, private key in the OS keyring where available, else a `0600` file. The public key is the host's durable identity across reinstalls; the token is a session credential the platform can revoke.
 
@@ -142,7 +187,14 @@ Not in this contract, by design: wallet operations, listing/asks, stake, payouts
 | D5 | Per-heartbeat accrual, integer mints | §6 as written. |
 | D6 | Platform runs on rented cloud; the exchange owns no hardware | API + ledger on a managed host with managed Postgres (Render/Fly first, AWS when it matters; the client only sees a base URL). One **dedicated** 24 GB GPU rented by the hour (RunPod Secure or equivalent, not a shared community host) as the reference node for challenge canaries and step 6's public endpoint: ~$300–600/month, the platform's largest fixed cost until volume. Seed supply, if needed before real hosts arrive, is the host client itself running on rented cards. Buyer inference never runs on platform-rented GPUs; if it has to, the unit economics have already failed. |
 
-The rationale for each, as recorded before the decision:
+**Open (2026-10-02).**
+
+| | Question | Recommendation |
+| --- | --- | --- |
+| D7 | Metering: how much a prompt token counts against a unit | Keep the provisional prefill weight of 1/16 (§7) until a calibration run measures it: a prefill-heavy and a decode-heavy variant of the reference job on the table cards. It is a platform constant, not part of the I-1 spec, so changing it never changes the unit; it only moves price between prompt-heavy and output-heavy buyers. |
+| D8 | Serving context length | The certified engine runs `--max-model-len 1024` because the reference job needs 768 tokens, which caps every buyer request at prompt + output ≤ 1,024 tokens: too short for most chat. Let the benchmark certify with `--max-model-len` up to 8192. The job, and so the unit, is unchanged, and vLLM's batching defaults on 24 GB cards (2,048 batched tokens, 32 sequences) do not depend on it. Confirm by measuring the reference job's rate at 8192 on a table card; if it holds within run-to-run noise, the spec's next rc allows it. The host client already reads the context length from the engine, so nothing changes on this side. |
+
+The rationale for D1–D5, as recorded before the decision:
 
 **D1 — Unit rails: off-chain ledger with on-chain USDC settlement, or an L2 token from day one.**
 *Recommendation: off-chain ledger for v1.* A 4090 mints ~100 units an hour; one host is ~2,400 mints a day, and resale, expiry and burn are each another event. On an L2 that is either a gas bill or a batching layer that reinvents the ledger anyway. The 72-hour expiry and the no-mint-ahead rule are a few lines in a ledger the platform runs, and the platform is already the trusted verifier and router in v1, so the ledger adds no trust the design does not already assume. Settlement stays on-chain: one USDC payout per host per day. If units later earn their own token, the ledger is the source of truth it mints from. *Affects the client only in §6: the client does not care which, as long as minting is a platform call.*
@@ -165,7 +217,7 @@ The rationale for each, as recorded before the decision:
 | --- | --- | --- |
 | M0 | This document | Pushed; D1–D6 recorded in §9 (2026-09-30). |
 | M1 | Daemon skeleton + mock platform | `kwh-host init → bench → register → run` reaches **live** against the in-repo mock, with challenges answered and accrual ticking, on a RunPod 4090 (bare-metal mode for the test only). |
-| M2 | Jobs | Mock router dispatches jobs over the WebSocket; outputs and verification samples come back; a deliberately wrong-model container fails the challenge. |
+| M2 | Jobs | Mock router dispatches jobs over the WebSocket to live hosts and re-routes on failure; signed results with token ids come back and greedy outputs are verified after delivery; a wrong-model host fails the challenge and never receives work. Built and tested end to end in process (2026-10-02); real-GPU run next. |
 | M3 | Docker sandbox + install | One-line install on Ubuntu; engine container pinned to the lock; resource limits; WSL2 path documented and tested. |
 | M4 | Reliability telemetry | Every event in §5 reported; `kwh-host status` shows state, rate, accrual, last checks. |
 | M5 | Real platform | Base URL swap when step 4's ledger exists; stake deposit added to `kwh-host register`. |

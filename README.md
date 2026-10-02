@@ -2,13 +2,13 @@
 
 The program a GPU owner installs to sell work on the kWh Exchange. It benchmarks the rig with [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark), registers the certified rate with the platform, proves the rig is live (heartbeat, platform-issued canaries, micro-benchmarks), and executes buyer jobs in a sandboxed copy of the certified engine. Units are minted by the platform against that liveness; the client never mints on its own.
 
-Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle, liveness, minting, jobs, the platform API contract, and decisions D1–D6.
+Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle, liveness, minting, jobs and their verification, the platform API contract, decisions D1–D6 and the open ones (D7 metering, D8 context length).
 
 ## Status
 
 - [x] M0 — scope document, decisions recorded
 - [x] M1 — daemon skeleton + mock platform: `init → bench → register → run` reaches **live**, answers challenges, mints, micro-benchmarks. Proven on a RunPod RTX 3090 on 2026-09-30 (see below).
-- [ ] M2 — job dispatch over WebSocket, verification samples
+- [ ] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Built and tested end to end in process (45 tests); the real-GPU run is what closes it.
 - [ ] M3 — Docker sandbox hardening, one-line install, WSL2 path
 - [ ] M4 — reliability telemetry, `kwh-host status`
 - [ ] M5 — real platform (step 4), stake deposit
@@ -32,10 +32,12 @@ The certified report it produced is the RTX 3090 row in the benchmark's `results
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q                                   # 14 tests: identity, state machine, accrual, end to end
+python -m pytest -q          # 45 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+                             # platform state machine, and jobs end to end over a real local server
 
-# terminal 1: the mock platform (challenges come from the public lock; a stand-in, not a guard)
-kwh-host mock-platform --port 9000 --heartbeat 5 --challenge-every 10 --microbench-every 30 --accept-uncertified --allow-bare-metal
+# terminal 1: the mock platform; --mock-challenges lets a mock-engine host pass its challenges
+kwh-host mock-platform --port 9000 --heartbeat 5 --challenge-every 10 --microbench-every 300 \
+  --accept-uncertified --allow-bare-metal --mock-challenges --no-tokenizer
 
 # terminal 2: a host with the benchmark's mock engine
 export KWH_HOST_HOME=/tmp/kwh-host-demo
@@ -43,10 +45,14 @@ kwh-host init --platform http://127.0.0.1:9000 --engine bare-metal --allow-bare-
 kwh-host bench --mock-engine
 kwh-host register
 kwh-host run --mock-engine
+
+# terminal 3: be the buyer (token ids, since the mock has no tokenizer without transformers)
+echo '{"requests": [{"prompt_token_ids": [128000, 9906], "max_tokens": 24, "temperature": 0.0}]}' > /tmp/job.json
+kwh-host submit --platform http://127.0.0.1:9000 --file /tmp/job.json
 kwh-host status
 ```
 
-The mock engine is not the reference model, so it fails the lock canaries and sits in `degraded` with nothing minted. That is the wrong-model guard doing its job; a real engine serving the reference model goes `live` on the first passed challenge.
+Without `--mock-challenges` the mock platform serves the real lock canaries, the mock engine fails them, and the host sits in `degraded` with nothing minted and no jobs: the wrong-model guard doing its job.
 
 ## On a real GPU (RunPod pod, bare metal)
 
@@ -56,8 +62,11 @@ kwh-host mock-platform --port 9000 --allow-bare-metal &            # stand-in un
 kwh-host init --platform http://127.0.0.1:9000 --engine bare-metal --allow-bare-metal
 kwh-host bench          # kwh-bench run, signed; ~5 min on a 4090
 kwh-host register       # certified report -> host_id, rate, bucket
-kwh-host run            # engine up, heartbeat every 30 s, challenges, micro-benchmark every 30 min
+kwh-host run            # engine up, heartbeat every 30 s, challenges, micro-benchmark every 30 min, jobs
+kwh-host submit --prompt "Explain photosynthesis in two sentences."     # as a buyer, from another shell
 ```
+
+On a pod the mock platform finds the reference tokenizer (transformers comes with vLLM), so `submit --prompt` works with plain text; `--verify-url http://127.0.0.1:8000` on the mock platform verifies every delivered greedy output against a reference engine.
 
 Docker mode (`--engine docker`, the default and the only mode the real platform accepts, D4) launches `vllm/vllm-openai:v0.30.0` with the pinned flags. Hosts with a CUDA 12.x driver need the cu129 build in bare-metal mode; see the benchmark's `scripts/runpod.sh`.
 
@@ -67,12 +76,15 @@ Docker mode (`--engine docker`, the default and the only mode the real platform 
 kwh-host run ──▶ engine (vLLM, pinned flags)            ← kwh_bench.engines.VLLMEngine
       │  ├── heartbeat: engine health + GPU sample       POST /v1/hosts/{id}/heartbeat
       │  ├── challenge: score platform continuation      POST /v1/hosts/{id}/liveness
-      │  └── micro-benchmark when idle (1/8 job)         POST /v1/hosts/{id}/microbench
+      │  ├── micro-benchmark when idle (1/8 job)         POST /v1/hosts/{id}/microbench
+      │  └── jobs: token ids in, signed token ids out    WS   /v1/hosts/{id}/jobs
       ▼
 platform (mock in kwh_host/platform/mock.py; real one is step 4)
       ├── verifies signatures + report (kwh-bench verify)
       ├── state machine: registered → live ⇄ degraded → offline
-      └── accrual per accepted live heartbeat, integer mints, nothing ahead, nothing late
+      ├── accrual per accepted live heartbeat, integer mints, nothing ahead, nothing late
+      ├── router: tokenize, dispatch to a live host that fits, re-route on failure, meter
+      └── verifier (step 3 prototype): teacher-force delivered greedy outputs through the reference
 ```
 
 ## Layout
@@ -81,15 +93,20 @@ platform (mock in kwh_host/platform/mock.py; real one is step 4)
 HOST-CLIENT.md          scope, lifecycle, liveness, API contract, decisions
 kwh_host/
   config.py             ~/.kwh-host: config, identity, report, state
-  identity.py           ed25519 keypair; request and report signing
+  identity.py           ed25519 keypair; request, report and result signing
   engine.py             daemon-owned vLLM (docker | bare-metal), health, own PIDs
   gpu.py                nvidia-smi sample + foreign-process detection
   bench.py              full run, micro-benchmark, challenge scoring (all via kwh_bench)
-  daemon.py             the run loop
+  jobspec.py            job envelope, validation, provisional metering (shared with the platform)
+  jobs.py               job execution: vLLM streaming executor, toy executor, signed results
+  daemon.py             the run loop: heartbeat + job channel
+  mockmodel.py          deterministic toy language model (tests, GPU-free demo)
+  experiments.py        verifier calibration on real cards
   platform/client.py    the §8 contract, client side
-  platform/mock.py      the §8 contract, server side (in memory, FastAPI)
-  cli.py                kwh-host init | bench | register | run | status | mock-platform
-tests/                  identity, platform state machine + accrual, daemon end to end
+  platform/mock.py      the §8 contract, server side (in memory, FastAPI), router
+  platform/verifier.py  teacher-forced greedy verification (step 3 prototype)
+  cli.py                init | bench | register | run | status | mock-platform | submit | experiment
+tests/                  identity, jobs, verifier, platform state machine, router end to end
 ```
 
 Apache-2.0, same as the benchmark.

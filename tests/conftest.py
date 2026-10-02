@@ -57,3 +57,27 @@ def report(identity, mock_engine, cfg):
     identity.sign_report(r)
     cfg.report_path.write_text(json.dumps(r, indent=2))
     return r
+
+
+def idle_gpu(*_):
+    return {"available": True, "util_pct": 0.0, "power_w": 15.0, "mem_used_mib": 1.0, "mem_total_mib": 24564.0,
+            "compute_processes": 1, "foreign_processes": 0, "foreign_pids": []}
+
+
+async def challenge_from(engine, prompt_id=0, continuation=None):
+    """A fresh challenge whose reference value comes from the engine under test (the real
+    platform's reference node does the same with the real model)."""
+    from kwh_bench import reference as ref
+    from kwh_bench.prompts import canonical_prompts
+    from kwh_host.platform.mock import Challenge
+    prompt = canonical_prompts()[prompt_id]
+    continuation = continuation or list(range(100, 100 + ref.CANARY_TOKENS))
+    async with engine as e:
+        ids = (await e.tokenize(prompt.text))[:ref.PROMPT_TOKENS]
+        lps = await e.score_continuation(ids, continuation)
+    return Challenge(f"fresh-{prompt_id}", prompt.text, ref.PROMPT_TOKENS, continuation, sum(lps) / len(lps))
+
+
+async def unsigned_mock_report():
+    """A fresh benchmark report from the mock engine; each call yields a distinct report."""
+    return await run_benchmark(MockEngine(step_ms=0.01, prefill_ms_per_1k=0.02), measured_jobs=3, log=lambda s: None)

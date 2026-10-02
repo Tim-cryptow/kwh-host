@@ -15,11 +15,14 @@ from .config import HostConfig
 from .gpu import process_tree
 
 
-def make_engine(cfg: HostConfig, log_path: Optional[str] = None, lock: Optional[Lock] = None) -> VLLMEngine:
+def make_engine(cfg: HostConfig, log_path: Optional[str] = None, lock: Optional[Lock] = None,
+                model: Optional[str] = None) -> VLLMEngine:
+    """The certified engine. `model` overrides the reference model for wrong-model tests only:
+    such an engine fails the platform's challenges and never goes live."""
     lock = lock or load_lock()
     docker = cfg.docker_image if cfg.engine_mode == "docker" else None
-    return VLLMEngine(revision=lock.model_revision, docker_image=docker, port=cfg.engine_port,
-                      log_path=log_path, hf_cache=cfg.hf_cache)
+    kwargs = {"model": model, "revision": None} if model else {"revision": lock.model_revision}
+    return VLLMEngine(docker_image=docker, port=cfg.engine_port, log_path=log_path, hf_cache=cfg.hf_cache, **kwargs)
 
 
 def launch_mode(cfg: HostConfig) -> str:

@@ -47,7 +47,7 @@ async def test_daemon_reaches_live_mints_and_microbenches(cfg, identity, report,
         cfg.host_id, cfg.token = client.host_id, client.token
         cfg.save()
         d = Daemon(cfg, client, mock_engine, log=log.append, sampler=idle_gpu, sleep=fake_sleep, clock=clock,
-                   max_beats=8, require_lock_version=False)
+                   max_beats=8, require_lock_version=False, jobs=False)
         final = await d.run()
 
     rec = platform.hosts[client.host_id]
@@ -81,7 +81,7 @@ async def test_wrong_model_is_degraded_not_live(cfg, identity, report, mock_engi
         await client.register(report)
         cfg.host_id, cfg.token = client.host_id, client.token
         d = Daemon(cfg, client, mock_engine, log=lambda s: None, sampler=idle_gpu, sleep=fake_sleep, clock=clock,
-                   max_beats=4, require_lock_version=False)
+                   max_beats=4, require_lock_version=False, jobs=False)
         final = await d.run()
     rec = platform.hosts[client.host_id]
     assert final["last_challenge"]["pass"] is False and rec.balance == 0 and rec.accrual == 0

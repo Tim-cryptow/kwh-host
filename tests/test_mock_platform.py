@@ -160,3 +160,16 @@ def test_status_and_events(identity, report, clock):
     answer(p, hid, p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()}))
     s = p.status(hid)
     assert s["state"] == "live" and [e["kind"] for e in s["events"]] == ["registered", "challenge", "liveness", "state"]
+
+
+def test_engine_restart_requires_a_new_challenge(identity, report, clock):
+    p = MockPlatform(pool(), settings(), clock=clock)
+    hid = register(p, identity, report)
+    answer(p, hid, p.heartbeat(hid, {"engine": {**healthy(), "instance": "a"}, "gpu_sample": idle_gpu()}))
+    clock.advance(30)
+    assert p.heartbeat(hid, {"engine": {**healthy(), "instance": "a"}, "gpu_sample": idle_gpu()})["state"] == "live"
+    clock.advance(30)
+    r = p.heartbeat(hid, {"engine": {**healthy(), "instance": "b"}, "gpu_sample": idle_gpu()})
+    assert r["state"] == "degraded" and r["minted"] == 0 and r["challenge"] is not None   # nothing routed or minted until re-proven
+    assert "engine restarted" in r["reasons"][0]
+    assert answer(p, hid, r)["state"] == "live"
