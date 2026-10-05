@@ -102,3 +102,30 @@ def test_engine_user_is_never_root(monkeypatch):
     monkeypatch.setattr(sandbox.os, "getuid", lambda: 1000)
     monkeypatch.setattr(sandbox.os, "getgid", lambda: 1000)
     assert (sandbox.default_uid(), sandbox.default_gid()) == (1000, 1000)
+
+
+def test_an_engine_that_dies_early_says_why(tmp_path, monkeypatch):
+    """`exited early with code 125` told a host nothing; the docker error in the log does."""
+    import asyncio
+
+    import pytest
+    from kwh_bench.engines.vllm import VLLMEngine
+
+    from kwh_host import sandbox
+
+    log = tmp_path / "engine.log"
+    log.write_text('docker: Error response from daemon: could not select device driver "" with capabilities: [[gpu]]\n\n'
+                   "Run 'docker run --help' for more information\n")
+    monkeypatch.setattr(sandbox, "prepare_dirs", lambda s: None)
+    removed = []
+    monkeypatch.setattr(sandbox, "remove_container", removed.append)
+
+    async def dies(self):
+        raise RuntimeError("engine process exited early with code 125")
+    monkeypatch.setattr(VLLMEngine, "start", dies)
+    engine = SandboxedVLLMEngine(spec(tmp_path), log_path=str(log))
+    with pytest.raises(RuntimeError) as e:
+        asyncio.run(engine.start())
+    assert "code 125" in str(e.value) and "could not select device driver" in str(e.value)
+    assert "docker run --help" not in str(e.value) and removed == ["kwh-engine-gpu0", "kwh-engine-gpu0"]
+    assert sandbox.log_tail(None) == "" and sandbox.log_tail(str(tmp_path / "missing.log")) == ""

@@ -44,7 +44,9 @@ warn() { printf '    WARN %s\n' "$*"; }
 die()  { printf '    FAIL %s\n' "$*" >&2; exit 1; }
 need_change=()
 failed=()
-APT=(sudo apt-get -o DPkg::Lock::Timeout=300)
+# no prompts (a config file left behind by an earlier install keeps its contents), wait out a busy apt
+APT=(sudo env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300
+     -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold)
 
 # wait_for_apt: a freshly booted machine runs its automatic updates first, holding apt for minutes
 wait_for_apt() {
@@ -160,24 +162,45 @@ if command -v docker >/dev/null 2>&1; then
     fi
 
     say "NVIDIA Container Toolkit"
-    runtimes="$(docker_cmd info --format '{{json .Runtimes}}' 2>/dev/null || true)"
-    if echo "$runtimes" | grep -q nvidia || [ -e /etc/cdi/nvidia.yaml ] || [ -n "$DESKTOP" ]; then
-      ok "Docker can hand the GPU to containers"
+    # The real test is a throwaway container asking for the GPU (NVIDIA's own sample workload).
+    # An "nvidia" runtime in Docker's settings proves nothing: on a machine whose toolkit was
+    # removed it stays registered while the programs behind it are gone, and --gpus fails.
+    gpu_test() { docker_cmd run --rm --gpus all ubuntu nvidia-smi -L > /dev/null 2>&1; }
+    has_toolkit() { command -v nvidia-container-runtime-hook > /dev/null 2>&1; }
+    install_toolkit() {
+      wait_for_apt
+      curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+        | sudo gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg &&
+      curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+        | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+        | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null &&
+      "${APT[@]}" update -q &&
+      "${APT[@]}" install -y -q nvidia-container-toolkit &&
+      sudo nvidia-ctk runtime configure --runtime=docker &&
+      restart_docker
+    }
+    if [ -n "$DESKTOP" ]; then
+      ok "Docker Desktop hands the GPU to containers itself"
+    elif [ "$CHECK" = 1 ] || [ "$SKIP_GPU" = 1 ]; then
+      if has_toolkit; then
+        ok "installed (no GPU container tried in this mode)"
+      else
+        change "Install the NVIDIA Container Toolkit (NVIDIA's apt repository, needs sudo)" install_toolkit \
+          && ok "toolkit installed" || true
+      fi
+    elif gpu_test; then
+      ok "a test container sees the GPU"
     else
-      install_toolkit() {
-        wait_for_apt
-        curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
-          | sudo gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg &&
-        curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
-          | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
-          | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null &&
-        "${APT[@]}" update -q &&
-        "${APT[@]}" install -y -q nvidia-container-toolkit &&
-        sudo nvidia-ctk runtime configure --runtime=docker &&
-        restart_docker
-      }
-      change "Install the NVIDIA Container Toolkit (NVIDIA's apt repository, needs sudo)" install_toolkit \
-        && ok "toolkit installed; Docker configured for the GPU" || true
+      what="Install the NVIDIA Container Toolkit (NVIDIA's apt repository, needs sudo)"
+      has_toolkit && what="Reinstall and reconfigure the NVIDIA Container Toolkit: a test container cannot see the GPU (needs sudo)"
+      if change "$what" install_toolkit; then
+        if gpu_test; then
+          ok "toolkit installed; a test container sees the GPU"
+        else
+          failed+=("GPU in containers")
+          warn "a test container still cannot see the GPU; try: docker run --rm --gpus all ubuntu nvidia-smi"
+        fi
+      fi
     fi
   else
     warn "Docker is not usable by $USER yet ($state)"

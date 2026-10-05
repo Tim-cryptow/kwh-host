@@ -103,8 +103,30 @@ def test_doctor_on_docker_desktop_flags_the_socket_and_offers_tcp(home):
     assert doctor.check_transport(HostConfig(engine_transport="tcp"), desktop).status == "warn"
     engine = {"OperatingSystem": "Ubuntu 24.04 LTS", "ServerVersion": "28.0", "Runtimes": {"runc": {}, "nvidia": {}}}
     assert doctor.check_transport(HostConfig(), engine).status == "ok"
-    assert doctor.check_gpu_runtime(engine).status == "ok"
-    assert doctor.check_gpu_runtime({"Runtimes": {"runc": {}}, "OperatingSystem": "Ubuntu"}).status in ("fail", "ok")
+    assert doctor.check_gpu_runtime(HostConfig(), desktop).status == "ok"     # Desktop attaches the GPU itself
+
+
+def test_doctor_tries_the_gpu_in_a_real_container(home):
+    """Seen on a rented VM (2026-10-05): Docker kept an "nvidia" runtime whose programs were gone,
+    the old check said ok, and the engine died with 'could not select device driver'."""
+    cfg = HostConfig()
+    leftover = {"OperatingSystem": "Ubuntu 22.04.5 LTS", "Runtimes": {"runc": {}, "nvidia": {"path": "nvidia-container-runtime"}}}
+    no_hook = lambda name: None                                            # noqa: E731
+    hook = lambda name: "/usr/bin/" + name                                 # noqa: E731
+    c = doctor.check_gpu_runtime(cfg, leftover, runner({}), which=no_hook)
+    assert c.status == "fail" and "programs are missing" in c.detail and "installer" in c.fix
+    plain = {"OperatingSystem": "Ubuntu 24.04 LTS", "Runtimes": {"runc": {}}}
+    assert "not installed" in doctor.check_gpu_runtime(cfg, plain, runner({}), which=no_hook).detail
+    # toolkit there, image not pulled yet: tried after fetch
+    assert doctor.check_gpu_runtime(cfg, leftover, runner({}), which=hook).status == "warn"
+    pulled = {"docker image inspect": (0, "sha256:abc\n", "")}
+    sees = runner({**pulled, "docker run": (0, "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-1234)\n", "")})
+    c = doctor.check_gpu_runtime(cfg, leftover, sees, which=hook)
+    assert c.status == "ok" and c.detail == "a container sees GPU 0: NVIDIA GeForce RTX 4090"
+    broken = runner({**pulled, "docker run": (125, "", 'docker: Error response from daemon: could not select device driver "" '
+                                                   'with capabilities: [[gpu]]\n\nRun \'docker run --help\'\n')})
+    c = doctor.check_gpu_runtime(cfg, leftover, broken, which=hook)
+    assert c.status == "fail" and "could not select device driver" in c.detail
 
 
 def test_doctor_finds_the_fetched_checkpoint(home):

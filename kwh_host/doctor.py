@@ -2,8 +2,9 @@
 
 The checks are what the sandboxed engine needs: an NVIDIA driver with a big enough card and new
 enough for the engine image's CUDA build, Docker reachable without sudo, Docker able to hand the
-GPU to a container (NVIDIA Container Toolkit), Docker Engine rather than Docker Desktop when the
-engine talks over a Unix socket, and the image and the checkpoint already fetched.
+GPU to a container (the NVIDIA Container Toolkit, tried with a real container once the image is
+there), Docker Engine rather than Docker Desktop when the engine talks over a Unix socket, and the
+image and the checkpoint already fetched.
 """
 
 from __future__ import annotations
@@ -141,17 +142,35 @@ def check_docker(info: Optional[dict], run: Run = _run) -> Check:
     return Check("Docker", "ok", f"{info.get('OperatingSystem', '?')}, server {info.get('ServerVersion', '?')}")
 
 
-def check_gpu_runtime(info: Optional[dict]) -> Check:
+TOOLKIT_FIX = ("rerun the installer (it tries a GPU container and installs the toolkit if that fails), or install "
+               "nvidia-container-toolkit, then: sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker")
+
+
+def check_gpu_runtime(cfg: HostConfig, info: Optional[dict], run: Run = _run,
+                      which: Callable[[str], Optional[str]] = shutil.which) -> Check:
+    """Can Docker hand the GPU to a container? An "nvidia" runtime in Docker's settings is not
+    enough: on a machine whose toolkit was removed the runtime stays registered while its programs
+    are gone (a rented VM image, 2026-10-05), and `docker run --gpus` fails. So the toolkit's hook
+    has to exist and, once the engine image is pulled, a throwaway container from it has to see
+    the GPU."""
+    name = "GPU in containers"
     if info is None:
-        return Check("GPU in containers", "fail", "Docker not reachable", None)
-    runtimes = info.get("Runtimes") or {}
-    cdi = any(Path(p).exists() for p in ("/etc/cdi/nvidia.yaml", "/var/run/cdi/nvidia.yaml"))
-    if "nvidia" in runtimes or cdi or "Docker Desktop" in str(info.get("OperatingSystem", "")):
-        return Check("GPU in containers", "ok", "nvidia runtime" if "nvidia" in runtimes else
-                     ("CDI devices" if cdi else "Docker Desktop GPU support"))
-    return Check("GPU in containers", "fail", "Docker has no NVIDIA runtime",
-                 "install the NVIDIA Container Toolkit (the installer does), then: "
-                 "sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker")
+        return Check(name, "fail", "Docker not reachable", None)
+    if "Docker Desktop" in str(info.get("OperatingSystem", "")):
+        return Check(name, "ok", "Docker Desktop GPU support")
+    if not which("nvidia-container-runtime-hook"):
+        detail = ("Docker lists an nvidia runtime, but the NVIDIA Container Toolkit's programs are missing"
+                  if "nvidia" in (info.get("Runtimes") or {}) else "the NVIDIA Container Toolkit is not installed")
+        return Check(name, "fail", detail, TOOLKIT_FIX)
+    if run(["docker", "image", "inspect", "--format", "{{.Id}}", cfg.docker_image]).returncode != 0:
+        return Check(name, "warn", "toolkit installed; tried with a container once the engine image is fetched",
+                     "kwh-host fetch")
+    r = run(["docker", "run", "--rm", "--gpus", f"device={cfg.gpu_index}", "--entrypoint", "nvidia-smi",
+             cfg.docker_image, "-L"])
+    if r.returncode == 0 and "GPU" in r.stdout:
+        return Check(name, "ok", "a container sees " + r.stdout.strip().splitlines()[0].split(" (UUID")[0])
+    said = ((r.stderr or r.stdout or "").strip().splitlines() or ["no output"])[0][:200]
+    return Check(name, "fail", f"a test container could not use GPU {cfg.gpu_index}: {said}", TOOLKIT_FIX)
 
 
 def check_transport(cfg: HostConfig, info: Optional[dict]) -> Check:
@@ -193,7 +212,7 @@ def run_checks(cfg: HostConfig, revision: Optional[str], run: Run = _run) -> Lis
         if gpu.status != "fail":
             checks.append(check_engine_build(cfg, run))
         info = docker_info(run) if shutil.which("docker") else None
-        checks += [check_docker(info, run), check_gpu_runtime(info), check_transport(cfg, info)]
+        checks += [check_docker(info, run), check_gpu_runtime(cfg, info, run), check_transport(cfg, info)]
         if info is not None:
             checks.append(check_image(cfg, run))
     checks.append(check_model(cfg, revision))

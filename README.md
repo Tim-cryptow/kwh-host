@@ -8,7 +8,7 @@ The program a GPU owner installs to sell work on the kWh Exchange. It benchmarks
 curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/install.sh | bash
 ```
 
-It checks for an NVIDIA card with 16 GB or more, asks before installing Docker Engine and the NVIDIA Container Toolkit, and installs `kwh-host` for your user. Then:
+It checks for an NVIDIA card with 16 GB or more, asks before installing Docker Engine and the NVIDIA Container Toolkit, runs a test container on the GPU (and repairs the toolkit if that fails), and installs `kwh-host` for your user. Then:
 
 ```bash
 kwh-host init --platform <platform URL>
@@ -78,7 +78,7 @@ What it settled:
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 64 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+python -m pytest -q          # 66 tests: signing, envelope, execution, the vLLM stream parser, verifier,
                              # platform state machine, sandbox, and jobs end to end over a real local server
 
 # the sandbox for real, with a stand-in engine (needs Docker; what CI runs on every push)

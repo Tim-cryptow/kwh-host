@@ -166,6 +166,18 @@ def docker_is_rootless() -> bool:
     return "rootless" in out
 
 
+def log_tail(path: Optional[str], lines: int = 3, limit: int = 400) -> str:
+    """The last meaningful lines of an engine log: what a container that died early said."""
+    if not path:
+        return ""
+    try:
+        text = Path(path).read_text(errors="replace")
+    except OSError:
+        return ""
+    keep = [s.strip() for s in text.splitlines() if s.strip() and not s.startswith("Run 'docker run --help'")]
+    return " | ".join(keep[-lines:])[-limit:]
+
+
 def redact_home(arg: str) -> str:
     """Reports are public: never publish the host's home directory (it carries the user name)."""
     home = str(Path.home())
@@ -190,8 +202,11 @@ class SandboxedVLLMEngine(VLLMEngine):
         remove_container(self.spec.name)
         try:
             await super().start()
-        except BaseException:
+        except BaseException as e:
             remove_container(self.spec.name)
+            said = log_tail(self.log_path) if isinstance(e, (RuntimeError, TimeoutError)) else ""
+            if said:      # "exited early with code 125" alone does not tell a host what to fix
+                raise type(e)(f"{e}; the engine's log ends: {said}") from e
             raise
 
     async def stop(self) -> None:
