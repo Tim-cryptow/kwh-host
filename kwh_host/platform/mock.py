@@ -692,11 +692,20 @@ class HFTokenizer:
     def __init__(self, model_id: str = ref.MODEL_ID, revision: Optional[str] = None):
         from transformers import AutoTokenizer
         self.tok = AutoTokenizer.from_pretrained(model_id, revision=revision)
+        # The chat template needs jinja2, which transformers does not install (vLLM does): find
+        # out now, so chat requests get a clear refusal instead of a 500 mid-job.
+        self.chat_error: Optional[str] = None
+        try:
+            self.tok.apply_chat_template([{"role": "user", "content": "hi"}], add_generation_prompt=True, tokenize=False)
+        except ImportError as e:
+            self.chat_error = str(e)
 
     def encode(self, text: str) -> List[int]:
         return list(self.tok.encode(text, add_special_tokens=True))
 
     def chat(self, messages: List[dict]) -> List[int]:
+        if self.chat_error:
+            raise JobInvalid(f"chat messages need the chat template, which is unavailable here: {self.chat_error}")
         ids = self.tok.apply_chat_template(messages, add_generation_prompt=True, tokenize=True)
         if isinstance(ids, dict) or hasattr(ids, "keys"):
             ids = ids["input_ids"]
@@ -818,7 +827,10 @@ def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenize
     @app.post("/v1/mock/jobs")
     async def mock_jobs(request: Request):
         body = await request.json()
-        reqs = tokenize_requests(body.get("requests") or [], tokenizer)
+        try:
+            reqs = tokenize_requests(body.get("requests") or [], tokenizer)
+        except JobInvalid as e:
+            return JSONResponse({"job_id": None, "status": "failed", "reason": str(e), "attempts": []}, status_code=400)
         out = await router.submit(reqs, body.get("timeout_s"))
         return JSONResponse(out, status_code=200 if out["status"] == "completed" else 503)
 
@@ -829,6 +841,8 @@ def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenize
     @app.get("/healthz")
     async def healthz():
         return {"ok": True, "hosts": len(platform.hosts), "job_channels": len(router.conns),
-                "tokenizer": tokenizer is not None, "verifier": router.scorer is not None}
+                "tokenizer": tokenizer is not None,
+                "chat": tokenizer is not None and not getattr(tokenizer, "chat_error", None),
+                "verifier": router.scorer is not None}
 
     return app

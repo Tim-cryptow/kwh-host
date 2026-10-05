@@ -64,10 +64,16 @@ hosts() { curl -fs "$PLATFORM/v1/mock/hosts"; }
 host_is() { hosts | python3 -c "import json,sys; d=json.load(sys.stdin)['hosts']; h=d[0] if d else {}; sys.exit(0 if ($1) else 1)" 2>/dev/null; }
 wait_host() { for _ in $(seq 1 "${2:-300}"); do host_is "$1" && return 0; sleep 3; done; return 1; }
 wait_http() { for _ in $(seq 1 120); do curl -fs "$1" >/dev/null 2>&1 && return 0; sleep 1; done; return 1; }
-stop_pid() { kill -TERM "$1" 2>/dev/null; for _ in $(seq 1 120); do kill -0 "$1" 2>/dev/null || return 0; sleep 1; done; kill -KILL "$1" 2>/dev/null; }
+# The daemon runs under sg or a function's subshell, so $! is a wrapper: a signal to it never reaches
+# the daemon (on 2026-10-05 the first daemon kept running and fought the next one). Stop it by name.
+stop_daemon() {
+  pkill -TERM -u "$(id -u)" -f 'kwh-hos[t] run' 2>/dev/null
+  for _ in $(seq 1 120); do pgrep -u "$(id -u)" -f 'kwh-hos[t] run' > /dev/null || return 0; sleep 1; done
+  pkill -KILL -u "$(id -u)" -f 'kwh-hos[t] run' 2>/dev/null
+}
 
 # leftovers of an earlier attempt, if any: its platform, daemon and engine container
-pkill -f "kwh-host mock-platform" 2>/dev/null; pkill -f "kwh-host run" 2>/dev/null
+pkill -f 'kwh-hos[t] mock-platform' 2>/dev/null; pkill -f 'kwh-hos[t] run' 2>/dev/null
 as_docker docker rm -f kwh-engine-gpu0 >/dev/null 2>&1
 nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv | tee "$OUT/gpu.txt"
 nvidia-smi > "$OUT/nvidia-smi.txt" 2>&1
@@ -77,7 +83,7 @@ df -h / "$HOME" | tee "$OUT/disk.txt"; free -g | tee -a "$OUT/disk.txt"
 log "0. installer (--yes: Docker, NVIDIA Container Toolkit, kwh-host as needed)"
 curl -fsSL "https://raw.githubusercontent.com/Tim-cryptow/kwh-host/$REF/install.sh" | bash -s -- --yes --ref "$REF" 2>&1 | tee "$OUT/install.log"
 log "installer exit ${PIPESTATUS[1]}"
-"$HOME/.kwh-host/venv/bin/pip" install -q transformers 2>&1 | tail -1   # the mock platform's tokenizer (buyer-side, not the host)
+"$HOME/.kwh-host/venv/bin/pip" install -q transformers jinja2 2>&1 | tail -1   # the mock platform's tokenizer and chat template (buyer side)
 
 log "1. init, doctor, fetch"
 as_docker kwh-host init --platform "$PLATFORM" | tee "$OUT/init.json"
@@ -99,7 +105,6 @@ as_docker kwh-host register > "$OUT/register.json" 2>&1; log "register: $(tr -d 
 
 log "4. the daemon, live in the sandbox"
 as_docker kwh-host run > "$OUT/run.log" 2>&1 &
-RUN=$!
 wait_host "h.get('state') == 'live' and h.get('jobs_channel')" 300 && log "live, job channel open" || log "NOT live"
 docker inspect kwh-engine-gpu0 > "$OUT/engine-inspect.json" 2>/dev/null || as_docker docker inspect kwh-engine-gpu0 > "$OUT/engine-inspect.json"
 python3 - "$OUT" <<'PY' | tee -a "$OUT/steps.log"
@@ -136,16 +141,15 @@ kwh-host submit --platform "$PLATFORM" --file "$OUT/too-long.json" --timeout 10 
 log "too-long job (8,292 > 8,192, expected to fail): exit $?"
 sleep 15
 hosts > "$OUT/hosts-after-jobs.json"
-stop_pid "$RUN"
+stop_daemon
 as_docker docker inspect kwh-engine-gpu0 >/dev/null 2>&1 && log "ENGINE CONTAINER LEFT BEHIND" || log "daemon stopped, engine container removed"
 
 log "6. a 4-bit substitute in the same sandbox"
 as_docker kwh-host fetch --model "$AWQ" --no-image > "$OUT/fetch-awq.json" 2>> "$OUT/fetch.log"; log "fetch AWQ exit $?"
 as_docker kwh-host run --model "$AWQ" > "$OUT/run-awq.log" 2>&1 &
-RUN=$!
 wait_host "(h.get('last_challenge') or {}).get('pass') is False" 600 && log "substitute failed its challenge" || log "no failed challenge seen"
 hosts > "$OUT/hosts-wrong-model.json"
-stop_pid "$RUN"
+stop_daemon
 
 log "7. systemd user service"
 sudo loginctl enable-linger "$USER"

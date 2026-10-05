@@ -304,6 +304,9 @@ def mock_platform(host, port, heartbeat, challenge_every, microbench_every, acce
         try:
             from kwh_bench.lockfile import load_lock
             tokenizer = HFTokenizer(revision=load_lock().model_revision)
+            if tokenizer.chat_error:
+                _log(f"tokenizer loaded, but no chat template ({tokenizer.chat_error}); "
+                     "raw text and token ids work, chat messages are refused")
         except Exception as e:  # noqa: BLE001
             if use_tokenizer:
                 raise click.ClickException(f"tokenizer unavailable: {type(e).__name__}: {e}")

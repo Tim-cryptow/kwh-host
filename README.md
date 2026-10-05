@@ -78,7 +78,7 @@ What it settled:
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 66 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+python -m pytest -q          # 67 tests: signing, envelope, execution, the vLLM stream parser, verifier,
                              # platform state machine, sandbox, and jobs end to end over a real local server
 
 # the sandbox for real, with a stand-in engine (needs Docker; what CI runs on every push)
