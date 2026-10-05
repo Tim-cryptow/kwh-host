@@ -234,7 +234,8 @@ install.sh              the one-line installer (Ubuntu, WSL2)
 docs/windows-wsl2.md    hosting on Windows
 tests/                  identity, jobs, verifier, platform state machine, re-benchmark and reliability, status,
                         router, sandbox (+ fake_engine/ for Docker)
-scripts/                real-GPU milestone runs (pod-m1.sh, pod-m2.sh, vm-m3.sh, vm-m4.sh) and ci-sandbox.sh
+scripts/                real-GPU milestone runs (pod-m1.sh, pod-m2.sh, vm-m3.sh, vm-m4.sh), the Windows check
+                        (wsl-check.sh in Ubuntu, then wsl-keepalive.ps1 in PowerShell) and ci-sandbox.sh
 results/                what those runs wrote, one folder per run
 ```
 
