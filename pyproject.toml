@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kwh-host"
-version = "0.2.0.dev2"
+version = "0.2.0.dev3"
 description = "kWh Exchange host client: benchmark the rig, prove it is live, run buyer jobs."
 readme = "README.md"
 requires-python = ">=3.10"
