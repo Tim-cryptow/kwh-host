@@ -1,0 +1,22 @@
+[1m==>[0m kWh host client installer
+    ok   Ubuntu 22.04.5 LTS
+[1m==>[0m NVIDIA GPU
+    ok   NVIDIA GeForce RTX 4090, 24 GB, driver 580.178.04 (CUDA 13.0)
+[1m==>[0m NVIDIA driver updates
+    ok   kept out of the automatic updates (/etc/apt/apt.conf.d/52kwh-host-nvidia)
+[1m==>[0m Docker
+    ok   Docker 28.1.1 on Ubuntu 22.04.5 LTS
+[1m==>[0m NVIDIA Container Toolkit
+    ok   a test container sees the GPU
+[1m==>[0m Python and git
+    ok   Python 3.10
+[1m==>[0m kwh-host
+    ok   kwh-host, version 0.3.0.dev1 in /home/kwh/.kwh-host/venv, linked from ~/.local/bin/kwh-host
+
+[1m==>[0m Ready. Next:
+    kwh-host init --platform <platform URL>
+    kwh-host doctor            # every check should say ok
+    kwh-host fetch             # the model (~9 GB, hash-checked) and the engine image (~9 GB, ~14 GB for CUDA 12 drivers)
+    kwh-host bench             # the certified benchmark, ~10 minutes
+    kwh-host register
+    kwh-host service install   # runs in the background from now on, restarts on failure

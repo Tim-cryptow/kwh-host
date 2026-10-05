@@ -1,0 +1,21 @@
+{"t": 1791198847.739644, "kind": "registered", "rate": 101.827}
+{"t": 1791198884.314112, "kind": "jobs_connected", "max_concurrency": 32, "max_model_len": 8192}
+{"t": 1791198884.3149643, "kind": "challenge", "id": "ch-1-ac03b0f4"}
+{"t": 1791198884.6924107, "kind": "liveness", "id": "ch-1-ac03b0f4", "passed": true, "delta": 0.0}
+{"t": 1791198884.6924107, "kind": "state", "from": "registered", "to": "live", "reasons": []}
+{"t": 1791198903.7153301, "kind": "microbench", "units_per_hour": 100.996, "within": true}
+{"t": 1791198954.1166081, "kind": "challenge", "id": "ch-2-d778254c"}
+{"t": 1791198954.5461774, "kind": "liveness", "id": "ch-2-d778254c", "passed": true, "delta": 0.0}
+{"t": 1791199015.0110698, "kind": "challenge", "id": "ch-3-fb318ba3"}
+{"t": 1791199015.4357905, "kind": "liveness", "id": "ch-3-fb318ba3", "passed": true, "delta": 0.0}
+{"t": 1791199031.7847526, "kind": "microbench", "units_per_hour": 71.712, "within": false}
+{"t": 1791199082.2097955, "kind": "challenge", "id": "ch-4-6c0feb32"}
+{"t": 1791199082.6333544, "kind": "liveness", "id": "ch-4-6c0feb32", "passed": true, "delta": 0.0}
+{"t": 1791199143.0458877, "kind": "challenge", "id": "ch-5-86054de9"}
+{"t": 1791199143.4760365, "kind": "liveness", "id": "ch-5-86054de9", "passed": true, "delta": 0.0}
+{"t": 1791199159.829529, "kind": "microbench", "units_per_hour": 71.682, "within": false}
+{"t": 1791199159.829529, "kind": "rebench_required", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791199159.829529, "kind": "state", "from": "live", "to": "degraded", "reasons": ["re-benchmark required: micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791199159.871784, "kind": "rebench_started", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791199159.8728259, "kind": "jobs_disconnected"}
+{"t": 1791199260.2624602, "kind": "state", "from": "degraded", "to": "offline", "reasons": ["no accepted heartbeat within timeout"]}

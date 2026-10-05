@@ -1,0 +1,2 @@
+j_684250fdb98d7cd4: failed on None  units None  0.0 ms  attempts []  (no live host with capacity for this job)
+responses: /home/kwh/m4/jobs-during-full.json

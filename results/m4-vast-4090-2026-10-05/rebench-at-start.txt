@@ -1,0 +1,2 @@
+2026-10-05 13:07:28  rebench           started: driver changed: 580.95.05 benchmarked, 580.178.04 now
+2026-10-05 13:10:41  rebench           done: 101.88 units/hour (was 101.83), 3 min

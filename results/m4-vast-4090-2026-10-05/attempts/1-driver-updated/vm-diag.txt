@@ -1,0 +1,863 @@
+Mon Oct  5 12:52:15 UTC 2026
+ 12:52:15 up  1:47,  1 user,  load average: 0.00, 0.00, 0.00
+Failed to initialize NVML: Driver/library version mismatch
+NVML library version: 580.178
+NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  580.95.05  Release Build  (dvs-builder@U22-I3-B17-02-5)  Tue Sep 23 09:55:41 UTC 2025
+GCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04) 
+ii  libnvidia-cfg1-580-server:amd64       580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA binary OpenGL/GLX configuration library
+ii  libnvidia-common-580-server           580.178.04-0ubuntu0.22.04.1             all          Shared files used by the NVIDIA libraries
+ii  libnvidia-compute-580-server:amd64    580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA libcompute package
+ii  libnvidia-container-tools             1.20.1-1                                amd64        NVIDIA container runtime library (command-line tools)
+ii  libnvidia-container1:amd64            1.20.1-1                                amd64        NVIDIA container runtime library
+ii  libnvidia-decode-580-server:amd64     580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA Video Decoding runtime libraries
+ii  libnvidia-egl-wayland1:amd64          1:1.1.17-0ubuntu0~gpu22.04.1            amd64        Wayland EGL External Platform library -- shared library
+ii  libnvidia-encode-580-server:amd64     580.178.04-0ubuntu0.22.04.1             amd64        NVENC Video Encoding runtime library
+ii  libnvidia-extra-580-server:amd64      580.178.04-0ubuntu0.22.04.1             amd64        Extra libraries for the NVIDIA Server Driver
+ii  libnvidia-fbc1-580-server:amd64       580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA OpenGL-based Framebuffer Capture runtime library
+ii  libnvidia-gl-580-server:amd64         580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA OpenGL/GLX/EGL/GLES GLVND libraries and Vulkan ICD
+ii  nvidia-compute-utils-580-server       580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA compute utilities
+ii  nvidia-container-toolkit              1.20.1-1                                amd64        NVIDIA Container toolkit
+ii  nvidia-container-toolkit-base         1.20.1-1                                amd64        NVIDIA Container Toolkit Base
+ii  nvidia-dkms-580-server-open           580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA DKMS package (open kernel module)
+ii  nvidia-driver-580-server-open         580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA driver (open kernel) metapackage
+ii  nvidia-firmware-580-server-580.178.04 580.178.04-0ubuntu0.22.04.1             amd64        Firmware files used by the kernel module
+ii  nvidia-kernel-common-580-server       580.178.04-0ubuntu0.22.04.1             amd64        Shared files used with the kernel module
+ii  nvidia-kernel-source-580-server-open  580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA kernel source package
+ii  nvidia-prime                          0.8.17.1                                all          Tools to enable NVIDIA's Prime
+ii  nvidia-settings                       580.105.08-0ubuntu1                     amd64        Tool for configuring the NVIDIA graphics driver
+ii  nvidia-utils-580-server               580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA Server Driver support binaries
+ii  screen-resolution-extra               0.18.2ubuntu0.1                         all          Extension for the nvidia-settings control panel
+ii  xserver-xorg-video-nvidia-580-server  580.178.04-0ubuntu0.22.04.1             amd64        NVIDIA binary Xorg driver
+
+Start-Date: 2026-10-05  11:07:22
+Commandline: apt-get -o DPkg::Lock::Timeout=300 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install -y -q nvidia-container-toolkit
+Requested-By: kwh (1002)
+Install: libnvidia-container1:amd64 (1.20.1-1, automatic), libnvidia-container-tools:amd64 (1.20.1-1, automatic), nvidia-container-toolkit:amd64 (1.20.1-1), nvidia-container-toolkit-base:amd64 (1.20.1-1, automatic)
+End-Date: 2026-10-05  11:07:30
+
+Start-Date: 2026-10-05  11:17:55
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libglib2.0-bin:amd64 (2.72.4-0ubuntu2.4, 2.72.4-0ubuntu2.10), libglib2.0-0:amd64 (2.72.4-0ubuntu2.4, 2.72.4-0ubuntu2.10)
+End-Date: 2026-10-05  11:17:55
+
+Start-Date: 2026-10-05  11:17:58
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: vim:amd64 (2:8.2.3995-1ubuntu2.24, 2:8.2.3995-1ubuntu2.36), vim-common:amd64 (2:8.2.3995-1ubuntu2.24, 2:8.2.3995-1ubuntu2.36), vim-tiny:amd64 (2:8.2.3995-1ubuntu2.24, 2:8.2.3995-1ubuntu2.36), vim-runtime:amd64 (2:8.2.3995-1ubuntu2.24, 2:8.2.3995-1ubuntu2.36)
+End-Date: 2026-10-05  11:17:59
+
+Start-Date: 2026-10-05  11:18:02
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: g++-11:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3), gcc-11:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3), libtsan0:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3), libasan6:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3), cpp-11:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3), gcc-11-base:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3), libgcc-11-dev:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3), libstdc++-11-dev:amd64 (11.4.0-1ubuntu1~22.04, 11.4.0-1ubuntu1~22.04.3)
+End-Date: 2026-10-05  11:18:03
+
+Start-Date: 2026-10-05  11:18:05
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: systemd-timesyncd:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22), libpam-systemd:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22), libsystemd0:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22), libnss-systemd:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22), systemd:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22), systemd-sysv:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22)
+End-Date: 2026-10-05  11:18:07
+
+Start-Date: 2026-10-05  11:18:10
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libbinutils:amd64 (2.38-4ubuntu2.8, 2.38-4ubuntu2.12), binutils-x86-64-linux-gnu:amd64 (2.38-4ubuntu2.8, 2.38-4ubuntu2.12), libctf0:amd64 (2.38-4ubuntu2.8, 2.38-4ubuntu2.12), binutils-common:amd64 (2.38-4ubuntu2.8, 2.38-4ubuntu2.12), binutils:amd64 (2.38-4ubuntu2.8, 2.38-4ubuntu2.12)
+End-Date: 2026-10-05  11:18:10
+
+Start-Date: 2026-10-05  11:18:13
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libtasn1-6:amd64 (4.18.0-4ubuntu0.1, 4.18.0-4ubuntu0.2)
+End-Date: 2026-10-05  11:18:13
+
+Start-Date: 2026-10-05  11:18:15
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgomp1:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), gcc-12:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libtsan2:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libcc1-0:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libasan8:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), cpp-12:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libitm1:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libquadmath0:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libubsan1:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), liblsan0:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), gcc-12-base:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libstdc++6:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libatomic1:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libgcc-12-dev:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3), libgcc-s1:amd64 (12.3.0-1ubuntu1~22.04, 12.3.0-1ubuntu1~22.04.3)
+End-Date: 2026-10-05  11:18:17
+
+Start-Date: 2026-10-05  11:18:20
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgdk-pixbuf2.0-bin:amd64 (2.42.8+dfsg-1ubuntu0.4, 2.42.8+dfsg-1ubuntu0.5)
+End-Date: 2026-10-05  11:18:20
+
+Start-Date: 2026-10-05  11:18:23
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: ca-certificates:amd64 (20240203~22.04.1, 20260601~22.04.1)
+End-Date: 2026-10-05  11:18:26
+
+Start-Date: 2026-10-05  11:18:28
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: packagekit-tools:amd64 (1.2.5-2ubuntu3, 1.2.5-2ubuntu3.1), packagekit:amd64 (1.2.5-2ubuntu3, 1.2.5-2ubuntu3.1), libpackagekit-glib2-18:amd64 (1.2.5-2ubuntu3, 1.2.5-2ubuntu3.1)
+End-Date: 2026-10-05  11:18:29
+
+Start-Date: 2026-10-05  11:18:31
+Commandline: /usr/bin/unattended-upgrade
+Install: nvidia-firmware-580-server-580.178.04:amd64 (580.178.04-0ubuntu0.22.04.1, automatic)
+Upgrade: libnvidia-common-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), nvidia-driver-580-server-open:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), libnvidia-cfg1-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), nvidia-dkms-580-server-open:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), libnvidia-decode-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), nvidia-compute-utils-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), libnvidia-fbc1-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), libnvidia-extra-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), nvidia-kernel-source-580-server-open:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), nvidia-kernel-common-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), libnvidia-compute-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), xserver-xorg-video-nvidia-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), nvidia-utils-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), libnvidia-encode-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1), libnvidia-gl-580-server:amd64 (580.95.05-0ubuntu0.22.04.2, 580.178.04-0ubuntu0.22.04.1)
+End-Date: 2026-10-05  11:19:29
+
+Start-Date: 2026-10-05  11:19:32
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: pollinate:amd64 (4.33-3ubuntu2.1, 4.33-3ubuntu2.3)
+End-Date: 2026-10-05  11:19:32
+
+Start-Date: 2026-10-05  11:19:35
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: ubuntu-pro-client-l10n:amd64 (35.1ubuntu0~22.04, 37.2ubuntu~22.04.1), ubuntu-advantage-tools:amd64 (35.1ubuntu0~22.04, 37.2ubuntu~22.04.1), ubuntu-pro-client:amd64 (35.1ubuntu0~22.04, 37.2ubuntu~22.04.1)
+End-Date: 2026-10-05  11:19:37
+
+Start-Date: 2026-10-05  11:19:40
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: bsdextrautils:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:19:40
+
+Start-Date: 2026-10-05  11:19:42
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: ncurses-bin:amd64 (6.3-2ubuntu0.1, 6.3-2ubuntu0.3)
+End-Date: 2026-10-05  11:19:43
+
+Start-Date: 2026-10-05  11:19:45
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: liblzma5:amd64 (5.2.5-2ubuntu1, 5.2.5-2ubuntu1.1)
+End-Date: 2026-10-05  11:19:46
+
+Start-Date: 2026-10-05  11:19:48
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: ncurses-term:amd64 (6.3-2ubuntu0.1, 6.3-2ubuntu0.3)
+End-Date: 2026-10-05  11:19:49
+
+Start-Date: 2026-10-05  11:19:51
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3.10:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), libpython3.10-minimal:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), libpython3.10-stdlib:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), python3.10-venv:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), python3.10-full:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), libpython3.10:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), libpython3.10-dev:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), python3.10-dev:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18), python3.10-minimal:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18)
+End-Date: 2026-10-05  11:19:53
+
+Start-Date: 2026-10-05  11:19:56
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: rsyslog:amd64 (8.2112.0-2ubuntu2.2, 8.2112.0-2ubuntu2.5)
+End-Date: 2026-10-05  11:19:56
+
+Start-Date: 2026-10-05  11:19:59
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libxslt1.1:amd64 (1.1.34-4ubuntu0.22.04.3, 1.1.34-4ubuntu0.22.04.5)
+End-Date: 2026-10-05  11:19:59
+
+Start-Date: 2026-10-05  11:20:02
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: dpkg-dev:amd64 (1.21.1ubuntu2.3, 1.21.1ubuntu2.6), libdpkg-perl:amd64 (1.21.1ubuntu2.3, 1.21.1ubuntu2.6)
+End-Date: 2026-10-05  11:20:02
+
+Start-Date: 2026-10-05  11:20:05
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: mount:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:20:05
+
+Start-Date: 2026-10-05  11:20:08
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpam-runtime:amd64 (1.4.0-11ubuntu2.5, 1.4.0-11ubuntu2.8)
+End-Date: 2026-10-05  11:20:08
+
+Start-Date: 2026-10-05  11:20:11
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: iputils-tracepath:amd64 (3:20211215-1, 3:20211215-1ubuntu0.1)
+End-Date: 2026-10-05  11:20:11
+
+Start-Date: 2026-10-05  11:20:13
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpolkit-agent-1-0:amd64 (0.105-33, 0.105-33ubuntu0.2), polkitd:amd64 (0.105-33, 0.105-33ubuntu0.2), libpolkit-gobject-1-0:amd64 (0.105-33, 0.105-33ubuntu0.2), pkexec:amd64 (0.105-33, 0.105-33ubuntu0.2), policykit-1:amd64 (0.105-33, 0.105-33ubuntu0.2)
+End-Date: 2026-10-05  11:20:14
+
+Start-Date: 2026-10-05  11:20:17
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-httplib2:amd64 (0.20.2-2, 0.20.2-2ubuntu0.1)
+End-Date: 2026-10-05  11:20:17
+
+Start-Date: 2026-10-05  11:20:20
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: rsync:amd64 (3.2.7-0ubuntu0.22.04.4, 3.2.7-0ubuntu0.22.04.7)
+End-Date: 2026-10-05  11:20:20
+
+Start-Date: 2026-10-05  11:20:23
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: bind9-host:amd64 (1:9.18.30-0ubuntu0.22.04.2, 1:9.18.39-0ubuntu0.22.04.6), bind9-dnsutils:amd64 (1:9.18.30-0ubuntu0.22.04.2, 1:9.18.39-0ubuntu0.22.04.6), bind9-libs:amd64 (1:9.18.30-0ubuntu0.22.04.2, 1:9.18.39-0ubuntu0.22.04.6)
+End-Date: 2026-10-05  11:20:23
+
+Start-Date: 2026-10-05  11:20:26
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-idna:amd64 (3.3-1ubuntu0.1, 3.3-1ubuntu0.2)
+End-Date: 2026-10-05  11:20:26
+
+Start-Date: 2026-10-05  11:20:29
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libcairo2:amd64 (1.16.0-5ubuntu2, 1.16.0-5ubuntu2.1), libcairo-gobject2:amd64 (1.16.0-5ubuntu2, 1.16.0-5ubuntu2.1)
+End-Date: 2026-10-05  11:20:29
+
+Start-Date: 2026-10-05  11:20:32
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: kmod:amd64 (29-1ubuntu1, 29-1ubuntu1.1), libkmod2:amd64 (29-1ubuntu1, 29-1ubuntu1.1)
+End-Date: 2026-10-05  11:20:44
+
+Start-Date: 2026-10-05  11:20:47
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libcups2:amd64 (2.4.1op1-1ubuntu4.12, 2.4.1op1-1ubuntu4.21)
+End-Date: 2026-10-05  11:20:47
+
+Start-Date: 2026-10-05  11:20:49
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpam-cap:amd64 (1:2.44-1ubuntu0.22.04.2, 1:2.44-1ubuntu0.22.04.3)
+End-Date: 2026-10-05  11:20:50
+
+Start-Date: 2026-10-05  11:20:52
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: gpg:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gnupg:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gpg-wks-server:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gpg-agent:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gpgv:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gpgsm:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), dirmngr:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gnupg-utils:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gnupg-l10n:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gpg-wks-client:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5), gpgconf:amd64 (2.2.27-3ubuntu2.3, 2.2.27-3ubuntu2.5)
+End-Date: 2026-10-05  11:20:54
+
+Start-Date: 2026-10-05  11:20:56
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpam-modules:amd64 (1.4.0-11ubuntu2.5, 1.4.0-11ubuntu2.8), libpam-modules-bin:amd64 (1.4.0-11ubuntu2.5, 1.4.0-11ubuntu2.8)
+End-Date: 2026-10-05  11:20:57
+
+Start-Date: 2026-10-05  11:20:59
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libglx-mesa0:amd64 (23.2.1-1ubuntu3.1~22.04.3, 23.2.1-1ubuntu3.1~22.04.4), libgbm1:amd64 (23.2.1-1ubuntu3.1~22.04.3, 23.2.1-1ubuntu3.1~22.04.4), libgl1-mesa-dri:amd64 (23.2.1-1ubuntu3.1~22.04.3, 23.2.1-1ubuntu3.1~22.04.4), libglapi-mesa:amd64 (23.2.1-1ubuntu3.1~22.04.3, 23.2.1-1ubuntu3.1~22.04.4), libegl-mesa0:amd64 (23.2.1-1ubuntu3.1~22.04.3, 23.2.1-1ubuntu3.1~22.04.4)
+End-Date: 2026-10-05  11:21:00
+
+Start-Date: 2026-10-05  11:21:03
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgnutls30:amd64 (3.7.3-4ubuntu1.6, 3.7.3-4ubuntu1.9)
+End-Date: 2026-10-05  11:21:03
+
+Start-Date: 2026-10-05  11:21:05
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: liblcms2-2:amd64 (2.12~rc1-2build2, 2.12~rc1-2ubuntu0.1)
+End-Date: 2026-10-05  11:21:05
+
+Start-Date: 2026-10-05  11:21:09
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: linux-firmware:amd64 (20220329.git681281e4-0ubuntu3.36, 20220329.git681281e4-0ubuntu3.40)
+End-Date: 2026-10-05  11:21:26
+
+Start-Date: 2026-10-05  11:21:29
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: openssh-client:amd64 (1:8.9p1-3ubuntu0.13, 1:8.9p1-3ubuntu0.17), openssh-server:amd64 (1:8.9p1-3ubuntu0.13, 1:8.9p1-3ubuntu0.17), openssh-sftp-server:amd64 (1:8.9p1-3ubuntu0.13, 1:8.9p1-3ubuntu0.17)
+End-Date: 2026-10-05  11:21:30
+
+Start-Date: 2026-10-05  11:21:33
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libcurl4:amd64 (7.81.0-1ubuntu1.20, 7.81.0-1ubuntu1.29), curl:amd64 (7.81.0-1ubuntu1.20, 7.81.0-1ubuntu1.29)
+End-Date: 2026-10-05  11:21:33
+
+Start-Date: 2026-10-05  11:21:36
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-setuptools-whl:amd64 (59.6.0-1.2ubuntu0.22.04.2, 59.6.0-1.2ubuntu0.22.04.3)
+End-Date: 2026-10-05  11:21:36
+
+Start-Date: 2026-10-05  11:21:38
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libsodium23:amd64 (1.0.18-1build2, 1.0.18-1ubuntu0.22.04.1)
+End-Date: 2026-10-05  11:21:38
+
+Start-Date: 2026-10-05  11:21:41
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: locales:amd64 (2.35-0ubuntu3.9, 2.35-0ubuntu3.15)
+End-Date: 2026-10-05  11:21:42
+
+Start-Date: 2026-10-05  11:21:45
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: cpio:amd64 (2.13+dfsg-7ubuntu0.1, 2.13+dfsg-7ubuntu0.2)
+End-Date: 2026-10-05  11:21:45
+
+Start-Date: 2026-10-05  11:21:48
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: bsdutils:amd64 (1:2.37.2-4ubuntu3.4, 1:2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:21:48
+
+Start-Date: 2026-10-05  11:21:51
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libfdisk1:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:21:51
+
+Start-Date: 2026-10-05  11:21:54
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgcrypt20:amd64 (1.9.4-3ubuntu3, 1.9.4-3ubuntu3.3)
+End-Date: 2026-10-05  11:21:54
+
+Start-Date: 2026-10-05  11:21:56
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libcurl3-gnutls:amd64 (7.81.0-1ubuntu1.20, 7.81.0-1ubuntu1.29)
+End-Date: 2026-10-05  11:21:57
+
+Start-Date: 2026-10-05  11:21:59
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libntfs-3g89:amd64 (1:2021.8.22-3ubuntu1.2, 1:2021.8.22-3ubuntu1.4), ntfs-3g:amd64 (1:2021.8.22-3ubuntu1.2, 1:2021.8.22-3ubuntu1.4)
+End-Date: 2026-10-05  11:22:11
+
+Start-Date: 2026-10-05  11:22:14
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: openssl:amd64 (3.0.2-0ubuntu1.19, 3.0.2-0ubuntu1.30)
+End-Date: 2026-10-05  11:22:14
+
+Start-Date: 2026-10-05  11:22:17
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3.10-examples:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18)
+End-Date: 2026-10-05  11:22:17
+
+Start-Date: 2026-10-05  11:22:20
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python-apt-common:amd64 (2.4.0ubuntu4, 2.4.0ubuntu4.1)
+End-Date: 2026-10-05  11:22:20
+
+Start-Date: 2026-10-05  11:22:23
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libuuid1:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:22:23
+
+Start-Date: 2026-10-05  11:22:25
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: udev:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22), libudev1:amd64 (249.11-0ubuntu3.15, 249.11-0ubuntu3.22)
+End-Date: 2026-10-05  11:22:38
+
+Start-Date: 2026-10-05  11:22:40
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libssh-4:amd64 (0.9.6-2ubuntu0.22.04.3, 0.9.6-2ubuntu0.22.04.8)
+End-Date: 2026-10-05  11:22:41
+
+Start-Date: 2026-10-05  11:22:43
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: tar:amd64 (1.34+dfsg-1ubuntu0.1.22.04.2, 1.34+dfsg-1ubuntu0.1.22.04.6)
+End-Date: 2026-10-05  11:22:43
+
+Start-Date: 2026-10-05  11:22:46
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgdk-pixbuf-2.0-0:amd64 (2.42.8+dfsg-1ubuntu0.4, 2.42.8+dfsg-1ubuntu0.5), libgdk-pixbuf2.0-common:amd64 (2.42.8+dfsg-1ubuntu0.4, 2.42.8+dfsg-1ubuntu0.5)
+End-Date: 2026-10-05  11:22:46
+
+Start-Date: 2026-10-05  11:22:49
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-apt:amd64 (2.4.0ubuntu4, 2.4.0ubuntu4.1)
+End-Date: 2026-10-05  11:22:49
+
+Start-Date: 2026-10-05  11:22:52
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: gzip:amd64 (1.10-4ubuntu4.1, 1.10-4ubuntu4.2)
+End-Date: 2026-10-05  11:22:52
+
+Start-Date: 2026-10-05  11:22:55
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: jq:amd64 (1.6-2.1ubuntu3, 1.6-2.1ubuntu3.2), libjq1:amd64 (1.6-2.1ubuntu3, 1.6-2.1ubuntu3.2)
+End-Date: 2026-10-05  11:22:55
+
+Start-Date: 2026-10-05  11:22:58
+Commandline: /usr/bin/unattended-upgrade
+Install: linux-hwe-6.8-tools-6.8.0-138:amd64 (6.8.0-138.138~22.04.1, automatic), linux-modules-6.8.0-138-generic:amd64 (6.8.0-138.138~22.04.1, automatic), linux-modules-extra-6.8.0-138-generic:amd64 (6.8.0-138.138~22.04.1, automatic), linux-tools-6.8.0-138-generic:amd64 (6.8.0-138.138~22.04.1, automatic), linux-image-6.8.0-138-generic:amd64 (6.8.0-138.138~22.04.1, automatic), linux-hwe-6.8-headers-6.8.0-138:amd64 (6.8.0-138.138~22.04.1, automatic), linux-headers-6.8.0-138-generic:amd64 (6.8.0-138.138~22.04.1, automatic)
+Upgrade: linux-image-generic-hwe-22.04:amd64 (6.8.0-59.61~22.04.1, 6.8.0-138.138~22.04.1), linux-headers-generic-hwe-22.04:amd64 (6.8.0-59.61~22.04.1, 6.8.0-138.138~22.04.1), linux-generic-hwe-22.04:amd64 (6.8.0-59.61~22.04.1, 6.8.0-138.138~22.04.1)
+End-Date: 2026-10-05  11:23:39
+
+Start-Date: 2026-10-05  11:23:42
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgssapi-krb5-2:amd64 (1.19.2-2ubuntu0.6, 1.19.2-2ubuntu0.8), libkrb5support0:amd64 (1.19.2-2ubuntu0.6, 1.19.2-2ubuntu0.8), libkrb5-3:amd64 (1.19.2-2ubuntu0.6, 1.19.2-2ubuntu0.8)
+End-Date: 2026-10-05  11:23:43
+
+Start-Date: 2026-10-05  11:23:45
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpython3.10-testsuite:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18)
+End-Date: 2026-10-05  11:23:47
+
+Start-Date: 2026-10-05  11:23:50
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libxml2:amd64 (2.9.13+dfsg-1ubuntu0.7, 2.9.13+dfsg-1ubuntu0.13)
+End-Date: 2026-10-05  11:23:50
+
+Start-Date: 2026-10-05  11:23:53
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libavahi-common-data:amd64 (0.8-5ubuntu5.2, 0.8-5ubuntu5.5), libavahi-common3:amd64 (0.8-5ubuntu5.2, 0.8-5ubuntu5.5), libavahi-client3:amd64 (0.8-5ubuntu5.2, 0.8-5ubuntu5.5)
+End-Date: 2026-10-05  11:23:53
+
+Start-Date: 2026-10-05  11:23:56
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libsqlite3-0:amd64 (3.37.2-2ubuntu0.3, 3.37.2-2ubuntu0.8)
+End-Date: 2026-10-05  11:23:56
+
+Start-Date: 2026-10-05  11:23:59
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libxpm4:amd64 (1:3.5.12-1ubuntu0.22.04.2, 1:3.5.12-1ubuntu0.22.04.4)
+End-Date: 2026-10-05  11:23:59
+
+Start-Date: 2026-10-05  11:24:01
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-pip:amd64 (22.0.2+dfsg-1ubuntu0.5, 22.0.2+dfsg-1ubuntu0.7)
+End-Date: 2026-10-05  11:24:02
+
+Start-Date: 2026-10-05  11:24:05
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libisns0:amd64 (0.101-0ubuntu2, 0.101-0ubuntu2.1)
+End-Date: 2026-10-05  11:24:05
+
+Start-Date: 2026-10-05  11:24:08
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libcap2-bin:amd64 (1:2.44-1ubuntu0.22.04.2, 1:2.44-1ubuntu0.22.04.3)
+End-Date: 2026-10-05  11:24:08
+
+Start-Date: 2026-10-05  11:24:11
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libc6:amd64 (2.35-0ubuntu3.9, 2.35-0ubuntu3.15), libc-dev-bin:amd64 (2.35-0ubuntu3.9, 2.35-0ubuntu3.15), libc6-dev:amd64 (2.35-0ubuntu3.9, 2.35-0ubuntu3.15)
+End-Date: 2026-10-05  11:24:12
+
+Start-Date: 2026-10-05  11:24:14
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev-crypto2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:24:14
+
+Start-Date: 2026-10-05  11:24:17
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev-loop2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:24:17
+
+Start-Date: 2026-10-05  11:24:20
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: gir1.2-packagekitglib-1.0:amd64 (1.2.5-2ubuntu3, 1.2.5-2ubuntu3.1)
+End-Date: 2026-10-05  11:24:20
+
+Start-Date: 2026-10-05  11:24:23
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: distro-info-data:amd64 (0.52ubuntu0.9, 0.72-0ubuntu0.22.04.1)
+End-Date: 2026-10-05  11:24:23
+
+Start-Date: 2026-10-05  11:24:26
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: git:amd64 (1:2.34.1-1ubuntu1.12, 1:2.34.1-1ubuntu1.17)
+End-Date: 2026-10-05  11:24:26
+
+Start-Date: 2026-10-05  11:24:29
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: git-man:amd64 (1:2.34.1-1ubuntu1.12, 1:2.34.1-1ubuntu1.17)
+End-Date: 2026-10-05  11:24:29
+
+Start-Date: 2026-10-05  11:24:32
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libarchive13:amd64 (3.6.0-1ubuntu1.4, 3.6.0-1ubuntu1.8)
+End-Date: 2026-10-05  11:24:32
+
+Start-Date: 2026-10-05  11:24:35
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: net-tools:amd64 (1.60+git20181103.0eebece-1ubuntu5, 1.60+git20181103.0eebece-1ubuntu5.4)
+End-Date: 2026-10-05  11:24:35
+
+Start-Date: 2026-10-05  11:24:38
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-pkg-resources:amd64 (59.6.0-1.2ubuntu0.22.04.2, 59.6.0-1.2ubuntu0.22.04.3), python3-setuptools:amd64 (59.6.0-1.2ubuntu0.22.04.2, 59.6.0-1.2ubuntu0.22.04.3)
+End-Date: 2026-10-05  11:24:38
+
+Start-Date: 2026-10-05  11:24:41
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: sudo:amd64 (1.9.9-1ubuntu2.4, 1.9.9-1ubuntu2.6)
+End-Date: 2026-10-05  11:24:41
+
+Start-Date: 2026-10-05  11:24:44
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libnss3:amd64 (2:3.98-0ubuntu0.22.04.2, 2:3.98-0ubuntu0.22.04.4)
+End-Date: 2026-10-05  11:24:44
+
+Start-Date: 2026-10-05  11:24:47
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libc-devtools:amd64 (2.35-0ubuntu3.9, 2.35-0ubuntu3.15)
+End-Date: 2026-10-05  11:24:47
+
+Start-Date: 2026-10-05  11:24:50
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: eject:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:24:50
+
+Start-Date: 2026-10-05  11:24:54
+Commandline: /usr/bin/unattended-upgrade
+Install: linux-kvm-headers-5.15.0-1108:amd64 (5.15.0-1108.113, automatic), linux-modules-5.15.0-1108-kvm:amd64 (5.15.0-1108.113, automatic), linux-headers-5.15.0-1108-kvm:amd64 (5.15.0-1108.113, automatic), linux-image-5.15.0-1108-kvm:amd64 (5.15.0-1108.113, automatic)
+Upgrade: linux-image-kvm:amd64 (5.15.0.1079.75, 5.15.0.1108.104), linux-headers-kvm:amd64 (5.15.0.1079.75, 5.15.0.1108.104), linux-kvm:amd64 (5.15.0.1079.75, 5.15.0.1108.104)
+End-Date: 2026-10-05  11:25:18
+
+Start-Date: 2026-10-05  11:25:21
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libp11-kit0:amd64 (0.24.0-6build1, 0.24.0-6ubuntu0.1)
+End-Date: 2026-10-05  11:25:21
+
+Start-Date: 2026-10-05  11:25:24
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libssl3:amd64 (3.0.2-0ubuntu1.19, 3.0.2-0ubuntu1.30)
+End-Date: 2026-10-05  11:25:24
+
+Start-Date: 2026-10-05  11:25:27
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-requests:amd64 (2.25.1+dfsg-2ubuntu0.1, 2.25.1+dfsg-2ubuntu0.4)
+End-Date: 2026-10-05  11:25:27
+
+Start-Date: 2026-10-05  11:25:30
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev-part-err2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:25:30
+
+Start-Date: 2026-10-05  11:25:33
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libxfont2:amd64 (1:2.0.5-1build1, 1:2.0.5-1ubuntu0.2)
+End-Date: 2026-10-05  11:25:33
+
+Start-Date: 2026-10-05  11:25:36
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libexpat1:amd64 (2.4.7-1ubuntu0.6, 2.4.7-1ubuntu0.9), libexpat1-dev:amd64 (2.4.7-1ubuntu0.6, 2.4.7-1ubuntu0.9)
+End-Date: 2026-10-05  11:25:36
+
+Start-Date: 2026-10-05  11:25:39
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-problem-report:amd64 (2.20.11-0ubuntu82.6, 2.20.11-0ubuntu82.10)
+End-Date: 2026-10-05  11:25:39
+
+Start-Date: 2026-10-05  11:25:42
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: wget:amd64 (1.21.2-2ubuntu1.1, 1.21.2-2ubuntu1.5)
+End-Date: 2026-10-05  11:25:42
+
+Start-Date: 2026-10-05  11:25:45
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libtinfo6:amd64 (6.3-2ubuntu0.1, 6.3-2ubuntu0.3), libncursesw6:amd64 (6.3-2ubuntu0.1, 6.3-2ubuntu0.3), libncurses6:amd64 (6.3-2ubuntu0.1, 6.3-2ubuntu0.3)
+End-Date: 2026-10-05  11:25:45
+
+Start-Date: 2026-10-05  11:25:48
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: sed:amd64 (4.8-1ubuntu2, 4.8-1ubuntu2.1)
+End-Date: 2026-10-05  11:25:49
+
+Start-Date: 2026-10-05  11:25:51
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: bzip2:amd64 (1.0.8-5build1, 1.0.8-5ubuntu0.1), libbz2-1.0:amd64 (1.0.8-5build1, 1.0.8-5ubuntu0.1)
+End-Date: 2026-10-05  11:25:52
+
+Start-Date: 2026-10-05  11:25:54
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libmount1:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:25:55
+
+Start-Date: 2026-10-05  11:25:57
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: open-vm-tools:amd64 (2:12.3.5-3~ubuntu0.22.04.2, 2:12.3.5-3~ubuntu0.22.04.3)
+End-Date: 2026-10-05  11:25:58
+
+Start-Date: 2026-10-05  11:26:01
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-apport:amd64 (2.20.11-0ubuntu82.6, 2.20.11-0ubuntu82.10)
+End-Date: 2026-10-05  11:26:01
+
+Start-Date: 2026-10-05  11:26:04
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-pyasn1:amd64 (0.4.8-1, 0.4.8-1ubuntu0.3)
+End-Date: 2026-10-05  11:26:04
+
+Start-Date: 2026-10-05  11:26:07
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgl1-amber-dri:amd64 (21.3.9-0ubuntu1~22.04.1, 21.3.9-0ubuntu1~22.04.2)
+End-Date: 2026-10-05  11:26:07
+
+Start-Date: 2026-10-05  11:26:10
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: wireless-regdb:amd64 (2024.07.04-0ubuntu1~22.04.1, 2026.05.30-0ubuntu1~22.04.1)
+End-Date: 2026-10-05  11:26:11
+
+Start-Date: 2026-10-05  11:26:14
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: linux-tools-common:amd64 (5.15.0-140.150, 5.15.0-194.204)
+End-Date: 2026-10-05  11:26:14
+
+Start-Date: 2026-10-05  11:26:17
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: diffutils:amd64 (1:3.8-0ubuntu2, 1:3.8-0ubuntu2.1)
+End-Date: 2026-10-05  11:26:17
+
+Start-Date: 2026-10-05  11:26:20
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-twisted:amd64 (22.1.0-2ubuntu2.6, 22.1.0-2ubuntu2.7)
+End-Date: 2026-10-05  11:26:21
+
+Start-Date: 2026-10-05  11:26:24
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: util-linux:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:26:25
+
+Start-Date: 2026-10-05  11:26:28
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: intel-microcode:amd64 (3.20250211.0ubuntu0.22.04.1, 3.20260210.0ubuntu0.22.04.1)
+End-Date: 2026-10-05  11:26:40
+
+Start-Date: 2026-10-05  11:26:43
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libperl5.34:amd64 (5.34.0-3ubuntu1.4, 5.34.0-3ubuntu1.9), perl:amd64 (5.34.0-3ubuntu1.4, 5.34.0-3ubuntu1.9), perl-base:amd64 (5.34.0-3ubuntu1.4, 5.34.0-3ubuntu1.9), perl-modules-5.34:amd64 (5.34.0-3ubuntu1.4, 5.34.0-3ubuntu1.9)
+End-Date: 2026-10-05  11:26:44
+
+Start-Date: 2026-10-05  11:26:47
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: snapd:amd64 (2.67.1+22.04, 2.76+ubuntu22.04.1)
+End-Date: 2026-10-05  11:26:56
+
+Start-Date: 2026-10-05  11:26:58
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: uuid-runtime:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:26:59
+
+Start-Date: 2026-10-05  11:27:02
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libglib2.0-data:amd64 (2.72.4-0ubuntu2.4, 2.72.4-0ubuntu2.10)
+End-Date: 2026-10-05  11:27:02
+
+Start-Date: 2026-10-05  11:27:05
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libcap2:amd64 (1:2.44-1ubuntu0.22.04.2, 1:2.44-1ubuntu0.22.04.3)
+End-Date: 2026-10-05  11:27:05
+
+Start-Date: 2026-10-05  11:27:08
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-jwt:amd64 (2.3.0-1ubuntu0.2, 2.3.0-1ubuntu0.4)
+End-Date: 2026-10-05  11:27:08
+
+Start-Date: 2026-10-05  11:27:11
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: xxd:amd64 (2:8.2.3995-1ubuntu2.24, 2:8.2.3995-1ubuntu2.36)
+End-Date: 2026-10-05  11:27:11
+
+Start-Date: 2026-10-05  11:27:14
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblkid1:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:27:14
+
+Start-Date: 2026-10-05  11:27:17
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:27:17
+
+Start-Date: 2026-10-05  11:27:20
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libevent-core-2.1-7:amd64 (2.1.12-stable-1build3, 2.1.12-stable-1ubuntu0.2)
+End-Date: 2026-10-05  11:27:20
+
+Start-Date: 2026-10-05  11:27:23
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: klibc-utils:amd64 (2.0.10-4ubuntu0.1, 2.0.10-4ubuntu0.2), libklibc:amd64 (2.0.10-4ubuntu0.1, 2.0.10-4ubuntu0.2)
+End-Date: 2026-10-05  11:27:35
+
+Start-Date: 2026-10-05  11:27:38
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: xz-utils:amd64 (5.2.5-2ubuntu1, 5.2.5-2ubuntu1.1)
+End-Date: 2026-10-05  11:27:38
+
+Start-Date: 2026-10-05  11:27:41
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libattr1:amd64 (1:2.5.1-1build1, 1:2.5.1-1ubuntu0.1)
+End-Date: 2026-10-05  11:27:41
+
+Start-Date: 2026-10-05  11:27:43
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: idle-python3.10:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18)
+End-Date: 2026-10-05  11:27:44
+
+Start-Date: 2026-10-05  11:27:47
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: screen:amd64 (4.9.0-1, 4.9.0-1ubuntu0.1)
+End-Date: 2026-10-05  11:27:47
+
+Start-Date: 2026-10-05  11:27:50
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpam0g:amd64 (1.4.0-11ubuntu2.5, 1.4.0-11ubuntu2.8)
+End-Date: 2026-10-05  11:27:50
+
+Start-Date: 2026-10-05  11:27:53
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: ncurses-base:amd64 (6.3-2ubuntu0.1, 6.3-2ubuntu0.3)
+End-Date: 2026-10-05  11:27:53
+
+Start-Date: 2026-10-05  11:27:56
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libudisks2-0:amd64 (2.9.4-1ubuntu2, 2.9.4-1ubuntu2.3)
+End-Date: 2026-10-05  11:27:56
+
+Start-Date: 2026-10-05  11:27:59
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: fdisk:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:27:59
+
+Start-Date: 2026-10-05  11:28:02
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libnghttp2-14:amd64 (1.43.0-1ubuntu0.2, 1.43.0-1ubuntu0.4)
+End-Date: 2026-10-05  11:28:02
+
+Start-Date: 2026-10-05  11:28:05
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpcap0.8:amd64 (1.10.1-4ubuntu1.22.04.1, 1.10.1-4ubuntu1.22.04.2)
+End-Date: 2026-10-05  11:28:05
+
+Start-Date: 2026-10-05  11:28:08
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libsmartcols1:amd64 (2.37.2-4ubuntu3.4, 2.37.2-4ubuntu3.6)
+End-Date: 2026-10-05  11:28:08
+
+Start-Date: 2026-10-05  11:28:11
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libctf-nobfd0:amd64 (2.38-4ubuntu2.8, 2.38-4ubuntu2.12)
+End-Date: 2026-10-05  11:28:11
+
+Start-Date: 2026-10-05  11:28:14
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: mesa-vdpau-drivers:amd64 (23.2.1-1ubuntu3.1~22.04.3, 23.2.1-1ubuntu3.1~22.04.4)
+End-Date: 2026-10-05  11:28:14
+
+Start-Date: 2026-10-05  11:28:17
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev-fs2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:28:17
+
+Start-Date: 2026-10-05  11:28:20
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: linux-libc-dev:amd64 (5.15.0-140.150, 5.15.0-194.204)
+End-Date: 2026-10-05  11:28:20
+
+Start-Date: 2026-10-05  11:28:23
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: apport:amd64 (2.20.11-0ubuntu82.6, 2.20.11-0ubuntu82.10)
+End-Date: 2026-10-05  11:28:24
+
+Start-Date: 2026-10-05  11:28:27
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: coreutils:amd64 (8.32-4.1ubuntu1.2, 8.32-4.1ubuntu1.4)
+End-Date: 2026-10-05  11:28:27
+
+Start-Date: 2026-10-05  11:28:30
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: cloud-init:amd64 (24.4.1-0ubuntu0~22.04.2, 25.1.4-0ubuntu0~22.04.1)
+End-Date: 2026-10-05  11:28:32
+
+Start-Date: 2026-10-05  11:28:34
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-urllib3:amd64 (1.26.5-1~exp1ubuntu0.2, 1.26.5-1~exp1ubuntu0.7)
+End-Date: 2026-10-05  11:28:35
+
+Start-Date: 2026-10-05  11:28:37
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev-swap2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:28:38
+
+Start-Date: 2026-10-05  11:28:40
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: tzdata:amd64 (2025b-0ubuntu0.22.04, 2026c-0ubuntu0.22.04.1)
+End-Date: 2026-10-05  11:28:41
+
+Start-Date: 2026-10-05  11:28:44
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-pip-whl:amd64 (22.0.2+dfsg-1ubuntu0.5, 22.0.2+dfsg-1ubuntu0.7)
+End-Date: 2026-10-05  11:28:44
+
+Start-Date: 2026-10-05  11:28:46
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: nano:amd64 (6.2-1ubuntu0.1, 6.2-1ubuntu0.2)
+End-Date: 2026-10-05  11:28:47
+
+Start-Date: 2026-10-05  11:28:49
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: iputils-ping:amd64 (3:20211215-1, 3:20211215-1ubuntu0.1)
+End-Date: 2026-10-05  11:28:50
+
+Start-Date: 2026-10-05  11:28:52
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: dpkg:amd64 (1.21.1ubuntu2.3, 1.21.1ubuntu2.6)
+End-Date: 2026-10-05  11:28:53
+
+Start-Date: 2026-10-05  11:28:56
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev-utils2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:28:56
+
+Start-Date: 2026-10-05  11:28:59
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libslirp0:amd64 (4.6.1-1build1, 4.6.1-1ubuntu0.2)
+End-Date: 2026-10-05  11:28:59
+
+Start-Date: 2026-10-05  11:29:02
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3.10-doc:amd64 (3.10.12-1~22.04.9, 3.10.12-1~22.04.18)
+End-Date: 2026-10-05  11:29:02
+
+Start-Date: 2026-10-05  11:29:05
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-cryptography:amd64 (3.4.8-1ubuntu2.2, 3.4.8-1ubuntu2.4)
+End-Date: 2026-10-05  11:29:05
+
+Start-Date: 2026-10-05  11:29:08
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libc-bin:amd64 (2.35-0ubuntu3.9, 2.35-0ubuntu3.15)
+End-Date: 2026-10-05  11:29:08
+
+Start-Date: 2026-10-05  11:29:12
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: qemu-guest-agent:amd64 (1:6.2+dfsg-2ubuntu6.26, 1:6.2+dfsg-2ubuntu6.30)
+End-Date: 2026-10-05  11:29:12
+
+Start-Date: 2026-10-05  11:29:15
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: usbmuxd:amd64 (1.1.1-2build2, 1.1.1-2ubuntu0.1)
+End-Date: 2026-10-05  11:29:16
+
+Start-Date: 2026-10-05  11:29:18
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libtiff5:amd64 (4.3.0-6ubuntu0.10, 4.3.0-6ubuntu0.13)
+End-Date: 2026-10-05  11:29:18
+
+Start-Date: 2026-10-05  11:29:21
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: python3-openssl:amd64 (21.0.0-1, 21.0.0-1ubuntu0.1)
+End-Date: 2026-10-05  11:29:21
+
+Start-Date: 2026-10-05  11:29:24
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libblockdev-part2:amd64 (2.26-1, 2.26-1ubuntu0.1)
+End-Date: 2026-10-05  11:29:24
+
+Start-Date: 2026-10-05  11:29:27
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libpng16-16:amd64 (1.6.37-3build5, 1.6.37-3ubuntu0.6)
+End-Date: 2026-10-05  11:29:27
+
+Start-Date: 2026-10-05  11:29:31
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libk5crypto3:amd64 (1.19.2-2ubuntu0.6, 1.19.2-2ubuntu0.8)
+End-Date: 2026-10-05  11:29:31
+
+Start-Date: 2026-10-05  11:29:33
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: libgraphite2-3:amd64 (1.3.14-1build2, 1.3.14-1ubuntu0.1)
+End-Date: 2026-10-05  11:29:34
+
+Start-Date: 2026-10-05  11:29:36
+Commandline: /usr/bin/unattended-upgrade
+Upgrade: gawk:amd64 (1:5.1.0-1ubuntu0.1, 1:5.1.0-1ubuntu0.2)
+End-Date: 2026-10-05  11:29:37
+
+Start-Date: 2026-10-05  11:29:39
+Commandline: /usr/bin/unattended-upgrade
+Remove: linux-headers-5.15.0-1079-kvm:amd64 (5.15.0-1079.84)
+End-Date: 2026-10-05  11:29:40
+
+Start-Date: 2026-10-05  11:29:42
+Commandline: /usr/bin/unattended-upgrade
+Remove: linux-kvm-headers-5.15.0-1079:amd64 (5.15.0-1079.84)
+End-Date: 2026-10-05  11:29:43
+
+Start-Date: 2026-10-05  11:29:45
+Commandline: /usr/bin/unattended-upgrade
+Remove: nvidia-firmware-580-server-580.95.05:amd64 (580.95.05-0ubuntu0.22.04.2)
+End-Date: 2026-10-05  11:29:45
+
+Start-Date: 2026-10-05  11:29:48
+Commandline: /usr/bin/unattended-upgrade
+Remove: linux-modules-5.15.0-1079-kvm:amd64 (5.15.0-1079.84), linux-image-5.15.0-1079-kvm:amd64 (5.15.0-1079.84)
+End-Date: 2026-10-05  11:29:49
+2026-10-05 11:16:08,300 WARNING Could not figure out development release: Distribution data outdated. Please check for an update for distro-info-data. See /usr/share/doc/distro-info-data/README.Debian for details.
+2026-10-05 11:16:08,300 INFO Starting unattended upgrades script
+2026-10-05 11:16:08,300 INFO Allowed origins are: o=Ubuntu,a=jammy, o=Ubuntu,a=jammy-security, o=UbuntuESMApps,a=jammy-apps-security, o=UbuntuESM,a=jammy-infra-security
+2026-10-05 11:16:08,300 INFO Initial blacklist: 
+2026-10-05 11:16:08,300 INFO Initial whitelist (not strict): 
+2026-10-05 11:17:55,072 INFO Packages that will be upgraded: apport bind9-dnsutils bind9-host bind9-libs binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils bsdutils bzip2 ca-certificates cloud-init coreutils cpio cpp-11 cpp-12 curl diffutils dirmngr distro-info-data dpkg dpkg-dev eject fdisk g++-11 gawk gcc-11 gcc-11-base gcc-12 gcc-12-base gir1.2-packagekitglib-1.0 git git-man gnupg gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client gpg-wks-server gpgconf gpgsm gpgv gzip idle-python3.10 intel-microcode iputils-ping iputils-tracepath jq klibc-utils kmod libarchive13 libasan6 libasan8 libatomic1 libattr1 libavahi-client3 libavahi-common-data libavahi-common3 libbinutils libblkid1 libblockdev-crypto2 libblockdev-fs2 libblockdev-loop2 libblockdev-part-err2 libblockdev-part2 libblockdev-swap2 libblockdev-utils2 libblockdev2 libbz2-1.0 libc-bin libc-dev-bin libc-devtools libc6 libc6-dev libcairo-gobject2 libcairo2 libcap2 libcap2-bin libcc1-0 libctf-nobfd0 libctf0 libcups2 libcurl3-gnutls libcurl4 libdpkg-perl libegl-mesa0 libevent-core-2.1-7 libexpat1 libexpat1-dev libfdisk1 libgbm1 libgcc-11-dev libgcc-12-dev libgcc-s1 libgcrypt20 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgl1-amber-dri libgl1-mesa-dri libglapi-mesa libglib2.0-0 libglib2.0-bin libglib2.0-data libglx-mesa0 libgnutls30 libgomp1 libgraphite2-3 libgssapi-krb5-2 libisns0 libitm1 libjq1 libk5crypto3 libklibc libkmod2 libkrb5-3 libkrb5support0 liblcms2-2 liblsan0 liblzma5 libmount1 libncurses6 libncursesw6 libnghttp2-14 libnss-systemd libnss3 libntfs-3g89 libnvidia-cfg1-580-server libnvidia-common-580-server libnvidia-compute-580-server libnvidia-decode-580-server libnvidia-encode-580-server libnvidia-extra-580-server libnvidia-fbc1-580-server libnvidia-gl-580-server libp11-kit0 libpackagekit-glib2-18 libpam-cap libpam-modules libpam-modules-bin libpam-runtime libpam-systemd libpam0g libpcap0.8 libperl5.34 libpng16-16 libpolkit-agent-1-0 libpolkit-gobject-1-0 libpython3.10 libpython3.10-dev libpython3.10-minimal libpython3.10-stdlib libpython3.10-testsuite libquadmath0 libslirp0 libsmartcols1 libsodium23 libsqlite3-0 libssh-4 libssl3 libstdc++-11-dev libstdc++6 libsystemd0 libtasn1-6 libtiff5 libtinfo6 libtsan0 libtsan2 libubsan1 libudev1 libudisks2-0 libuuid1 libxfont2 libxml2 libxpm4 libxslt1.1 linux-firmware linux-generic-hwe-22.04 linux-headers-generic-hwe-22.04 linux-headers-kvm linux-image-generic-hwe-22.04 linux-image-kvm linux-kvm linux-libc-dev linux-tools-common locales mesa-vdpau-drivers mount nano ncurses-base ncurses-bin ncurses-term net-tools ntfs-3g nvidia-compute-utils-580-server nvidia-dkms-580-server-open nvidia-driver-580-server-open nvidia-kernel-common-580-server nvidia-kernel-source-580-server-open nvidia-utils-580-server open-vm-tools openssh-client openssh-server openssh-sftp-server openssl packagekit packagekit-tools perl perl-base perl-modules-5.34 pkexec policykit-1 polkitd pollinate python-apt-common python3-apport python3-apt python3-cryptography python3-httplib2 python3-idna python3-jwt python3-openssl python3-pip python3-pip-whl python3-pkg-resources python3-problem-report python3-pyasn1 python3-requests python3-setuptools python3-setuptools-whl python3-twisted python3-urllib3 python3.10 python3.10-dev python3.10-doc python3.10-examples python3.10-full python3.10-minimal python3.10-venv qemu-guest-agent rsync rsyslog screen sed snapd sudo systemd systemd-sysv systemd-timesyncd tar tzdata ubuntu-advantage-tools ubuntu-pro-client ubuntu-pro-client-l10n udev usbmuxd util-linux uuid-runtime vim vim-common vim-runtime vim-tiny wget wireless-regdb xserver-xorg-video-nvidia-580-server xxd xz-utils
+2026-10-05 11:17:55,072 INFO Writing dpkg log to /var/log/unattended-upgrades/unattended-upgrades-dpkg.log
+2026-10-05 11:29:39,490 INFO All upgrades installed
+2026-10-05 11:29:51,556 INFO Packages that were successfully auto-removed: linux-headers-5.15.0-1079-kvm linux-image-5.15.0-1079-kvm linux-kvm-headers-5.15.0-1079 linux-modules-5.15.0-1079-kvm nvidia-firmware-580-server-580.95.05
+2026-10-05 11:29:51,556 INFO Packages that are kept back: 
+2026-10-05 11:29:53,820 INFO Starting unattended upgrades script
+2026-10-05 11:29:53,820 INFO Allowed origins are: o=Ubuntu,a=jammy, o=Ubuntu,a=jammy-security, o=UbuntuESMApps,a=jammy-apps-security, o=UbuntuESM,a=jammy-infra-security
+2026-10-05 11:29:53,820 INFO Initial blacklist: 
+2026-10-05 11:29:53,820 INFO Initial whitelist (not strict): 

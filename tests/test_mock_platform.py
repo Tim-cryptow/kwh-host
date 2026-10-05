@@ -141,6 +141,10 @@ def test_engine_version_enforced_when_strict(identity, report, clock):
     hid = register(p, identity, report)
     r = p.heartbeat(hid, {"engine": healthy(version="0.29.0"), "gpu_sample": idle_gpu()})
     assert not r["accepted"] and "engine version" in r["reasons"][0] and r["challenge"] is None
+    # an engine that does not answer has an unknown version, not a wrong one: one reason, not two
+    clock.advance(30)
+    r = p.heartbeat(hid, {"engine": {"healthy": False, "version": None, "launch_mode": "docker"}, "gpu_sample": idle_gpu()})
+    assert r["reasons"] == ["engine unhealthy"]
 
 
 def test_microbench_two_misses_require_rebench(identity, report, clock):

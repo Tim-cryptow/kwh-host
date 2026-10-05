@@ -1,0 +1,126 @@
+kwh-host 0.3.0.dev1 starting engine (docker)
+re-benchmarking: driver changed: 580.95.05 benchmarked, 580.178.04 now
+probing hardware
+pre-flight: 100% VRAM free, GPU 0.0% busy, 48.4 W -> idle
+starting engine vllm
+engine vllm 0.30.0 model=RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 mode=docker
+tokenizing prompt set
+warm-up job
+  warm-up 35.41s  1851 tok/s  failures=0
+  run 1/3  35.34s  1854 tok/s  failures=0
+  run 2/3  35.34s  1855 tok/s  failures=0
+  run 3/3  35.33s  1855 tok/s  failures=0
+canary check
+  canary 16: mean logprob -1.1655 (reference -1.1655)
+  canary 48: mean logprob -1.1124 (reference -1.1124)
+  canary 80: mean logprob -1.3479 (reference -1.3479)
+  canary 112: mean logprob -1.2453 (reference -1.2453)
+  canary 144: mean logprob -1.1668 (reference -1.1668)
+  canary 176: mean logprob -1.1766 (reference -1.1766)
+  canary 208: mean logprob -1.5939 (reference -1.5939)
+  canary 240: mean logprob -1.6008 (reference -1.6008)
+re-benchmark accepted: 101.875 units/hour (was 101.827)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-1-fdd1d5e8: pass (mean delta 0.0 over 4, 369 ms) -> live
+micro-benchmark discarded: a job arrived while it ran
+job j_42b351e4e921f662.1: completed (2 request(s), 256 tokens)
+micro-benchmark: 100.74 u/h equivalent in 4.47s -> within tolerance
+minted 1 unit(s), balance 1
+challenge ch-2-caf58a8a: pass (mean delta 0.0 over 4, 425 ms) -> live
+minted 1 unit(s), balance 2
+minted 1 unit(s), balance 3
+challenge ch-3-b8ee7a42: pass (mean delta 0.0 over 4, 423 ms) -> live
+micro-benchmark: 72.06 u/h equivalent in 6.24s -> OUTSIDE tolerance
+minted 1 unit(s), balance 4
+minted 1 unit(s), balance 5
+challenge ch-4-4bef8050: pass (mean delta 0.0 over 4, 422 ms) -> live
+minted 1 unit(s), balance 6
+minted 1 unit(s), balance 7
+challenge ch-5-add43faa: pass (mean delta 0.0 over 4, 422 ms) -> live
+micro-benchmark: 71.81 u/h equivalent in 6.27s -> OUTSIDE tolerance
+platform: degraded (re-benchmarking)
+re-benchmarking: micro-benchmark outside 10% of the rate twice in a row
+probing hardware
+pre-flight: 100% VRAM free, GPU 0.0% busy, 16.2 W -> idle
+starting engine vllm
+engine vllm 0.30.0 model=RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 mode=docker
+tokenizing prompt set
+warm-up job
+  warm-up 50.75s  1291 tok/s  failures=0
+  run 1/3  50.71s  1292 tok/s  failures=0
+  run 2/3  50.76s  1291 tok/s  failures=0
+  run 3/3  50.12s  1308 tok/s  failures=0
+canary check
+  canary 16: mean logprob -1.1655 (reference -1.1655)
+  canary 48: mean logprob -1.1124 (reference -1.1124)
+  canary 80: mean logprob -1.3479 (reference -1.3479)
+  canary 112: mean logprob -1.2453 (reference -1.2453)
+  canary 144: mean logprob -1.1668 (reference -1.1668)
+  canary 176: mean logprob -1.1766 (reference -1.1766)
+  canary 208: mean logprob -1.5939 (reference -1.5939)
+  canary 240: mean logprob -1.6008 (reference -1.6008)
+re-benchmark accepted: 70.993 units/hour (was 101.875)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-6-174600c1: pass (mean delta 0.0 over 4, 574 ms) -> live
+micro-benchmark: 71.48 u/h equivalent in 6.30s -> within tolerance
+minted 1 unit(s), balance 8
+challenge ch-7-0600bcac: pass (mean delta 0.0 over 4, 221 ms) -> live
+minted 1 unit(s), balance 9
+minted 1 unit(s), balance 10
+challenge ch-8-facfb381: pass (mean delta 0.0 over 4, 220 ms) -> live
+micro-benchmark: 100.95 u/h equivalent in 4.46s -> OUTSIDE tolerance
+minted 1 unit(s), balance 11
+challenge ch-9-cd880d34: pass (mean delta 0.0 over 4, 217 ms) -> live
+minted 1 unit(s), balance 12
+challenge ch-10-83545627: pass (mean delta 0.0 over 4, 215 ms) -> live
+micro-benchmark: 100.94 u/h equivalent in 4.46s -> OUTSIDE tolerance
+platform: degraded (re-benchmarking)
+re-benchmarking: micro-benchmark outside 10% of the rate twice in a row
+probing hardware
+pre-flight: 100% VRAM free, GPU 0.0% busy, 13.9 W -> idle
+starting engine vllm
+engine vllm 0.30.0 model=RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 mode=docker
+tokenizing prompt set
+warm-up job
+  warm-up 35.48s  1847 tok/s  failures=0
+  run 1/3  35.46s  1848 tok/s  failures=0
+  run 2/3  35.46s  1848 tok/s  failures=0
+  run 3/3  35.43s  1850 tok/s  failures=0
+canary check
+  canary 16: mean logprob -1.1655 (reference -1.1655)
+  canary 48: mean logprob -1.1124 (reference -1.1124)
+  canary 80: mean logprob -1.3479 (reference -1.3479)
+  canary 112: mean logprob -1.2453 (reference -1.2453)
+  canary 144: mean logprob -1.1668 (reference -1.1668)
+  canary 176: mean logprob -1.1766 (reference -1.1766)
+  canary 208: mean logprob -1.5939 (reference -1.5939)
+  canary 240: mean logprob -1.6008 (reference -1.6008)
+re-benchmark accepted: 101.515 units/hour (was 70.993)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-11-011de525: pass (mean delta 0.0 over 4, 374 ms) -> live
+micro-benchmark: 100.40 u/h equivalent in 4.48s -> within tolerance
+platform: degraded (engine unhealthy; engine version None != lock '0.30.0')
+engine unhealthy for 3 heartbeats; restarting it
+platform: offline (engine unhealthy; engine version None != lock '0.30.0')
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+platform: offline (engine unhealthy; engine version None != lock '0.30.0'; 5 consecutive failures)
+challenge ch-12-da22190f: pass (mean delta 0.0 over 4, 374 ms) -> live
+micro-benchmark: 100.15 u/h equivalent in 4.49s -> within tolerance
+{
+  "state": "stopped",
+  "beats": 138,
+  "accepted_beats": 129,
+  "minted_total": 12,
+  "balance": 12,
+  "jobs": {
+    "completed": 1,
+    "failed": 0,
+    "rejected": 0,
+    "undelivered": 0,
+    "completion_tokens": 256
+  }
+}

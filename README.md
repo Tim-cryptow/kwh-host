@@ -31,7 +31,7 @@ Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle,
 - [x] M1 — daemon skeleton + mock platform: `init → bench → register → run` reaches **live**, answers challenges, mints, micro-benchmarks. Proven on a RunPod RTX 3090 on 2026-09-30 (see below).
 - [x] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Proven on a RunPod A40 on 2026-10-02 (see below).
 - [ ] M3 — Docker sandbox, one-line install, WSL2 path. Proven on Linux on a rented RTX 4090 VM on 2026-10-05 (see below): the one-line install, then a certified benchmark inside the sandbox, live, buyer jobs, a 4-bit substitute caught, and the background service. CI runs the same flow without a GPU on every push. Left: WSL2 on a real Windows PC.
-- [ ] M4 — reliability telemetry and re-benchmarking. Built and tested without a GPU on 2026-10-05 (see below), including a re-benchmark inside the real sandbox in CI. Left: one run on a real GPU.
+- [x] M4 — reliability telemetry and re-benchmarking. Proven on a rented RTX 4090 VM on 2026-10-05 (see below): a driver change found by the daemon itself, a slowed card held and re-rated within 5 minutes and re-rated back when it recovered, and a frozen engine replaced in under 2 minutes. CI runs a re-benchmark in the real sandbox on every push.
 - [ ] M5 — real platform (step 4), stake deposit
 
 ## M1 on real hardware (RTX 3090, RunPod, 2026-09-30)
@@ -101,7 +101,7 @@ What it settled:
 - **The installer has to try the GPU, not read settings.** This VM's template promised the NVIDIA Container Toolkit, but none of its programs were installed, while Docker still listed an `nvidia` runtime. The first attempt's engine died with `could not select device driver`. The installer now runs a test container on the GPU and installs the toolkit when that fails, which it did here. `doctor` runs `nvidia-smi` inside the engine image. An engine that dies at launch now shows its own error.
 - Two faults in the test script, not the client, cost a second attempt. Both are written up in the results folder.
 
-## M4: reliability and re-benchmarking
+## M4 on real hardware (RTX 4090, Vast.ai VM, 2026-10-05)
 
 A report stops counting after seven days, or at once when the driver, the engine image or the GPU changes, or after two micro-benchmark misses. The platform then holds the host in `degraded` (no jobs, no mint) until a new report arrives, and the daemon produces one:
 
@@ -110,34 +110,33 @@ A report stops counting after seven days, or at once when the driver, the engine
 3. It benchmarks on a fresh engine and uploads the signed report.
 4. It serves again; the next passed challenge makes it live at the new rate.
 
-Heartbeats continue throughout, so the host is never seen as offline. An engine that stops answering is restarted.
+Heartbeats continue throughout, so the host is never seen as offline. An engine that stops answering, or will not start, is retried. The platform counts what happens to each host, in 5-minute buckets kept for a week, and step 3 will score from those counts. HOST-CLIENT.md §5 has the rules.
 
-The platform counts what happens to each host in 5-minute buckets, kept for a week: time in each state, heartbeats, challenges, micro-benchmarks, jobs with latency, mints. It sums them over the last hour, day and week. Step 3 will score from those counts. The daemon logs the same events as it saw them to `~/.kwh-host/events.jsonl`. HOST-CLIENT.md §5 has the rules. This is `kwh-host status` from the CI run, right after a re-benchmark. The engine is the test stand-in, so the rate is not a GPU's:
+`scripts/vm-m4.sh` put all of it to a real card: a rented VM in Israel with an RTX 4090 and Ubuntu 22.04, $1.45 for both runs. The files are in [results/m4-vast-4090-2026-10-05](results/m4-vast-4090-2026-10-05/).
 
 ```
-Daemon       running (pid 1973), up 23 s
-State        live for 0 s
-Rate         1,882.85 units/hour (bucket I-1/1880)
-Engine       vLLM 0.30.0, in Docker, kwh-fake-engine:test, healthy
-Last checks  challenge 0 s ago: passed, mean delta 0.0000
-             report measured 4 s ago, re-benchmark due in 6 days
-             last re-benchmark 2026-10-05 11:36:29: 1,882.85 units/hour
-Reliability          last hour      last day     last week
-  live                    5.9%          5.9%          5.9%
-  beats ok               12/12         12/12         12/12
-  challenges               2/2           2/2           2/2
-  ...
-Recent (the platform's log; more: kwh-host events --remote)
-  11:36  re-benchmarked    new report: 1,882.85 units/hour (was 2,082.61)
-  11:36  rebench_ended     the host is serving again
-  11:36  state             degraded -> live
+at start   driver changed: 580.95.05 benchmarked, 580.178.04 now -> re-benchmarked before serving: 101.88 units/hour
+slow       graphics clock locked at 945 MHz; micro-benchmarks 72.06, 71.81 -> held; buyer job refused (no live host)
+           re-benchmarked: 70.99 units/hour, live again 4 min 52 s after the hold; next micro-benchmark 71.48
+full       clock released; micro-benchmarks 100.95, 100.94 -> held; re-benchmarked: 101.52, live again after 3 min 52 s
+freeze     docker pause on the engine -> restart decided after 44 s; live again in a new locked-down container at 115 s
 ```
+
+What it settled:
+
+- **The re-benchmark loop works on a real card, both ways.** A card slowed by 30% was caught, held, and re-rated in under 5 minutes. When it sped back up, it was re-rated upward. Buyers were refused while the host was held, not given a host whose rate no longer held.
+- **A driver update is caught by the daemon itself.** It compared its report with `nvidia-smi` before serving anything, and re-benchmarked first. The rate came back unchanged (101.83 to 101.88); the rule is there for when it would not.
+- **A slower clock makes cheaper units.** At 945 MHz the card made 30% fewer units per hour but 28% more per electric kWh: 415 against 324. Which of the two a host should be rated on is step 3's question.
+- **Ubuntu's automatic updates broke the first attempt.** Ten minutes after boot they replaced the NVIDIA driver (580.95.05 to 580.178.04) under the running VM. The old kernel module stayed loaded, so nothing new could use the GPU until a reboot. The engine, stopped for its re-benchmark, could not start again, and the daemon exited, which left the host silent. The fixes:
+  - The daemon now reports and retries an engine that will not start.
+  - `doctor` and `kwh-host status` say to reboot.
+  - The installer offers to keep the driver out of the automatic updates.
 
 ## Try it without a GPU
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 88 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+python -m pytest -q          # 94 tests: signing, envelope, execution, the vLLM stream parser, verifier,
                              # platform state machine, re-benchmarking and reliability counters, status,
                              # sandbox, and jobs end to end over a real local server
 

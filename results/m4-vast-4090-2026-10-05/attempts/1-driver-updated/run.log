@@ -1,0 +1,27 @@
+kwh-host 0.3.0.dev0 starting engine (docker)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-1-ac03b0f4: pass (mean delta 0.0 over 4, 375 ms) -> live
+micro-benchmark discarded: a job arrived while it ran
+job j_6c523d3779db2ba1.1: completed (2 request(s), 256 tokens)
+micro-benchmark: 101.00 u/h equivalent in 4.46s -> within tolerance
+minted 1 unit(s), balance 1
+challenge ch-2-d778254c: pass (mean delta 0.0 over 4, 427 ms) -> live
+minted 1 unit(s), balance 2
+minted 1 unit(s), balance 3
+challenge ch-3-fb318ba3: pass (mean delta 0.0 over 4, 422 ms) -> live
+micro-benchmark: 71.71 u/h equivalent in 6.28s -> OUTSIDE tolerance
+minted 1 unit(s), balance 4
+minted 1 unit(s), balance 5
+challenge ch-4-6c0feb32: pass (mean delta 0.0 over 4, 421 ms) -> live
+minted 1 unit(s), balance 6
+minted 1 unit(s), balance 7
+challenge ch-5-86054de9: pass (mean delta 0.0 over 4, 427 ms) -> live
+micro-benchmark: 71.68 u/h equivalent in 6.28s -> OUTSIDE tolerance
+platform: degraded (re-benchmarking)
+re-benchmarking: micro-benchmark outside 10% of the rate twice in a row
+probing hardware
+pre-flight: nvidia-smi unavailable, skipping
+starting engine vllm
+re-benchmark failed: RuntimeError: engine process exited early with code 125; the engine's log ends: : Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error running prestart hook #0: exit status 1, stdout: , stderr: Auto-detected mode as 'legacy' | nvidia-container-cli: initialization error: nvml error: driver/library version mismatch: unknown; serving on the current report, next try in 30 min
+error: RuntimeError: engine process exited early with code 125; the engine's log ends: : Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error running prestart hook #0: exit status 1, stdout: , stderr: Auto-detected mode as 'legacy' | nvidia-container-cli: initialization error: nvml error: driver/library version mismatch: unknown

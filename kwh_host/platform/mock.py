@@ -453,7 +453,9 @@ class MockPlatform:
         if not eng.get("healthy"):
             said = str(eng.get("error") or "")[:240]      # the host's own account, when it has one
             reasons.append("engine unhealthy" + (f": {said}" if said else ""))
-        if self.s.require_engine_version and eng.get("version") != self.s.require_engine_version:
+        # An engine that does not answer has no version to compare: unknown, not wrong (a frozen
+        # engine on the M4 GPU run read "engine version None != lock" and sent nobody anywhere useful).
+        if self.s.require_engine_version and eng.get("healthy") and eng.get("version") != self.s.require_engine_version:
             reasons.append(f"engine version {eng.get('version')!r} != lock {self.s.require_engine_version!r}")
         if eng.get("launch_mode") != "docker" and not self.s.allow_bare_metal:
             reasons.append("engine not sandboxed (D4)")

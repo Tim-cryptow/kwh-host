@@ -1,0 +1,188 @@
+{"t": 1791205648.196, "kind": "start", "version": "0.3.0.dev1", "engine_mode": "docker", "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90", "host_id": "h_bbe464c76d50"}
+{"t": 1791205648.229, "kind": "rebench", "phase": "start", "reasons": ["driver changed: 580.95.05 benchmarked, 580.178.04 now"]}
+{"t": 1791205648.275, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 14.1}
+{"t": 1791205648.276, "kind": "state", "from": "starting", "to": "registered", "reasons": []}
+{"t": 1791205658.31, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791205668.349, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791205678.388, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791205688.426, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.6}
+{"t": 1791205698.476, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 16.3}
+{"t": 1791205708.526, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.5}
+{"t": 1791205718.576, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.0}
+{"t": 1791205728.627, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.2}
+{"t": 1791205738.667, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791205748.717, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.0}
+{"t": 1791205758.768, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.0}
+{"t": 1791205768.818, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 4.9}
+{"t": 1791205778.869, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 6.0}
+{"t": 1791205788.918, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.2}
+{"t": 1791205798.968, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.0}
+{"t": 1791205809.057, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 17.2}
+{"t": 1791205819.106, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 4.9}
+{"t": 1791205829.156, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.4}
+{"t": 1791205839.205, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 5.3}
+{"t": 1791205841.18, "kind": "rebench", "phase": "done", "units_per_hour": 101.875, "previous_units_per_hour": 101.827, "seconds": 193.0}
+{"t": 1791205849.247, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.7}
+{"t": 1791205859.288, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.6}
+{"t": 1791205869.329, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.7}
+{"t": 1791205877.479, "kind": "engine_up", "instance": "5475a4fedb6114b3", "version": "0.30.0", "served_model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8", "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90", "context": 8192}
+{"t": 1791205877.491, "kind": "jobs_channel", "open": true, "context": 8192}
+{"t": 1791205879.399, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791205879.771, "kind": "challenge", "id": "ch-1-fdd1d5e8", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 369, "state": "live", "passes_needed": 0}
+{"t": 1791205879.771, "kind": "state", "from": "registered", "to": "live", "reasons": []}
+{"t": 1791205884.252, "kind": "microbench", "discarded": "a job arrived while it ran", "units_per_hour": 100.449}
+{"t": 1791205885.551, "kind": "job", "job_id": "j_42b351e4e921f662.1", "status": "completed", "requests": 2, "completion_tokens": 256, "latency_ms": 5311.9}
+{"t": 1791205894.327, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791205898.796, "kind": "microbench", "units_per_hour": 100.743, "job_seconds": 4.4668, "within": true, "rebench_required": false}
+{"t": 1791205908.874, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791205918.943, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.1}
+{"t": 1791205929.021, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791205939.092, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791205949.172, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791205949.599, "kind": "challenge", "id": "ch-2-caf58a8a", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 425, "state": "live", "passes_needed": 0}
+{"t": 1791205959.669, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.4}
+{"t": 1791205969.748, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791205979.818, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791205989.897, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.3}
+{"t": 1791205999.969, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206010.048, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206010.473, "kind": "challenge", "id": "ch-3-b8ee7a42", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 423, "state": "live", "passes_needed": 0}
+{"t": 1791206020.546, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.0}
+{"t": 1791206026.793, "kind": "microbench", "units_per_hour": 72.061, "job_seconds": 6.2447, "within": false, "rebench_required": false}
+{"t": 1791206036.873, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.2}
+{"t": 1791206046.951, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206057.032, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 4.4}
+{"t": 1791206067.141, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206077.219, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.6}
+{"t": 1791206077.643, "kind": "challenge", "id": "ch-4-4bef8050", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 422, "state": "live", "passes_needed": 0}
+{"t": 1791206087.719, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206097.789, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.2}
+{"t": 1791206107.867, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206117.935, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206128.014, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.4}
+{"t": 1791206138.085, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.6}
+{"t": 1791206138.509, "kind": "challenge", "id": "ch-5-add43faa", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 422, "state": "live", "passes_needed": 0}
+{"t": 1791206148.588, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206154.856, "kind": "microbench", "units_per_hour": 71.814, "job_seconds": 6.2662, "within": false, "rebench_required": true}
+{"t": 1791206154.922, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 1.7}
+{"t": 1791206154.923, "kind": "state", "from": "live", "to": "degraded", "reasons": ["re-benchmarking"]}
+{"t": 1791206154.923, "kind": "engine_down", "instance": "5475a4fedb6114b3", "reason": "rebench"}
+{"t": 1791206155.435, "kind": "rebench", "phase": "start", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206165.424, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206175.462, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206185.5, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206195.538, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206205.586, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.2}
+{"t": 1791206215.63, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206225.68, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.2}
+{"t": 1791206235.73, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 6.2}
+{"t": 1791206245.779, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.0}
+{"t": 1791206255.829, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.8}
+{"t": 1791206265.869, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206275.917, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.2}
+{"t": 1791206285.968, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.3}
+{"t": 1791206296.018, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.2}
+{"t": 1791206306.068, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 4.9}
+{"t": 1791206316.11, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206326.159, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.0}
+{"t": 1791206336.2, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206346.251, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.1}
+{"t": 1791206356.301, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.1}
+{"t": 1791206366.354, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 9.8}
+{"t": 1791206376.402, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.2}
+{"t": 1791206386.444, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 4.2}
+{"t": 1791206396.491, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 4.4}
+{"t": 1791206405.536, "kind": "rebench", "phase": "done", "units_per_hour": 70.993, "previous_units_per_hour": 101.875, "seconds": 250.1}
+{"t": 1791206406.532, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 1.8}
+{"t": 1791206416.572, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206426.612, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.7}
+{"t": 1791206436.653, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.8}
+{"t": 1791206441.796, "kind": "engine_up", "instance": "1fb27cf8d0366d7e", "version": "0.30.0", "served_model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8", "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90", "context": 8192}
+{"t": 1791206441.798, "kind": "jobs_channel", "open": true, "context": 8192}
+{"t": 1791206446.728, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.5}
+{"t": 1791206447.304, "kind": "challenge", "id": "ch-6-174600c1", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 574, "state": "live", "passes_needed": 0}
+{"t": 1791206447.304, "kind": "state", "from": "degraded", "to": "live", "reasons": []}
+{"t": 1791206453.602, "kind": "microbench", "units_per_hour": 71.482, "job_seconds": 6.2953, "within": true, "rebench_required": false}
+{"t": 1791206463.671, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206473.744, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.4}
+{"t": 1791206483.818, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 4.1}
+{"t": 1791206493.897, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206503.969, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.9}
+{"t": 1791206514.051, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 4.6}
+{"t": 1791206514.274, "kind": "challenge", "id": "ch-7-0600bcac", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 221, "state": "live", "passes_needed": 0}
+{"t": 1791206524.344, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.2}
+{"t": 1791206534.416, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 1.9}
+{"t": 1791206544.49, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206554.568, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206564.641, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206574.721, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.6}
+{"t": 1791206574.943, "kind": "challenge", "id": "ch-8-facfb381", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 220, "state": "live", "passes_needed": 0}
+{"t": 1791206579.403, "kind": "microbench", "units_per_hour": 100.951, "job_seconds": 4.4576, "within": false, "rebench_required": false}
+{"t": 1791206589.476, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206599.557, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206609.635, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 4.3}
+{"t": 1791206619.714, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.5}
+{"t": 1791206629.791, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206639.872, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 4.1}
+{"t": 1791206640.091, "kind": "challenge", "id": "ch-9-cd880d34", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 217, "state": "live", "passes_needed": 0}
+{"t": 1791206650.167, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206660.247, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206670.326, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.1}
+{"t": 1791206680.406, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206690.485, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206700.559, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.6}
+{"t": 1791206700.775, "kind": "challenge", "id": "ch-10-83545627", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 215, "state": "live", "passes_needed": 0}
+{"t": 1791206705.235, "kind": "microbench", "units_per_hour": 100.944, "job_seconds": 4.4579, "within": false, "rebench_required": true}
+{"t": 1791206705.3, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.0}
+{"t": 1791206705.3, "kind": "state", "from": "live", "to": "degraded", "reasons": ["re-benchmarking"]}
+{"t": 1791206705.3, "kind": "engine_down", "instance": "1fb27cf8d0366d7e", "reason": "rebench"}
+{"t": 1791206705.812, "kind": "rebench", "phase": "start", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206715.779, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206725.821, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.7}
+{"t": 1791206735.86, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206745.897, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206755.949, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.6}
+{"t": 1791206765.991, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791206776.042, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 4.9}
+{"t": 1791206786.093, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 4.9}
+{"t": 1791206796.144, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 6.5}
+{"t": 1791206806.197, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 6.1}
+{"t": 1791206816.246, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.1}
+{"t": 1791206826.296, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.3}
+{"t": 1791206836.337, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.7}
+{"t": 1791206846.388, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 6.3}
+{"t": 1791206856.439, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.7}
+{"t": 1791206866.489, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 4.8}
+{"t": 1791206876.537, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 8.4}
+{"t": 1791206886.588, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 5.3}
+{"t": 1791206895.136, "kind": "rebench", "phase": "done", "units_per_hour": 101.515, "previous_units_per_hour": 70.993, "seconds": 189.3}
+{"t": 1791206896.626, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791206906.665, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206916.703, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206926.742, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791206931.375, "kind": "engine_up", "instance": "a8c9be64f8dc4dd1", "version": "0.30.0", "served_model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8", "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90", "context": 8192}
+{"t": 1791206931.376, "kind": "jobs_channel", "open": true, "context": 8192}
+{"t": 1791206936.815, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791206937.191, "kind": "challenge", "id": "ch-11-011de525", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 374, "state": "live", "passes_needed": 0}
+{"t": 1791206937.191, "kind": "state", "from": "degraded", "to": "live", "reasons": []}
+{"t": 1791206941.675, "kind": "microbench", "units_per_hour": 100.404, "job_seconds": 4.4819, "within": true, "rebench_required": false}
+{"t": 1791206956.749, "kind": "heartbeat", "state": "degraded", "accepted": false, "minted": 0, "rtt_ms": 2.1, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791206956.749, "kind": "state", "from": "live", "to": "degraded", "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791206971.829, "kind": "heartbeat", "state": "degraded", "accepted": false, "minted": 0, "rtt_ms": 2.7, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791206986.911, "kind": "heartbeat", "state": "degraded", "accepted": false, "minted": 0, "rtt_ms": 2.3, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791206986.911, "kind": "engine_restart", "reason": "engine unhealthy for 3 heartbeats"}
+{"t": 1791206986.912, "kind": "engine_down", "instance": "a8c9be64f8dc4dd1", "reason": "restart"}
+{"t": 1791206996.962, "kind": "heartbeat", "state": "degraded", "accepted": false, "minted": 0, "rtt_ms": 2.4, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791207007.011, "kind": "heartbeat", "state": "offline", "accepted": false, "minted": 0, "rtt_ms": 2.5, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791207007.011, "kind": "state", "from": "degraded", "to": "offline", "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791207017.061, "kind": "heartbeat", "state": "offline", "accepted": false, "minted": 0, "rtt_ms": 2.8, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791207027.098, "kind": "heartbeat", "state": "offline", "accepted": false, "minted": 0, "rtt_ms": 2.0, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791207037.138, "kind": "heartbeat", "state": "offline", "accepted": false, "minted": 0, "rtt_ms": 2.5, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791207047.175, "kind": "heartbeat", "state": "offline", "accepted": false, "minted": 0, "rtt_ms": 2.3, "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791207053.665, "kind": "engine_up", "instance": "f2d213dd2444c976", "version": "0.30.0", "served_model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8", "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90", "context": 8192}
+{"t": 1791207053.668, "kind": "jobs_channel", "open": true, "context": 8192}
+{"t": 1791207057.244, "kind": "heartbeat", "state": "offline", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791207057.621, "kind": "challenge", "id": "ch-12-da22190f", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 374, "state": "live", "passes_needed": 0}
+{"t": 1791207057.621, "kind": "state", "from": "offline", "to": "live", "reasons": []}
+{"t": 1791207067.698, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791207072.194, "kind": "microbench", "units_per_hour": 100.154, "job_seconds": 4.4931, "within": true, "rebench_required": false}

@@ -1,0 +1,442 @@
+{
+  "host_id": "h_bbe464c76d50",
+  "platform": "http://127.0.0.1:9000",
+  "engine": "docker",
+  "local": {
+    "client_version": "0.3.0.dev1",
+    "pid": 2769,
+    "started_at": 1791205648.1962268,
+    "state": "live",
+    "reasons": [],
+    "state_since": 1791207057.6204615,
+    "beats": 138,
+    "accepted_beats": 129,
+    "send_failures": 0,
+    "accrual": 0.2948,
+    "balance": 12,
+    "minted_total": 12,
+    "last_challenge": {
+      "challenge_id": "ch-12-da22190f",
+      "mean_logprobs": [
+        -1.11244,
+        -1.17662,
+        -1.24528,
+        -1.16552
+      ],
+      "elapsed_ms": 374,
+      "pass": true,
+      "delta": 0.0,
+      "deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "state": "live",
+      "passes_needed": 0,
+      "t": 1791207057.6209102
+    },
+    "last_microbench": {
+      "job_seconds": 4.4931,
+      "generated_tokens": 8192,
+      "request_failures": 0,
+      "tokens_per_second": 1823.24,
+      "units_per_hour": 100.154,
+      "accepted": true,
+      "within_tolerance": true,
+      "rebench_required": false,
+      "t": 1791207072.1936848
+    },
+    "rebench_required": false,
+    "rebench_reasons": [],
+    "benchmarking": false,
+    "last_rebench": {
+      "reasons": [
+        "micro-benchmark outside 10% of the rate twice in a row"
+      ],
+      "started_at": 1791206705.8122733,
+      "ok": true,
+      "units_per_hour": 101.515,
+      "previous_units_per_hour": 70.993,
+      "seconds": 189.3
+    },
+    "engine": {
+      "healthy": true,
+      "version": "0.30.0",
+      "served_model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+      "launch_mode": "docker",
+      "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+      "port": 8000,
+      "instance": "f2d213dd2444c976"
+    },
+    "engine_restarts": 3,
+    "gpu": {
+      "available": true,
+      "util_pct": 0.0,
+      "power_w": 43.56,
+      "mem_used_mib": 22034.0,
+      "mem_total_mib": 24564.0,
+      "temp_c": 40.0,
+      "uuid": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+      "driver_version": "580.178.04",
+      "name": "NVIDIA GeForce RTX 4090",
+      "compute_processes": 1,
+      "foreign_processes": 0,
+      "foreign_pids": [],
+      "unattributed_processes": 0
+    },
+    "errors": 0,
+    "jobs_channel": "open",
+    "jobs": {
+      "completed": 1,
+      "failed": 0,
+      "rejected": 0,
+      "undelivered": 0,
+      "completion_tokens": 256
+    },
+    "report": {
+      "units_per_hour": 101.515,
+      "finished_at": "2026-10-05T13:28:15Z",
+      "report_sha256": "5169cac84bd90b55a7d561279e8234f4cc4b89a6dc225ba413e8496d6fd86a6e",
+      "certified": true
+    },
+    "platform_config": {
+      "heartbeat_seconds": 10.0,
+      "challenge_every_seconds": 60.0,
+      "microbench_every_seconds": 120.0,
+      "rebench_every_seconds": 604800.0,
+      "offline_after_seconds": 90.0,
+      "max_failures": 5
+    },
+    "updated_at": 1791207072.1937838,
+    "in_flight": 0,
+    "engine_error": null
+  },
+  "platform_view": {
+    "host_id": "h_bbe464c76d50",
+    "state": "live",
+    "reasons": [],
+    "state_since": 1791207057.6204615,
+    "rate_units_per_hour": 101.515,
+    "bucket": "I-1/100",
+    "accrual": 0.2948,
+    "balance": 12,
+    "failures": 0,
+    "last_beat_at": 1791207067.6978977,
+    "last_challenge": {
+      "id": "ch-12-da22190f",
+      "pass": true,
+      "delta": 0.0,
+      "deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "continuations": [
+        "lock-48",
+        "lock-176",
+        "lock-112",
+        "lock-16"
+      ],
+      "elapsed_ms": 374,
+      "t": 1791207057.6204615
+    },
+    "passes_needed": 0,
+    "last_microbench": {
+      "units_per_hour": 100.154,
+      "job_seconds": 4.4931,
+      "within": true,
+      "t": 1791207072.1932256
+    },
+    "rebench_required": false,
+    "rebench_reasons": [],
+    "benchmarking": false,
+    "report_sha256": "5169cac84bd90b55a7d561279e8234f4cc4b89a6dc225ba413e8496d6fd86a6e",
+    "jobs": {
+      "completed": 1,
+      "failed": 0,
+      "bad_results": 0,
+      "delivered_units": 0.003553,
+      "verifications_failed": 0
+    },
+    "now": 1791207080.0511298,
+    "registered_at": 1791205647.9738429,
+    "report_at": 1791206895.0,
+    "report_accepted_at": 1791206895.117124,
+    "rebench_due_at": 1791811695.0,
+    "host_reported": {
+      "uptime_s": 1419,
+      "send_failures": 0,
+      "engine_restarts": 0,
+      "results_undelivered": 0,
+      "last_error": null,
+      "t": 1791207067.6978977
+    },
+    "reliability": {
+      "1h": {
+        "observed_s": 1432,
+        "state_s": {
+          "degraded": 575,
+          "live": 575,
+          "offline": 51,
+          "registered": 232
+        },
+        "live_fraction": 0.4015,
+        "heartbeats": {
+          "accepted": 129,
+          "rejected": 9,
+          "expected": 143
+        },
+        "challenges": {
+          "passed": 12,
+          "failed": 0,
+          "mean_delta": 0.0,
+          "max_delta": 0.0
+        },
+        "microbench": {
+          "runs": 8,
+          "misses": 4,
+          "median_units_per_hour": 100.154
+        },
+        "jobs": {
+          "completed": 1,
+          "failed": 0,
+          "bad_results": 0,
+          "units": 0.003553,
+          "latency_ms_p50": 5313.0,
+          "latency_ms_p95": 5313.0
+        },
+        "minted": 12,
+        "host_reported": {
+          "send_failures": 0,
+          "engine_restarts": 3,
+          "results_undelivered": 0
+        }
+      },
+      "24h": {
+        "observed_s": 1432,
+        "state_s": {
+          "degraded": 575,
+          "live": 575,
+          "offline": 51,
+          "registered": 232
+        },
+        "live_fraction": 0.4015,
+        "heartbeats": {
+          "accepted": 129,
+          "rejected": 9,
+          "expected": 143
+        },
+        "challenges": {
+          "passed": 12,
+          "failed": 0,
+          "mean_delta": 0.0,
+          "max_delta": 0.0
+        },
+        "microbench": {
+          "runs": 8,
+          "misses": 4,
+          "median_units_per_hour": 100.154
+        },
+        "jobs": {
+          "completed": 1,
+          "failed": 0,
+          "bad_results": 0,
+          "units": 0.003553,
+          "latency_ms_p50": 5313.0,
+          "latency_ms_p95": 5313.0
+        },
+        "minted": 12,
+        "host_reported": {
+          "send_failures": 0,
+          "engine_restarts": 3,
+          "results_undelivered": 0
+        }
+      },
+      "7d": {
+        "observed_s": 1432,
+        "state_s": {
+          "degraded": 575,
+          "live": 575,
+          "offline": 51,
+          "registered": 232
+        },
+        "live_fraction": 0.4015,
+        "heartbeats": {
+          "accepted": 129,
+          "rejected": 9,
+          "expected": 143
+        },
+        "challenges": {
+          "passed": 12,
+          "failed": 0,
+          "mean_delta": 0.0,
+          "max_delta": 0.0
+        },
+        "microbench": {
+          "runs": 8,
+          "misses": 4,
+          "median_units_per_hour": 100.154
+        },
+        "jobs": {
+          "completed": 1,
+          "failed": 0,
+          "bad_results": 0,
+          "units": 0.003553,
+          "latency_ms_p50": 5313.0,
+          "latency_ms_p95": 5313.0
+        },
+        "minted": 12,
+        "host_reported": {
+          "send_failures": 0,
+          "engine_restarts": 3,
+          "results_undelivered": 0
+        }
+      }
+    },
+    "config": {
+      "heartbeat_seconds": 10.0,
+      "challenge_every_seconds": 60.0,
+      "microbench_every_seconds": 120.0,
+      "offline_after_seconds": 90.0,
+      "max_failures": 5,
+      "rebench_every_seconds": 604800.0
+    },
+    "events": [
+      {
+        "t": 1791206705.2991989,
+        "kind": "rebench_started",
+        "reasons": [
+          "micro-benchmark outside 10% of the rate twice in a row"
+        ]
+      },
+      {
+        "t": 1791206705.300255,
+        "kind": "jobs_disconnected"
+      },
+      {
+        "t": 1791206895.117124,
+        "kind": "re-benchmarked",
+        "rate": 101.515,
+        "previous_rate": 70.993
+      },
+      {
+        "t": 1791206931.3765435,
+        "kind": "jobs_connected",
+        "max_concurrency": 32,
+        "max_model_len": 8192
+      },
+      {
+        "t": 1791206936.8145971,
+        "kind": "host_reported",
+        "send_failures": 0,
+        "engine_restarts": 1,
+        "results_undelivered": 0,
+        "last_error": null
+      },
+      {
+        "t": 1791206936.8145971,
+        "kind": "rebench_ended",
+        "rebench_required": false
+      },
+      {
+        "t": 1791206936.8145971,
+        "kind": "challenge",
+        "id": "ch-11-011de525"
+      },
+      {
+        "t": 1791206937.190864,
+        "kind": "liveness",
+        "id": "ch-11-011de525",
+        "passed": true,
+        "delta": 0.0
+      },
+      {
+        "t": 1791206937.190864,
+        "kind": "state",
+        "from": "degraded",
+        "to": "live",
+        "reasons": []
+      },
+      {
+        "t": 1791206941.6748242,
+        "kind": "microbench",
+        "units_per_hour": 100.404,
+        "within": true
+      },
+      {
+        "t": 1791206956.7482338,
+        "kind": "heartbeat_rejected",
+        "reasons": [
+          "engine unhealthy",
+          "engine version None != lock '0.30.0'"
+        ]
+      },
+      {
+        "t": 1791206956.7482338,
+        "kind": "state",
+        "from": "live",
+        "to": "degraded",
+        "reasons": [
+          "engine unhealthy",
+          "engine version None != lock '0.30.0'"
+        ]
+      },
+      {
+        "t": 1791206986.9115782,
+        "kind": "jobs_disconnected"
+      },
+      {
+        "t": 1791207007.0098302,
+        "kind": "state",
+        "from": "degraded",
+        "to": "offline",
+        "reasons": [
+          "engine unhealthy",
+          "engine version None != lock '0.30.0'",
+          "5 consecutive failures"
+        ]
+      },
+      {
+        "t": 1791207053.667825,
+        "kind": "jobs_connected",
+        "max_concurrency": 32,
+        "max_model_len": 8192
+      },
+      {
+        "t": 1791207057.2435772,
+        "kind": "host_reported",
+        "send_failures": 0,
+        "engine_restarts": 1,
+        "results_undelivered": 0,
+        "last_error": null
+      },
+      {
+        "t": 1791207057.2435772,
+        "kind": "challenge",
+        "id": "ch-12-da22190f"
+      },
+      {
+        "t": 1791207057.6204615,
+        "kind": "liveness",
+        "id": "ch-12-da22190f",
+        "passed": true,
+        "delta": 0.0
+      },
+      {
+        "t": 1791207057.6204615,
+        "kind": "state",
+        "from": "offline",
+        "to": "live",
+        "reasons": []
+      },
+      {
+        "t": 1791207072.1932256,
+        "kind": "microbench",
+        "units_per_hour": 100.154,
+        "within": true
+      }
+    ]
+  }
+}

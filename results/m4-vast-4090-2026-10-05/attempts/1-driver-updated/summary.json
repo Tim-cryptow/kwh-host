@@ -1,0 +1,207 @@
+{
+ "gpu": [
+  "NVIDIA GeForce RTX 4090, GPU-cac73a5d-4492-ef40-7c6a-8941c878465a, 580.95.05, 24564 MiB, 3150 MHz, 500.00 W",
+  "CUDA Version: 13.0"
+ ],
+ "version": [
+  "[11:07:58] installer exit 0; kwh-host, version 0.3.0.dev0"
+ ],
+ "doctor": [
+  "[ok  ] platform: Linux 6.8.0-59-generic",
+  "[ok  ] NVIDIA driver: GPU 0: NVIDIA GeForce RTX 4090, 24 GB, driver 580.95.05",
+  "[ok  ] engine mode: docker, context 8192 tokens",
+  "[ok  ] engine build: vllm/vllm-openai:v0.30.0 (sha256:8a69ffad\u2026), on a driver that supports CUDA 13.0",
+  "[ok  ] Docker: Ubuntu 22.04.5 LTS, server 28.1.1",
+  "[ok  ] GPU in containers: a container sees GPU 0: NVIDIA GeForce RTX 4090",
+  "[ok  ] engine network: none; the engine is reached through a Unix socket only",
+  "[ok  ] engine image: vllm/vllm-openai:v0.30.0 (sha256:8a69ffad\u2026)",
+  "[ok  ] checkpoint: RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 @ 024e24c (kwh-host fetch checked its hashes)"
+ ],
+ "reports": {
+  "first": {
+   "units_per_hour": 101.827,
+   "certified": true,
+   "reasons": [],
+   "canary_mean": 0.0,
+   "launch_mode": "docker",
+   "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+   "gpu": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+   "driver": "580.95.05",
+   "finished_at": "2026-10-05T11:14:07Z"
+  },
+  "slow": {
+   "units_per_hour": 101.827,
+   "certified": true,
+   "reasons": [],
+   "canary_mean": 0.0,
+   "launch_mode": "docker",
+   "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+   "gpu": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+   "driver": "580.95.05",
+   "finished_at": "2026-10-05T11:14:07Z"
+  },
+  "full": {
+   "units_per_hour": 101.827,
+   "certified": true,
+   "reasons": [],
+   "canary_mean": 0.0,
+   "launch_mode": "docker",
+   "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+   "gpu": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+   "driver": "580.95.05",
+   "finished_at": "2026-10-05T11:14:07Z"
+  }
+ },
+ "rebench_cycles": [
+  {
+   "reasons": [
+    "micro-benchmark outside 10% of the rate twice in a row"
+   ],
+   "started_after_s": 0.0
+  }
+ ],
+ "microbench_platform": [
+  [
+   1791198904,
+   100.996,
+   true
+  ],
+  [
+   1791199032,
+   71.712,
+   false
+  ],
+  [
+   1791199160,
+   71.682,
+   false
+  ]
+ ],
+ "jobs_during_rebench": {
+  "slow": [
+   {
+    "status": "failed",
+    "reason": "no live host with capacity for this job"
+   }
+  ],
+  "full": [
+   {
+    "status": "failed",
+    "reason": "no live host with capacity for this job"
+   }
+  ]
+ },
+ "freeze": {},
+ "reliability_1h": {
+  "observed_s": 3310,
+  "state_s": {
+   "offline": 3310
+  },
+  "live_fraction": 0.0,
+  "heartbeats": {
+   "accepted": 0,
+   "rejected": 0,
+   "expected": 330
+  },
+  "challenges": {
+   "passed": 0,
+   "failed": 0,
+   "mean_delta": null,
+   "max_delta": null
+  },
+  "microbench": {
+   "runs": 0,
+   "misses": 0,
+   "median_units_per_hour": null
+  },
+  "jobs": {
+   "completed": 0,
+   "failed": 0,
+   "bad_results": 0,
+   "units": 0.0,
+   "latency_ms_p50": null,
+   "latency_ms_p95": null
+  },
+  "minted": 0,
+  "host_reported": {
+   "send_failures": 0,
+   "engine_restarts": 0,
+   "results_undelivered": 0
+  }
+ },
+ "host_reported": {
+  "uptime_s": 322,
+  "send_failures": 0,
+  "engine_restarts": 0,
+  "results_undelivered": 0,
+  "last_error": null,
+  "t": 1791199170.2624602
+ },
+ "end_state": {
+  "state": "offline",
+  "reasons": [
+   "no accepted heartbeat within timeout"
+  ],
+  "rate_units_per_hour": 101.827,
+  "balance": 7,
+  "jobs": {
+   "completed": 1,
+   "failed": 0,
+   "bad_results": 0,
+   "delivered_units": 0.003553,
+   "verifications_failed": 0
+  }
+ },
+ "event_counts": {
+  "host": 47,
+  "platform": 21
+ },
+ "steps": [
+  "[11:06:57] 0. installer (--yes: Docker, NVIDIA Container Toolkit, kwh-host as needed)",
+  "[11:07:58] installer exit 0; kwh-host, version 0.3.0.dev0",
+  "[11:08:08] 1. init, fetch, doctor",
+  "[11:10:28] fetch exit 0 in 139s",
+  "[11:10:36] doctor exit 0",
+  "[11:10:36] 2. mock platform: Docker hosts only (D4), certified reports only; heartbeat 10 s, challenge 1 min, micro-benchmark 2 min",
+  "{\"ok\":true,\"hosts\":0,\"job_channels\":0,\"tokenizer\":true,\"chat\":true,\"verifier\":false}[11:10:38] 3. certified benchmark inside the sandbox, then register",
+  "[11:14:07] bench exit 0",
+  "canary check",
+  "  canary 16: mean logprob -1.1655 (reference -1.1655)",
+  "  canary 48: mean logprob -1.1124 (reference -1.1124)",
+  "  canary 80: mean logprob -1.3479 (reference -1.3479)",
+  "  canary 112: mean logprob -1.2453 (reference -1.2453)",
+  "  canary 144: mean logprob -1.1668 (reference -1.1668)",
+  "  canary 176: mean logprob -1.1766 (reference -1.1766)",
+  "  canary 208: mean logprob -1.5939 (reference -1.5939)",
+  "  canary 240: mean logprob -1.6008 (reference -1.6008)",
+  "units/hour: 101.827   median job: 35.354 s   stability: 0.00122",
+  "canary: PASS (mean delta 0.0000, tolerance 0.05; 8/8 canaries within it)",
+  "certified: YES",
+  "[11:14:07] register: {\"host_id\":\"h_bbe464c76d50\",\"rate_units_per_hour\":101.827,\"bucket\":\"I-1/100\"}",
+  "[11:14:07] 4. the daemon, live, and buyer jobs",
+  "[11:14:47] live, job channel open, engine 7681f4d7d9d5 running",
+  "[11:14:50] buyer jobs: exit 0",
+  "[11:15:05] micro-benchmark: 101.0 units/hour, within: True",
+  "[11:15:05] 5. the GPU slowed down: graphics clock locked low (a stand-in for throttling: heat, a power cap, a failing fan)",
+  "GPU clocks set to \"(gpuClkMin 945, gpuClkMax 945)\" for GPU 00000000:00:07.0",
+  "All done.",
+  "[11:15:05] graphics clock locked at 945 MHz (the card's maximum is 3150)",
+  "[11:19:21] slow: platform holds the host: micro-benchmark outside 10% of the rate twice in a row",
+  "[11:19:21] slow: daemon re-benchmarking (engine stopped)",
+  "[11:19:21] slow: a buyer job meanwhile: exit 1 (j_fcccb9366a769ebe: failed on None  units None  0.0 ms  attempts []  (no live host with capacity for this job))",
+  "[11:49:29] slow: NOT live again after 30 min: ('offline', ['no accepted heartbeat within timeout'])",
+  "[11:54:31] 6. the clock released",
+  "Failed to initialize NVML: Driver/library version mismatch",
+  "NVML library version: 580.178",
+  "[11:54:31] full: platform holds the host: micro-benchmark outside 10% of the rate twice in a row",
+  "[11:54:31] full: daemon re-benchmarking (engine stopped)",
+  "[11:54:31] full: a buyer job meanwhile: exit 1 (j_7db7cf3b0b12dfc1: failed on None  units None  0.0 ms  attempts []  (no live host with capacity for this job))",
+  "[12:24:39] full: NOT live again after 30 min: ('offline', ['no accepted heartbeat within timeout'])",
+  "[12:29:40] 7. the engine frozen (docker pause): the daemon should restart it",
+  "[12:39:49] NOT restarted after 10 min: ('offline', ['no accepted heartbeat within timeout'])",
+  "restarted engine: no inspect list index out of range",
+  "[12:39:49] 8. what a host reads",
+  "[12:40:10] daemon stopped, engine container removed",
+  "[12:40:10] 9. summary"
+ ]
+}

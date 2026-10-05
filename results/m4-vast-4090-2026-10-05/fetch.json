@@ -1,0 +1,8 @@
+{
+  "model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+  "revision": "024e24cbe4153670f747383ea3265d0fb197c727",
+  "snapshot": "/home/kwh/.kwh-host/hf/hub/models--RedHatAI--Meta-Llama-3.1-8B-Instruct-quantized.w8a8/snapshots/024e24cbe4153670f747383ea3265d0fb197c727",
+  "verified": true,
+  "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+  "image_digest": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90"
+}

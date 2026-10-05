@@ -1,0 +1,3 @@
+name, uuid, driver_version, memory.total [MiB], clocks.max.sm [MHz], power.default_limit [W]
+NVIDIA GeForce RTX 4090, GPU-cac73a5d-4492-ef40-7c6a-8941c878465a, 580.178.04, 24564 MiB, 3150 MHz, 500.00 W
+CUDA Version: 13.0

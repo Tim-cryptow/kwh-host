@@ -1,0 +1,47 @@
+{"t": 1791198847.955, "kind": "start", "version": "0.3.0.dev0", "engine_mode": "docker", "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90", "host_id": "h_bbe464c76d50"}
+{"t": 1791198884.242, "kind": "engine_up", "instance": "10f11167e9fec1c2", "version": "0.30.0", "served_model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8", "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90", "context": 8192}
+{"t": 1791198884.314, "kind": "jobs_channel", "open": true, "context": 8192}
+{"t": 1791198884.316, "kind": "heartbeat", "state": "registered", "accepted": true, "minted": 0, "rtt_ms": 3.4}
+{"t": 1791198884.693, "kind": "challenge", "id": "ch-1-ac03b0f4", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 375, "state": "live", "passes_needed": 0}
+{"t": 1791198884.693, "kind": "state", "from": "registered", "to": "live", "reasons": []}
+{"t": 1791198889.18, "kind": "microbench", "discarded": "a job arrived while it ran", "units_per_hour": 100.308}
+{"t": 1791198890.48, "kind": "job", "job_id": "j_6c523d3779db2ba1.1", "status": "completed", "requests": 2, "completion_tokens": 256, "latency_ms": 3374.6}
+{"t": 1791198899.258, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791198903.716, "kind": "microbench", "units_per_hour": 100.996, "job_seconds": 4.4556, "within": true, "rebench_required": false}
+{"t": 1791198913.797, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.0}
+{"t": 1791198923.877, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.2}
+{"t": 1791198933.958, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.1}
+{"t": 1791198944.037, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791198954.117, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.6}
+{"t": 1791198954.547, "kind": "challenge", "id": "ch-2-d778254c", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 427, "state": "live", "passes_needed": 0}
+{"t": 1791198964.617, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.2}
+{"t": 1791198974.697, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791198984.77, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791198994.858, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.1}
+{"t": 1791199004.931, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791199015.012, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.5}
+{"t": 1791199015.436, "kind": "challenge", "id": "ch-3-fb318ba3", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 422, "state": "live", "passes_needed": 0}
+{"t": 1791199025.507, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791199031.785, "kind": "microbench", "units_per_hour": 71.712, "job_seconds": 6.2751, "within": false, "rebench_required": false}
+{"t": 1791199041.864, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.1}
+{"t": 1791199051.95, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791199062.043, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.4}
+{"t": 1791199072.127, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791199082.211, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.5}
+{"t": 1791199082.634, "kind": "challenge", "id": "ch-4-6c0feb32", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 421, "state": "live", "passes_needed": 0}
+{"t": 1791199092.715, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.4}
+{"t": 1791199102.794, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 2.3}
+{"t": 1791199112.872, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791199122.929, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.2}
+{"t": 1791199132.993, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 1, "rtt_ms": 3.3}
+{"t": 1791199143.047, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 2.6}
+{"t": 1791199143.477, "kind": "challenge", "id": "ch-5-86054de9", "passed": true, "delta": 0.0, "deltas": [0.0, 0.0, 0.0, 0.0], "elapsed_ms": 427, "state": "live", "passes_needed": 0}
+{"t": 1791199153.55, "kind": "heartbeat", "state": "live", "accepted": true, "minted": 0, "rtt_ms": 4.6}
+{"t": 1791199159.83, "kind": "microbench", "units_per_hour": 71.682, "job_seconds": 6.2777, "within": false, "rebench_required": true}
+{"t": 1791199159.872, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 1.6}
+{"t": 1791199159.872, "kind": "state", "from": "live", "to": "degraded", "reasons": ["re-benchmarking"]}
+{"t": 1791199159.873, "kind": "engine_down", "instance": "10f11167e9fec1c2", "reason": "rebench"}
+{"t": 1791199160.484, "kind": "rebench", "phase": "start", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791199170.263, "kind": "heartbeat", "state": "degraded", "accepted": true, "minted": 0, "rtt_ms": 2.3}
+{"t": 1791199171.265, "kind": "rebench", "phase": "failed", "error": "RuntimeError: engine process exited early with code 125; the engine's log ends: : Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error running prestart hook #0: exit status 1, stdout: , stderr: Auto-detected mode as 'legacy' | nvidia-container-cli: initialization error: nvml error: driver/library version mismatch: unknown"}
+{"t": 1791199172.315, "kind": "stop", "error": "RuntimeError: engine process exited early with code 125; the engine's log ends: : Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error running prestart hook #0: exit status 1, stdout: , stderr: Auto-detected mode as 'legacy' | nvidia-container-cli: initialization error: nvml error: driver/library version mismatch: unknown"}

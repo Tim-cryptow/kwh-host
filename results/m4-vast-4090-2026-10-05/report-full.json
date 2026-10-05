@@ -1,0 +1,294 @@
+{
+  "spec": {
+    "series": "I-1",
+    "spec_version": "1.0.0-rc.6",
+    "bench_version": "1.0.0rc6"
+  },
+  "job": {
+    "requests": 256,
+    "prompt_tokens": 512,
+    "generated_tokens": 256,
+    "generated_tokens_per_job": 65536,
+    "concurrency": 32,
+    "sampling": {
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "seed": 0,
+      "max_tokens": 256,
+      "min_tokens": 256,
+      "ignore_eos": true
+    }
+  },
+  "engine": {
+    "name": "vllm",
+    "version": "0.30.0",
+    "model_id": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+    "model_revision": "024e24cbe4153670f747383ea3265d0fb197c727",
+    "launch_mode": "docker",
+    "launch_args": [
+      "docker",
+      "run",
+      "--rm",
+      "--init",
+      "--name",
+      "kwh-engine-gpu0",
+      "--label",
+      "kwh.engine=1",
+      "--user",
+      "1002:1002",
+      "--read-only",
+      "--tmpfs",
+      "/tmp:rw,exec,nosuid,nodev,size=4g",
+      "--cap-drop",
+      "ALL",
+      "--security-opt",
+      "no-new-privileges:true",
+      "--pids-limit",
+      "4096",
+      "--memory",
+      "36g",
+      "--memory-swap",
+      "36g",
+      "--shm-size",
+      "2g",
+      "-v",
+      "~/.kwh-host/hf:/hf:ro",
+      "-v",
+      "~/.kwh-host/engine-cache:/cache:rw",
+      "--gpus",
+      "device=0",
+      "-e",
+      "HOME=/cache/home",
+      "-e",
+      "USER=kwh",
+      "-e",
+      "LOGNAME=kwh",
+      "-e",
+      "HF_HOME=/hf",
+      "-e",
+      "HF_HUB_OFFLINE=1",
+      "-e",
+      "TRANSFORMERS_OFFLINE=1",
+      "-e",
+      "HF_HUB_DISABLE_TELEMETRY=1",
+      "-e",
+      "VLLM_NO_USAGE_STATS=1",
+      "-e",
+      "DO_NOT_TRACK=1",
+      "-e",
+      "XDG_CACHE_HOME=/cache/xdg",
+      "-e",
+      "VLLM_CACHE_ROOT=/cache/vllm",
+      "-e",
+      "TRITON_CACHE_DIR=/cache/triton",
+      "-e",
+      "TORCHINDUCTOR_CACHE_DIR=/cache/inductor",
+      "-e",
+      "CUDA_CACHE_PATH=/cache/nv",
+      "--network",
+      "none",
+      "-v",
+      "~/.kwh-host/run:/run/kwh:rw",
+      "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+      "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+      "--dtype",
+      "auto",
+      "--max-model-len",
+      "8192",
+      "--max-num-seqs",
+      "32",
+      "--no-enable-prefix-caching",
+      "--seed",
+      "0",
+      "--gpu-memory-utilization",
+      "0.90",
+      "--revision",
+      "024e24cbe4153670f747383ea3265d0fb197c727",
+      "--uds",
+      "/run/kwh/engine.sock"
+    ],
+    "server_url": "http://engine",
+    "certified_engine": true,
+    "extra": {
+      "served_model": "RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8",
+      "docker_image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90"
+    }
+  },
+  "hardware": {
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 4090",
+        "vram_mib": 24564,
+        "driver_version": "580.178.04",
+        "pcie_gen": 2,
+        "pcie_width": 16,
+        "power_limit_w": 500.0,
+        "uuid": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+        "compute_capability": "8.9"
+      }
+    ],
+    "cuda_version": "13.0",
+    "cpu_model": "AMD Ryzen 9 7950X 16-Core Processor",
+    "cpu_cores_physical": 30,
+    "cpu_threads": 30,
+    "ram_gib": 48.5,
+    "os": "Linux 6.8.0-138-generic",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.10.12",
+    "kwh_bench": "1.0.0rc6",
+    "hostname_hash": "7804a56a5c7636cc"
+  },
+  "preflight": {
+    "available": true,
+    "seconds": 5.0,
+    "samples": 10,
+    "idle": true,
+    "reasons": [],
+    "mem_total_mib": 24564,
+    "mem_used_mib_max": 1,
+    "free_fraction_min": 1.0,
+    "util_pct_mean": 0.0,
+    "util_pct_max": 0.0,
+    "power_w_mean": 13.9,
+    "thresholds": {
+      "max_util_pct": 5.0,
+      "min_free_fraction": 0.95
+    }
+  },
+  "warmup": {
+    "job_seconds": 35.4791,
+    "generated_tokens": 65536,
+    "tokens_per_second": 1847.17,
+    "request_failures": 0,
+    "ttft_p50_s": 0.25173,
+    "ttft_p95_s": 0.5076,
+    "tpot_p50_s": 0.01633,
+    "tpot_p95_s": 0.01688
+  },
+  "runs": [
+    {
+      "job_seconds": 35.4628,
+      "generated_tokens": 65536,
+      "tokens_per_second": 1848.02,
+      "request_failures": 0,
+      "ttft_p50_s": 0.25144,
+      "ttft_p95_s": 0.4788,
+      "tpot_p50_s": 0.01634,
+      "tpot_p95_s": 0.01688
+    },
+    {
+      "job_seconds": 35.463,
+      "generated_tokens": 65536,
+      "tokens_per_second": 1848.01,
+      "request_failures": 0,
+      "ttft_p50_s": 0.25142,
+      "ttft_p95_s": 0.4822,
+      "tpot_p50_s": 0.01634,
+      "tpot_p95_s": 0.01687
+    },
+    {
+      "job_seconds": 35.4316,
+      "generated_tokens": 65536,
+      "tokens_per_second": 1849.65,
+      "request_failures": 0,
+      "ttft_p50_s": 0.2529,
+      "ttft_p95_s": 0.47549,
+      "tpot_p50_s": 0.0163,
+      "tpot_p95_s": 0.01688
+    }
+  ],
+  "score": {
+    "median_job_seconds": 35.4628,
+    "min_job_seconds": 35.4316,
+    "max_job_seconds": 35.463,
+    "stability": 0.00089,
+    "units_per_hour": 101.515,
+    "mean_power_watts": 315.0,
+    "units_per_electric_kwh": 322.27
+  },
+  "canary": {
+    "passed": true,
+    "rule": "mean",
+    "mean_delta": 0.0,
+    "passing": 8,
+    "required": 8,
+    "max_delta": 0.05,
+    "results": [
+      {
+        "prompt_id": 16,
+        "mean_logprob": -1.16552,
+        "reference_mean_logprob": -1.16552,
+        "delta": 0.0,
+        "pass": true
+      },
+      {
+        "prompt_id": 48,
+        "mean_logprob": -1.11244,
+        "reference_mean_logprob": -1.11244,
+        "delta": 0.0,
+        "pass": true
+      },
+      {
+        "prompt_id": 80,
+        "mean_logprob": -1.34789,
+        "reference_mean_logprob": -1.34789,
+        "delta": 0.0,
+        "pass": true
+      },
+      {
+        "prompt_id": 112,
+        "mean_logprob": -1.24528,
+        "reference_mean_logprob": -1.24528,
+        "delta": 0.0,
+        "pass": true
+      },
+      {
+        "prompt_id": 144,
+        "mean_logprob": -1.16678,
+        "reference_mean_logprob": -1.16678,
+        "delta": 0.0,
+        "pass": true
+      },
+      {
+        "prompt_id": 176,
+        "mean_logprob": -1.17662,
+        "reference_mean_logprob": -1.17662,
+        "delta": 0.0,
+        "pass": true
+      },
+      {
+        "prompt_id": 208,
+        "mean_logprob": -1.5939,
+        "reference_mean_logprob": -1.5939,
+        "delta": 0.0,
+        "pass": true
+      },
+      {
+        "prompt_id": 240,
+        "mean_logprob": -1.60078,
+        "reference_mean_logprob": -1.60078,
+        "delta": 0.0,
+        "pass": true
+      }
+    ]
+  },
+  "power": {
+    "available": true,
+    "samples": 104,
+    "mean_watts": 315.0,
+    "energy_wh": 9.228
+  },
+  "certified": true,
+  "certified_reasons": [],
+  "prompt_set_sha256": "b7ba17276b1f7346dd30db000416bae68c34c23757045ded93b31ff86303c534",
+  "lock_sha256": "bb601596a03798d9eca09c88ff8a0a3fbe21c2ad6b8b4105cd9e93f511f7d0c5",
+  "started_at": "2026-10-05T13:25:10Z",
+  "finished_at": "2026-10-05T13:28:15Z",
+  "report_sha256": "5169cac84bd90b55a7d561279e8234f4cc4b89a6dc225ba413e8496d6fd86a6e",
+  "signature": {
+    "alg": "ed25519",
+    "public_key": "10492f502d607ee225ecdda1d9de7095fb0ed5f1d7b59164634a52b3e20d9434",
+    "signed": "report_sha256",
+    "sig": "FDDqzTgLrCjKmAfR7TjvNDf3dHS1jtsb/BqhQJflkJ1E7G2a/NMGQDilDeaGKWyFC2d8lnV2VvswwsAsi959Dw=="
+  }
+}

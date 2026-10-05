@@ -1,0 +1,34 @@
+kwh-host 0.3.0.dev1 · h_bbe464c76d50 · http://127.0.0.1:9000
+
+Daemon       running (pid 2769), up 23 min
+State        live for 22 s
+Rate         101.52 units/hour (bucket I-1/100)
+Earnings     12 units minted, 0.29 accruing
+Engine       vLLM 0.30.0, in Docker, vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…), healthy
+GPU          NVIDIA GeForce RTX 4090: 0% busy, 44 W, 21.5 of 24.0 GB, 40 °C, no other processes
+Last checks  challenge 22 s ago: passed, mean delta 0.0000
+             micro-benchmark 7 s ago: 100.15 units/hour, within 10%
+             report measured 3 min ago, re-benchmark due in 6 days
+             last re-benchmark 2026-10-05 13:25:05: 101.52 units/hour
+Jobs         1 completed, 0 failed, 0 turned away since the daemon started; job channel open
+
+Reliability          last hour      last day     last week
+  observed              23 min        23 min        23 min
+  live                   40.2%         40.2%         40.2%
+  beats ok             129/138       129/138       129/138
+  beats missed               5             5             5
+  challenges             12/12         12/12         12/12
+  jobs done                  1             1             1
+  jobs failed                0             0             0
+  latency p50            5.3 s         5.3 s         5.3 s
+  latency p95            5.3 s         5.3 s         5.3 s
+  micro-bench           100.15        100.15        100.15
+  minted                    12            12            12
+
+Recent (the platform's log; more: kwh-host events --remote)
+  13:28  state             degraded -> live
+  13:29  heartbeat_rejected rejected: engine unhealthy; engine version None != lock '0.30.0'
+  13:29  state             live -> degraded: engine unhealthy; engine version None != lock '0.30.0'
+  13:30  state             degraded -> offline: engine unhealthy; engine version None != lock '0.30.0'; 5 consecutive failures
+  13:30  host_reported     the host saw 1 engine restart(s)
+  13:30  state             offline -> live

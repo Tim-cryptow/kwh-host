@@ -1,0 +1,59 @@
+2026-10-05 13:07:28  start             kwh-host 0.3.0.dev1 started (docker), vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)
+2026-10-05 13:07:28  rebench           started: driver changed: 580.95.05 benchmarked, 580.178.04 now
+2026-10-05 13:07:28  state             starting -> registered
+2026-10-05 13:10:41  rebench           done: 101.88 units/hour (was 101.83), 3 min
+2026-10-05 13:11:17  engine_up         0.30.0 serving, context 8,192, vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)
+2026-10-05 13:11:17  jobs_channel      open, context 8,192
+2026-10-05 13:11:19  challenge         passed, mean delta 0.0000 (369 ms) -> live
+2026-10-05 13:11:19  state             registered -> live
+2026-10-05 13:11:24  microbench        discarded: a job arrived while it ran
+2026-10-05 13:11:25  job               j_42b351e4e921f662.1 completed, 2 request(s), 256 tokens, 5.3 s
+2026-10-05 13:11:38  microbench        100.74 units/hour in 4.47 s, within tolerance
+2026-10-05 13:12:29  challenge         passed, mean delta 0.0000 (425 ms) -> live
+2026-10-05 13:13:30  challenge         passed, mean delta 0.0000 (423 ms) -> live
+2026-10-05 13:13:46  microbench        72.06 units/hour in 6.24 s, OUTSIDE tolerance
+2026-10-05 13:14:37  challenge         passed, mean delta 0.0000 (422 ms) -> live
+2026-10-05 13:15:38  challenge         passed, mean delta 0.0000 (422 ms) -> live
+2026-10-05 13:15:54  microbench        71.81 units/hour in 6.27 s, OUTSIDE tolerance
+2026-10-05 13:15:54  state             live -> degraded: re-benchmarking
+2026-10-05 13:15:54  engine_down       stopped (rebench)
+2026-10-05 13:15:55  rebench           started: micro-benchmark outside 10% of the rate twice in a row
+2026-10-05 13:20:05  rebench           done: 70.99 units/hour (was 101.88), 4 min
+2026-10-05 13:20:41  engine_up         0.30.0 serving, context 8,192, vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)
+2026-10-05 13:20:41  jobs_channel      open, context 8,192
+2026-10-05 13:20:47  challenge         passed, mean delta 0.0000 (574 ms) -> live
+2026-10-05 13:20:47  state             degraded -> live
+2026-10-05 13:20:53  microbench        71.48 units/hour in 6.30 s, within tolerance
+2026-10-05 13:21:54  challenge         passed, mean delta 0.0000 (221 ms) -> live
+2026-10-05 13:22:54  challenge         passed, mean delta 0.0000 (220 ms) -> live
+2026-10-05 13:22:59  microbench        100.95 units/hour in 4.46 s, OUTSIDE tolerance
+2026-10-05 13:24:00  challenge         passed, mean delta 0.0000 (217 ms) -> live
+2026-10-05 13:25:00  challenge         passed, mean delta 0.0000 (215 ms) -> live
+2026-10-05 13:25:05  microbench        100.94 units/hour in 4.46 s, OUTSIDE tolerance
+2026-10-05 13:25:05  state             live -> degraded: re-benchmarking
+2026-10-05 13:25:05  engine_down       stopped (rebench)
+2026-10-05 13:25:05  rebench           started: micro-benchmark outside 10% of the rate twice in a row
+2026-10-05 13:28:15  rebench           done: 101.52 units/hour (was 70.99), 3 min
+2026-10-05 13:28:51  engine_up         0.30.0 serving, context 8,192, vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)
+2026-10-05 13:28:51  jobs_channel      open, context 8,192
+2026-10-05 13:28:57  challenge         passed, mean delta 0.0000 (374 ms) -> live
+2026-10-05 13:28:57  state             degraded -> live
+2026-10-05 13:29:01  microbench        100.40 units/hour in 4.48 s, within tolerance
+2026-10-05 13:29:16  heartbeat         degraded, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (2 ms)
+2026-10-05 13:29:16  state             live -> degraded: engine unhealthy; engine version None != lock '0.30.0'
+2026-10-05 13:29:31  heartbeat         degraded, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (3 ms)
+2026-10-05 13:29:46  heartbeat         degraded, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (2 ms)
+2026-10-05 13:29:46  engine_restart    engine unhealthy for 3 heartbeats
+2026-10-05 13:29:46  engine_down       stopped (restart)
+2026-10-05 13:29:56  heartbeat         degraded, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (2 ms)
+2026-10-05 13:30:07  heartbeat         offline, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (2 ms)
+2026-10-05 13:30:07  state             degraded -> offline: engine unhealthy; engine version None != lock '0.30.0'
+2026-10-05 13:30:17  heartbeat         offline, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (3 ms)
+2026-10-05 13:30:27  heartbeat         offline, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (2 ms)
+2026-10-05 13:30:37  heartbeat         offline, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (2 ms)
+2026-10-05 13:30:47  heartbeat         offline, REJECTED: engine unhealthy; engine version None != lock '0.30.0' (2 ms)
+2026-10-05 13:30:53  engine_up         0.30.0 serving, context 8,192, vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)
+2026-10-05 13:30:53  jobs_channel      open, context 8,192
+2026-10-05 13:30:57  challenge         passed, mean delta 0.0000 (374 ms) -> live
+2026-10-05 13:30:57  state             offline -> live
+2026-10-05 13:31:12  microbench        100.15 units/hour in 4.49 s, within tolerance

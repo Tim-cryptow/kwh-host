@@ -1,0 +1,46 @@
+[11:06:57] 0. installer (--yes: Docker, NVIDIA Container Toolkit, kwh-host as needed)
+[11:07:58] installer exit 0; kwh-host, version 0.3.0.dev0
+[11:08:08] 1. init, fetch, doctor
+[11:10:28] fetch exit 0 in 139s
+[11:10:36] doctor exit 0
+[11:10:36] 2. mock platform: Docker hosts only (D4), certified reports only; heartbeat 10 s, challenge 1 min, micro-benchmark 2 min
+{"ok":true,"hosts":0,"job_channels":0,"tokenizer":true,"chat":true,"verifier":false}[11:10:38] 3. certified benchmark inside the sandbox, then register
+[11:14:07] bench exit 0
+canary check
+  canary 16: mean logprob -1.1655 (reference -1.1655)
+  canary 48: mean logprob -1.1124 (reference -1.1124)
+  canary 80: mean logprob -1.3479 (reference -1.3479)
+  canary 112: mean logprob -1.2453 (reference -1.2453)
+  canary 144: mean logprob -1.1668 (reference -1.1668)
+  canary 176: mean logprob -1.1766 (reference -1.1766)
+  canary 208: mean logprob -1.5939 (reference -1.5939)
+  canary 240: mean logprob -1.6008 (reference -1.6008)
+units/hour: 101.827   median job: 35.354 s   stability: 0.00122
+canary: PASS (mean delta 0.0000, tolerance 0.05; 8/8 canaries within it)
+certified: YES
+[11:14:07] register: {"host_id":"h_bbe464c76d50","rate_units_per_hour":101.827,"bucket":"I-1/100"}
+[11:14:07] 4. the daemon, live, and buyer jobs
+[11:14:47] live, job channel open, engine 7681f4d7d9d5 running
+[11:14:50] buyer jobs: exit 0
+[11:15:05] micro-benchmark: 101.0 units/hour, within: True
+[11:15:05] 5. the GPU slowed down: graphics clock locked low (a stand-in for throttling: heat, a power cap, a failing fan)
+GPU clocks set to "(gpuClkMin 945, gpuClkMax 945)" for GPU 00000000:00:07.0
+All done.
+[11:15:05] graphics clock locked at 945 MHz (the card's maximum is 3150)
+[11:19:21] slow: platform holds the host: micro-benchmark outside 10% of the rate twice in a row
+[11:19:21] slow: daemon re-benchmarking (engine stopped)
+[11:19:21] slow: a buyer job meanwhile: exit 1 (j_fcccb9366a769ebe: failed on None  units None  0.0 ms  attempts []  (no live host with capacity for this job))
+[11:49:29] slow: NOT live again after 30 min: ('offline', ['no accepted heartbeat within timeout'])
+[11:54:31] 6. the clock released
+Failed to initialize NVML: Driver/library version mismatch
+NVML library version: 580.178
+[11:54:31] full: platform holds the host: micro-benchmark outside 10% of the rate twice in a row
+[11:54:31] full: daemon re-benchmarking (engine stopped)
+[11:54:31] full: a buyer job meanwhile: exit 1 (j_7db7cf3b0b12dfc1: failed on None  units None  0.0 ms  attempts []  (no live host with capacity for this job))
+[12:24:39] full: NOT live again after 30 min: ('offline', ['no accepted heartbeat within timeout'])
+[12:29:40] 7. the engine frozen (docker pause): the daemon should restart it
+[12:39:49] NOT restarted after 10 min: ('offline', ['no accepted heartbeat within timeout'])
+restarted engine: no inspect list index out of range
+[12:39:49] 8. what a host reads
+[12:40:10] daemon stopped, engine container removed
+[12:40:10] 9. summary

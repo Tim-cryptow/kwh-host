@@ -1,0 +1,325 @@
+{
+ "gpu": [
+  "NVIDIA GeForce RTX 4090, GPU-cac73a5d-4492-ef40-7c6a-8941c878465a, 580.178.04, 24564 MiB, 3150 MHz, 500.00 W",
+  "CUDA Version: 13.0"
+ ],
+ "version": [
+  "[13:07:09] installer exit 0; kwh-host, version 0.3.0.dev1"
+ ],
+ "doctor": [
+  "[ok  ] platform: Linux 6.8.0-138-generic",
+  "[ok  ] NVIDIA driver: GPU 0: NVIDIA GeForce RTX 4090, 24 GB, driver 580.178.04",
+  "[ok  ] engine mode: docker, context 8192 tokens",
+  "[ok  ] engine build: vllm/vllm-openai:v0.30.0 (sha256:8a69ffad\u2026), on a driver that supports CUDA 13.0",
+  "[ok  ] Docker: Ubuntu 22.04.5 LTS, server 28.1.1",
+  "[ok  ] GPU in containers: a container sees GPU 0: NVIDIA GeForce RTX 4090",
+  "[ok  ] engine network: none; the engine is reached through a Unix socket only",
+  "[ok  ] engine image: vllm/vllm-openai:v0.30.0 (sha256:8a69ffad\u2026)",
+  "[ok  ] checkpoint: RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 @ 024e24c (kwh-host fetch checked its hashes)"
+ ],
+ "reports": {
+  "first": {
+   "units_per_hour": 101.827,
+   "certified": true,
+   "reasons": [],
+   "canary_mean": 0.0,
+   "launch_mode": "docker",
+   "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+   "gpu": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+   "driver": "580.95.05",
+   "finished_at": "2026-10-05T11:14:07Z"
+  },
+  "start": {
+   "units_per_hour": 101.875,
+   "certified": true,
+   "reasons": [],
+   "canary_mean": 0.0,
+   "launch_mode": "docker",
+   "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+   "gpu": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+   "driver": "580.178.04",
+   "finished_at": "2026-10-05T13:10:41Z"
+  },
+  "slow": {
+   "units_per_hour": 70.993,
+   "certified": true,
+   "reasons": [],
+   "canary_mean": 0.0,
+   "launch_mode": "docker",
+   "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+   "gpu": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+   "driver": "580.178.04",
+   "finished_at": "2026-10-05T13:20:05Z"
+  },
+  "full": {
+   "units_per_hour": 101.515,
+   "certified": true,
+   "reasons": [],
+   "canary_mean": 0.0,
+   "launch_mode": "docker",
+   "image": "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+   "gpu": "GPU-cac73a5d-4492-ef40-7c6a-8941c878465a",
+   "driver": "580.178.04",
+   "finished_at": "2026-10-05T13:28:15Z"
+  }
+ },
+ "host_rebench": [
+  {
+   "t": 1791205648.229,
+   "phase": "start",
+   "reasons": [
+    "driver changed: 580.95.05 benchmarked, 580.178.04 now"
+   ]
+  },
+  {
+   "t": 1791205841.18,
+   "phase": "done",
+   "units_per_hour": 101.875,
+   "previous_units_per_hour": 101.827,
+   "seconds": 193.0
+  },
+  {
+   "t": 1791206155.435,
+   "phase": "start",
+   "reasons": [
+    "micro-benchmark outside 10% of the rate twice in a row"
+   ]
+  },
+  {
+   "t": 1791206405.536,
+   "phase": "done",
+   "units_per_hour": 70.993,
+   "previous_units_per_hour": 101.875,
+   "seconds": 250.1
+  },
+  {
+   "t": 1791206705.812,
+   "phase": "start",
+   "reasons": [
+    "micro-benchmark outside 10% of the rate twice in a row"
+   ]
+  },
+  {
+   "t": 1791206895.136,
+   "phase": "done",
+   "units_per_hour": 101.515,
+   "previous_units_per_hour": 70.993,
+   "seconds": 189.3
+  }
+ ],
+ "rebench_cycles": [
+  {
+   "trigger": "host",
+   "reasons": [
+    "driver changed: 580.95.05 benchmarked, 580.178.04 now"
+   ],
+   "rate": 101.875,
+   "previous_rate": 101.827,
+   "started_after_s": 0.0,
+   "reported_after_s": 192.9,
+   "live_after_s": 231.5
+  },
+  {
+   "trigger": "platform",
+   "reasons": [
+    "micro-benchmark outside 10% of the rate twice in a row"
+   ],
+   "rate": 70.993,
+   "previous_rate": 101.875,
+   "started_after_s": 0.1,
+   "reported_after_s": 250.7,
+   "live_after_s": 292.4
+  },
+  {
+   "trigger": "platform",
+   "reasons": [
+    "micro-benchmark outside 10% of the rate twice in a row"
+   ],
+   "rate": 101.515,
+   "previous_rate": 70.993,
+   "started_after_s": 0.1,
+   "reported_after_s": 189.9,
+   "live_after_s": 232.0
+  }
+ ],
+ "microbench_platform": [
+  [
+   1791205899,
+   100.743,
+   true
+  ],
+  [
+   1791206027,
+   72.061,
+   false
+  ],
+  [
+   1791206155,
+   71.814,
+   false
+  ],
+  [
+   1791206454,
+   71.482,
+   true
+  ],
+  [
+   1791206579,
+   100.951,
+   false
+  ],
+  [
+   1791206705,
+   100.944,
+   false
+  ],
+  [
+   1791206942,
+   100.404,
+   true
+  ],
+  [
+   1791207072,
+   100.154,
+   true
+  ]
+ ],
+ "jobs_during_rebench": {
+  "slow": [
+   {
+    "status": "failed",
+    "reason": "no live host with capacity for this job"
+   }
+  ],
+  "full": [
+   {
+    "status": "failed",
+    "reason": "no live host with capacity for this job"
+   }
+  ]
+ },
+ "freeze": {
+  "restart_decided_after_s": 43.9,
+  "engine_down_after_s": 43.9,
+  "engine_up_after_s": 110.7,
+  "live_after_s": 114.6,
+  "platform_states": [
+   [
+    "live",
+    "degraded"
+   ],
+   [
+    "degraded",
+    "offline"
+   ],
+   [
+    "offline",
+    "live"
+   ]
+  ]
+ },
+ "reliability_1h": {
+  "observed_s": 1432,
+  "state_s": {
+   "degraded": 575,
+   "live": 575,
+   "offline": 51,
+   "registered": 232
+  },
+  "live_fraction": 0.4015,
+  "heartbeats": {
+   "accepted": 129,
+   "rejected": 9,
+   "expected": 143
+  },
+  "challenges": {
+   "passed": 12,
+   "failed": 0,
+   "mean_delta": 0.0,
+   "max_delta": 0.0
+  },
+  "microbench": {
+   "runs": 8,
+   "misses": 4,
+   "median_units_per_hour": 100.154
+  },
+  "jobs": {
+   "completed": 1,
+   "failed": 0,
+   "bad_results": 0,
+   "units": 0.003553,
+   "latency_ms_p50": 5313.0,
+   "latency_ms_p95": 5313.0
+  },
+  "minted": 12,
+  "host_reported": {
+   "send_failures": 0,
+   "engine_restarts": 3,
+   "results_undelivered": 0
+  }
+ },
+ "host_reported": {
+  "uptime_s": 1419,
+  "send_failures": 0,
+  "engine_restarts": 0,
+  "results_undelivered": 0,
+  "last_error": null,
+  "t": 1791207067.6978977
+ },
+ "end_state": {
+  "state": "live",
+  "reasons": [],
+  "rate_units_per_hour": 101.515,
+  "balance": 12,
+  "jobs": {
+   "completed": 1,
+   "failed": 0,
+   "bad_results": 0,
+   "delivered_units": 0.003553,
+   "verifications_failed": 0
+  }
+ },
+ "event_counts": {
+  "host": 188,
+  "platform": 63
+ },
+ "steps": [
+  "[13:06:52] 0. installer (--yes: Docker, NVIDIA Container Toolkit, kwh-host as needed)",
+  "[13:07:09] installer exit 0; kwh-host, version 0.3.0.dev1",
+  "[13:07:09] 1. init, fetch, doctor",
+  "[13:07:17] fetch exit 0 in 7s",
+  "[13:07:24] doctor exit 0",
+  "[13:07:24] 2. mock platform: Docker hosts only (D4), certified reports only; heartbeat 10 s, challenge 1 min, micro-benchmark 2 min",
+  "{\"ok\":true,\"hosts\":0,\"job_channels\":0,\"tokenizer\":true,\"chat\":true,\"verifier\":false}[13:07:26] 3. the certified report already here, registered as it is: 101.827 units/hour, driver 580.95.05, measured 2026-10-05T11:14:07Z",
+  "[13:07:27]    this machine's driver now: 580.178.04",
+  "[13:07:28] register: {\"host_id\":\"h_bbe464c76d50\",\"rate_units_per_hour\":101.827,\"bucket\":\"I-1/100\"}",
+  "[13:07:28] 4. the daemon, live, and buyer jobs",
+  "[13:11:20] live, job channel open, engine edbb6e3141e8 running",
+  "   at start: 2026-10-05 13:07:28  rebench           started: driver changed: 580.95.05 benchmarked, 580.178.04 now",
+  "   at start: 2026-10-05 13:10:41  rebench           done: 101.88 units/hour (was 101.83), 3 min",
+  "[13:11:25] buyer jobs: exit 0",
+  "[13:11:40] micro-benchmark: 100.74 units/hour, within: True",
+  "[13:11:40] 5. the GPU slowed down: graphics clock locked low (a stand-in for throttling: heat, a power cap, a failing fan)",
+  "GPU clocks set to \"(gpuClkMin 945, gpuClkMax 945)\" for GPU 00000000:00:07.0",
+  "All done.",
+  "[13:11:40] graphics clock locked at 945 MHz (the card's maximum is 3150)",
+  "[13:15:56] slow: platform holds the host: micro-benchmark outside 10% of the rate twice in a row",
+  "[13:15:56] slow: daemon re-benchmarking (engine stopped)",
+  "[13:15:57] slow: a buyer job meanwhile: exit 1 (j_a51d7de45d077966: failed on None  units None  0.0 ms  attempts []  (no live host with capacity for this job))",
+  "[13:20:49] slow: live again at 70.993 units/hour, engine 2ae7f35090a7 running",
+  "[13:20:55] slow: next micro-benchmark 71.48 units/hour, within: True",
+  "[13:20:55] 6. the clock released",
+  "All done.",
+  "[13:25:05] full: platform holds the host: micro-benchmark outside 10% of the rate twice in a row",
+  "[13:25:05] full: daemon re-benchmarking (engine stopped)",
+  "[13:25:05] full: a buyer job meanwhile: exit 1 (j_684250fdb98d7cd4: failed on None  units None  0.0 ms  attempts []  (no live host with capacity for this job))",
+  "[13:28:57] full: live again at 101.515 units/hour, engine 4ce692849804 running",
+  "[13:29:03] full: next micro-benchmark 100.4 units/hour, within: True",
+  "[13:29:03] 7. the engine frozen (docker pause): the daemon should restart it",
+  "[13:30:59] engine restarted and live 116s after the freeze, engine ea0c7fd2bcbd running",
+  "restarted engine: {\"readonly_rootfs\": true, \"network\": \"none\", \"cap_drop\": [\"ALL\"], \"user\": \"1002:1002\"}",
+  "[13:30:59] 8. what a host reads",
+  "[13:31:21] daemon stopped, engine container removed",
+  "[13:31:21] 9. summary"
+ ]
+}

@@ -1,0 +1,63 @@
+{"t": 1791205647.9738429, "kind": "registered", "rate": 101.827}
+{"t": 1791205648.274791, "kind": "rebench_started", "reasons": []}
+{"t": 1791205841.1592019, "kind": "re-benchmarked", "rate": 101.875, "previous_rate": 101.827}
+{"t": 1791205877.4909718, "kind": "jobs_connected", "max_concurrency": 32, "max_model_len": 8192}
+{"t": 1791205879.3983982, "kind": "rebench_ended", "rebench_required": false}
+{"t": 1791205879.3983982, "kind": "challenge", "id": "ch-1-fdd1d5e8"}
+{"t": 1791205879.7705855, "kind": "liveness", "id": "ch-1-fdd1d5e8", "passed": true, "delta": 0.0}
+{"t": 1791205879.7705855, "kind": "state", "from": "registered", "to": "live", "reasons": []}
+{"t": 1791205898.795269, "kind": "microbench", "units_per_hour": 100.743, "within": true}
+{"t": 1791205949.1711547, "kind": "challenge", "id": "ch-2-caf58a8a"}
+{"t": 1791205949.5989816, "kind": "liveness", "id": "ch-2-caf58a8a", "passed": true, "delta": 0.0}
+{"t": 1791206010.0472064, "kind": "challenge", "id": "ch-3-b8ee7a42"}
+{"t": 1791206010.4728315, "kind": "liveness", "id": "ch-3-b8ee7a42", "passed": true, "delta": 0.0}
+{"t": 1791206026.7926626, "kind": "microbench", "units_per_hour": 72.061, "within": false}
+{"t": 1791206077.2178078, "kind": "challenge", "id": "ch-4-4bef8050"}
+{"t": 1791206077.6424675, "kind": "liveness", "id": "ch-4-4bef8050", "passed": true, "delta": 0.0}
+{"t": 1791206138.0839179, "kind": "challenge", "id": "ch-5-add43faa"}
+{"t": 1791206138.5087316, "kind": "liveness", "id": "ch-5-add43faa", "passed": true, "delta": 0.0}
+{"t": 1791206154.8559654, "kind": "microbench", "units_per_hour": 71.814, "within": false}
+{"t": 1791206154.8559654, "kind": "rebench_required", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206154.8559654, "kind": "state", "from": "live", "to": "degraded", "reasons": ["re-benchmark required: micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206154.9218812, "kind": "rebench_started", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206154.9230564, "kind": "jobs_disconnected"}
+{"t": 1791206405.5173275, "kind": "re-benchmarked", "rate": 70.993, "previous_rate": 101.875}
+{"t": 1791206441.798141, "kind": "jobs_connected", "max_concurrency": 32, "max_model_len": 8192}
+{"t": 1791206446.727516, "kind": "host_reported", "send_failures": 0, "engine_restarts": 1, "results_undelivered": 0, "last_error": null}
+{"t": 1791206446.727516, "kind": "rebench_ended", "rebench_required": false}
+{"t": 1791206446.727516, "kind": "challenge", "id": "ch-6-174600c1"}
+{"t": 1791206447.3036613, "kind": "liveness", "id": "ch-6-174600c1", "passed": true, "delta": 0.0}
+{"t": 1791206447.3036613, "kind": "state", "from": "degraded", "to": "live", "reasons": []}
+{"t": 1791206453.6015697, "kind": "microbench", "units_per_hour": 71.482, "within": true}
+{"t": 1791206514.0504375, "kind": "challenge", "id": "ch-7-0600bcac"}
+{"t": 1791206514.2733767, "kind": "liveness", "id": "ch-7-0600bcac", "passed": true, "delta": 0.0}
+{"t": 1791206574.7197828, "kind": "challenge", "id": "ch-8-facfb381"}
+{"t": 1791206574.9423947, "kind": "liveness", "id": "ch-8-facfb381", "passed": true, "delta": 0.0}
+{"t": 1791206579.4022727, "kind": "microbench", "units_per_hour": 100.951, "within": false}
+{"t": 1791206639.8708518, "kind": "challenge", "id": "ch-9-cd880d34"}
+{"t": 1791206640.090434, "kind": "liveness", "id": "ch-9-cd880d34", "passed": true, "delta": 0.0}
+{"t": 1791206700.5577416, "kind": "challenge", "id": "ch-10-83545627"}
+{"t": 1791206700.7748413, "kind": "liveness", "id": "ch-10-83545627", "passed": true, "delta": 0.0}
+{"t": 1791206705.2346802, "kind": "microbench", "units_per_hour": 100.944, "within": false}
+{"t": 1791206705.2346802, "kind": "rebench_required", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206705.2346802, "kind": "state", "from": "live", "to": "degraded", "reasons": ["re-benchmark required: micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206705.2991989, "kind": "rebench_started", "reasons": ["micro-benchmark outside 10% of the rate twice in a row"]}
+{"t": 1791206705.300255, "kind": "jobs_disconnected"}
+{"t": 1791206895.117124, "kind": "re-benchmarked", "rate": 101.515, "previous_rate": 70.993}
+{"t": 1791206931.3765435, "kind": "jobs_connected", "max_concurrency": 32, "max_model_len": 8192}
+{"t": 1791206936.8145971, "kind": "host_reported", "send_failures": 0, "engine_restarts": 1, "results_undelivered": 0, "last_error": null}
+{"t": 1791206936.8145971, "kind": "rebench_ended", "rebench_required": false}
+{"t": 1791206936.8145971, "kind": "challenge", "id": "ch-11-011de525"}
+{"t": 1791206937.190864, "kind": "liveness", "id": "ch-11-011de525", "passed": true, "delta": 0.0}
+{"t": 1791206937.190864, "kind": "state", "from": "degraded", "to": "live", "reasons": []}
+{"t": 1791206941.6748242, "kind": "microbench", "units_per_hour": 100.404, "within": true}
+{"t": 1791206956.7482338, "kind": "heartbeat_rejected", "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791206956.7482338, "kind": "state", "from": "live", "to": "degraded", "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'"]}
+{"t": 1791206986.9115782, "kind": "jobs_disconnected"}
+{"t": 1791207007.0098302, "kind": "state", "from": "degraded", "to": "offline", "reasons": ["engine unhealthy", "engine version None != lock '0.30.0'", "5 consecutive failures"]}
+{"t": 1791207053.667825, "kind": "jobs_connected", "max_concurrency": 32, "max_model_len": 8192}
+{"t": 1791207057.2435772, "kind": "host_reported", "send_failures": 0, "engine_restarts": 1, "results_undelivered": 0, "last_error": null}
+{"t": 1791207057.2435772, "kind": "challenge", "id": "ch-12-da22190f"}
+{"t": 1791207057.6204615, "kind": "liveness", "id": "ch-12-da22190f", "passed": true, "delta": 0.0}
+{"t": 1791207057.6204615, "kind": "state", "from": "offline", "to": "live", "reasons": []}
+{"t": 1791207072.1932256, "kind": "microbench", "units_per_hour": 100.154, "within": true}
