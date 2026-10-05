@@ -26,6 +26,7 @@ from kwh_bench.engines.base import Engine
 from kwh_bench.load import PreparedPrompt
 
 from . import __version__, bench, gpu
+from .gpu import reboot_hint
 from .config import HostConfig, read_state, write_state
 from .engine import check_version, describe, launch_mode, own_pids, running_image
 from .events import EventLog, NullEventLog
@@ -37,6 +38,11 @@ Log = Callable[[str], None]
 
 UNHEALTHY_BEATS_BEFORE_RESTART = 3     # 90 s of an engine that does not answer /health
 LATENCIES_KEPT = 1000
+
+
+class EngineRefused(RuntimeError):
+    """The engine started but may not serve (a version the lock does not certify). Retrying cannot
+    change that, so the daemon stops; every other engine failure is reported and retried."""
 
 
 async def describe_engine(engine: Engine, cfg: HostConfig) -> dict:
@@ -175,6 +181,7 @@ class Daemon:
         self._retry_at: Optional[float] = None
         self._unhealthy = 0
         self._restarts_in_a_row = 0
+        self._engine_error: Optional[str] = None
 
     def stop(self) -> None:
         self._stop.set()
@@ -228,6 +235,9 @@ class Daemon:
             eng = {"healthy": False, "version": None, "served_model": None, "image": self._image(),
                    "launch_mode": self._engine_desc.get("launch_mode") or launch_mode(self.cfg),
                    "instance": self._instance, "running": False}
+            if self._engine_error and not self._benchmarking:
+                # what to do first, when the cause is known; the whole error stays in the host's log
+                eng["error"] = reboot_hint(self._engine_error) or self._engine_error
             pids = None
         gs = self.sampler(self.cfg.gpu_index, pids)
         t0 = time.perf_counter()
@@ -433,6 +443,25 @@ class Daemon:
         self._restarts_in_a_row += 1
         return min(30.0 * 2 ** (self._restarts_in_a_row - 1), 600.0)
 
+    def _engine_failed(self, e: BaseException) -> None:
+        """The engine would not start, or died while starting. The host stays reachable and says
+        why, and the start is tried again with a growing pause: 30 s, doubling to 10 minutes. (A
+        driver updated under a running machine is the case that taught this: on 2026-10-05 the
+        engine stopped for a re-benchmark could not start again until a reboot, and the daemon,
+        which used to exit here, went silent.)"""
+        err = f"{type(e).__name__}: {e}"[:500]
+        hint = reboot_hint(err)
+        self._engine_error = err + (f" ({hint})" if hint else "")
+        self.state["engine_error"] = self._engine_error
+        self._benchmarking = False             # whatever it was doing, it is not re-benchmarking now
+        self.state["benchmarking"] = False
+        self._leave_why = "failed"
+        self.events.add("engine_failed", error=self._engine_error)
+        nxt = min(30.0 * 2 ** self._restarts_in_a_row, 600.0)
+        self.log(f"engine failed to start: {self._engine_error}; trying again in {nxt:.0f} s")
+        self._start_heartbeats()
+        self._persist()
+
     # -- heartbeat loop -------------------------------------------------------
     def _start_heartbeats(self) -> None:
         if self._hb_task is None:
@@ -564,7 +593,7 @@ class Daemon:
             if self.require_lock_version:
                 why = check_version(eng.get("version"))
                 if why:
-                    raise RuntimeError(f"refusing to serve: {why}")
+                    raise EngineRefused(f"refusing to serve: {why}")
             self._engine_starts += 1
             if self._engine_starts > 1:
                 self.tel.add("engine_restarts")
@@ -577,6 +606,10 @@ class Daemon:
             self.events.add("engine_up", instance=self._instance, version=eng.get("version"),
                             served_model=eng.get("served_model"), image=eng.get("image"), context=self.max_model_len)
             self._engine_up = True
+            if self._engine_error:
+                self.log("engine running again")
+            self._engine_error = None
+            self.state["engine_error"] = None
             if not self._leave.is_set():       # a re-benchmark decided while it started keeps its flag
                 self._benchmarking = False
                 self.state["benchmarking"] = False
@@ -629,11 +662,16 @@ class Daemon:
             while not self._stop.is_set():
                 if self._leave_why == "rebench":
                     await self._until_stopped(self._rebenchmark())
-                elif self._leave_why == "restart":
+                elif self._leave_why in ("restart", "failed"):
                     await self._until_stopped(self.sleep(self._restart_delay()))
                 if self._stop.is_set():
                     break
-                await self._serve()
+                try:
+                    await self._serve()
+                except (EngineRefused, asyncio.CancelledError):
+                    raise
+                except Exception as e:  # noqa: BLE001 - reported to the platform and retried, not fatal
+                    self._engine_failed(e)
         except BaseException as e:  # noqa: BLE001
             error = e
         finally:

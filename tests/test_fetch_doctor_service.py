@@ -58,6 +58,28 @@ def test_doctor_reads_the_gpu_and_names_the_fix(home):
     assert none.status == "fail" and none.fix
 
 
+def test_doctor_says_reboot_after_a_driver_update_under_a_running_machine(home):
+    """A rented VM, 2026-10-05: an automatic update replaced the driver's libraries while the old
+    kernel module stayed loaded. The fix is a reboot, not installing a driver."""
+    said = "Failed to initialize NVML: Driver/library version mismatch\nNVML library version: 580.178\n"
+    c = doctor.check_gpu(HostConfig(), runner({"nvidia-smi": (18, said, "")}))
+    assert c.status == "fail" and "Driver/library version mismatch" in c.detail
+    assert c.fix == "the NVIDIA driver was updated while the machine was running: reboot (sudo reboot)"
+
+
+def test_the_gpu_sample_says_why_nvidia_smi_failed(tmp_path, monkeypatch):
+    import os
+    from kwh_host import gpu
+    fake = tmp_path / "nvidia-smi"
+    fake.write_text("#!/bin/sh\necho 'Failed to initialize NVML: Driver/library version mismatch'\n"
+                    "echo 'NVML library version: 580.178'\nexit 18\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ['PATH']}")
+    s = gpu.sample(0, set())
+    assert s["available"] is False and s["error"].startswith("Failed to initialize NVML: Driver/library version mismatch")
+    assert gpu.reboot_hint(s["error"]) == gpu.REBOOT_HINT
+
+
 SMI_BANNER = ("+-----------------------------------------------------------------------------------------+\n"
               "| NVIDIA-SMI {drv}             Driver Version: {drv}     CUDA Version: {cuda}     |\n"
               "+-----------------------------------------+------------------------+----------------------+\n")

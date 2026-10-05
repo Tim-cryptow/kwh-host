@@ -8,6 +8,7 @@
 #   - Docker Engine (Docker's own script, get.docker.com) and docker-group membership for you
 #   - the NVIDIA Container Toolkit (NVIDIA's apt repository), so Docker can hand the GPU to the engine
 #   - python3-venv and git, if missing
+#   - a rule keeping the NVIDIA driver out of Ubuntu's automatic updates (/etc/apt/apt.conf.d/52kwh-host-nvidia)
 # It never installs a GPU driver: on Linux that needs a reboot, and on WSL2 the Windows driver does it.
 #
 # Options (pass through the pipe as: ... | bash -s -- --yes):
@@ -118,6 +119,37 @@ elif [ "$WSL" = 1 ]; then
   die "no NVIDIA GPU visible in WSL2. Install the current NVIDIA driver for Windows (it brings the GPU into WSL2; install nothing inside Linux), then run this again"
 else
   die "no NVIDIA driver. Install it with: sudo ubuntu-drivers install, reboot, then run this again"
+fi
+
+# --- automatic driver updates ------------------------------------------------------------
+# Ubuntu's automatic updates install new NVIDIA driver packages in the background. The old kernel
+# module stays loaded until a reboot, and until then nothing new can use the GPU: on a rented VM
+# (2026-10-05) unattended-upgrade replaced 580.95.05 with 580.178.04 ten minutes after boot, and
+# the engine, stopped for a re-benchmark, could not start again. Keeping the driver out of the
+# automatic updates leaves the host's owner to update it and reboot when it suits them.
+NVIDIA_HOLD=/etc/apt/apt.conf.d/52kwh-host-nvidia
+if [ "$WSL" = 0 ] && command -v dpkg-query >/dev/null 2>&1; then
+  say "NVIDIA driver updates"
+  apt_driver="$(dpkg-query -W -f='${Package} ${Status}\n' 'nvidia-driver-*' 'libnvidia-compute-*' 2>/dev/null \
+    | grep -c ' install ok installed$' || true)"
+  if [ "${apt_driver:-0}" = 0 ]; then
+    ok "the driver is not installed through apt; nothing for the automatic updates to replace"
+  elif ! dpkg-query -W -f='${Status}' unattended-upgrades 2>/dev/null | grep -q 'install ok installed'; then
+    ok "no automatic updates installed"
+  elif [ -f "$NVIDIA_HOLD" ]; then
+    ok "kept out of the automatic updates ($NVIDIA_HOLD)"
+  else
+    hold_driver() {
+      printf '%s\n' \
+        '// Written by the kwh-host installer. Automatic updates replace the NVIDIA driver while the old one' \
+        '// stays loaded, and nothing new can use the GPU until a reboot. Update it yourself (sudo apt upgrade),' \
+        '// then reboot. Delete this file to let the automatic updates have it again.' \
+        'Unattended-Upgrade::Package-Blacklist { "nvidia-"; "libnvidia-"; "xserver-xorg-video-nvidia"; };' \
+        | sudo tee "$NVIDIA_HOLD" > /dev/null
+    }
+    change "Keep the NVIDIA driver out of Ubuntu's automatic updates (an update under a running GPU stops it until a reboot; you update it, then reboot)" hold_driver \
+      && ok "kept out of the automatic updates ($NVIDIA_HOLD)" || true
+  fi
 fi
 
 # --- Docker ------------------------------------------------------------------------------

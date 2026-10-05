@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 from .config import image_label
+from .gpu import reboot_hint
 
 STATE_WORDS = {"live": "live", "degraded": "degraded", "offline": "offline", "registered": "registered, not yet live",
                "rejected": "rejected by the platform", "stopped": "stopped", "starting": "starting"}
@@ -144,6 +145,8 @@ def describe_event(ev: Dict[str, Any]) -> str:
         return f"rate {num(ev.get('rate'))} units/hour"
     if k == "engine_restart":
         return str(ev.get("reason"))
+    if k == "engine_failed":
+        return f"would not start: {ev.get('error')}"
     if k == "jobs_channel":
         return "open" + (f", context {num(ev.get('context'))}" if ev.get("context") else "") if ev.get("open") \
             else f"closed: {ev.get('error')}"
@@ -252,8 +255,13 @@ def render_status(host: dict, local: Optional[dict], remote: Optional[dict], now
         if eng.get("image"):
             bits.append(image_label(eng["image"]))
         health = "healthy" if eng.get("healthy") else ("stopped" if eng.get("running") is False else "NOT answering")
+        err = (local or {}).get("engine_error")
+        if err and not eng.get("healthy"):
+            health = "NOT starting\n" + err
         row("Engine", ", ".join(b for b in bits if b) + f", {health}")
     gs = (local or {}).get("gpu") or {}
+    if gs.get("error") and not gs.get("available"):
+        row("GPU", f"nvidia-smi fails: {gs['error'][:160]}" + (f"\n{reboot_hint(gs['error'])}" if reboot_hint(gs["error"]) else ""))
     if gs.get("available"):
         parts = [f"{gs['util_pct']:.0f}% busy" if gs.get("util_pct") is not None else None,
                  f"{gs['power_w']:.0f} W" if gs.get("power_w") is not None else None,

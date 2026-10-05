@@ -451,7 +451,8 @@ class MockPlatform:
     def _beat_problems(self, rec: HostRecord, eng: dict, gs: dict, now: float) -> List[str]:
         reasons: List[str] = []
         if not eng.get("healthy"):
-            reasons.append("engine unhealthy")
+            said = str(eng.get("error") or "")[:240]      # the host's own account, when it has one
+            reasons.append("engine unhealthy" + (f": {said}" if said else ""))
         if self.s.require_engine_version and eng.get("version") != self.s.require_engine_version:
             reasons.append(f"engine version {eng.get('version')!r} != lock {self.s.require_engine_version!r}")
         if eng.get("launch_mode") != "docker" and not self.s.allow_bare_metal:

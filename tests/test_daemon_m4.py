@@ -262,3 +262,79 @@ async def test_a_new_report_survives_a_moment_without_the_platform(cfg, identity
                               transport=transport, bench_engine_factory=bench_engine, rebench_runs=3)
     assert len(benched) == 1 and final["last_rebench"]["ok"]
     assert sum("report upload failed (ConnectError); trying again in 15 s" in line for line in log) == 2
+
+
+MISMATCH = ("engine process exited early with code 125; the engine's log ends: : Error response from daemon: failed "
+            "to create task for container: ... nvidia-container-cli: initialization error: nvml error: driver/library "
+            "version mismatch: unknown")
+
+
+class UpdatedDriver(MockEngine):
+    """Cannot start while `driver['updated']` is set: an NVIDIA driver updated under the running machine, so
+    nothing new gets the GPU until a reboot (a rented VM, 2026-10-05). The machine "reboots" after
+    `driver['reboot_after']` failed starts of the serving engine."""
+
+    def __init__(self, driver, serving=False):
+        super().__init__(step_ms=0.01, prefill_ms_per_1k=0.02)
+        self.driver, self.serving = driver, serving
+
+    async def start(self):
+        if self.driver["updated"]:
+            if self.serving:
+                self.driver["failed_starts"] += 1
+                if self.driver["failed_starts"] >= self.driver["reboot_after"]:
+                    self.driver["updated"] = False        # rebooted: the next start works
+            raise RuntimeError(MISMATCH)
+        await super().start()
+
+
+async def test_an_engine_that_cannot_start_is_reported_and_retried_not_fatal(cfg, identity, report, clock):
+    """The M4 GPU run, replayed: the driver is updated just as a re-benchmark starts. The benchmark
+    fails, the serving engine cannot start either, and the daemon, which used to exit there, keeps
+    heartbeating with the reason and retries until the machine is rebooted. Then the re-benchmark
+    it still owes runs and the host is live again."""
+    driver = {"updated": False, "failed_starts": 0, "reboot_after": 3}
+    engine = UpdatedDriver(driver, serving=True)
+    pool, s = await platform_for(engine, microbench_every_seconds=30, microbench_tolerance=0.0)
+    platform = MockPlatform(pool, s, clock=clock)
+
+    def bench_engine():
+        if not driver["failed_starts"]:
+            driver["updated"] = True                    # the update lands as the first re-benchmark starts
+        else:
+            platform.s.microbench_tolerance = 10.0      # the second try: the rig is fine again
+        return UpdatedDriver(driver)
+
+    d, final, log = await run(cfg, identity, report, engine, platform, clock, live_after(platform, "re-benchmarked"),
+                              bench_engine_factory=bench_engine, rebench_runs=3, retry_seconds=1800)
+    local = EventLog(cfg.events_path).read()
+    seq = [e["kind"] + (f":{e['phase']}" if e["kind"] == "rebench" else "") for e in local
+           if e["kind"] in ("engine_up", "engine_failed", "rebench", "stop")]
+    assert seq[:3] == ["engine_up", "rebench:start", "rebench:failed"]
+    assert seq.count("engine_failed") == 3 and seq[3:6] == ["engine_failed"] * 3
+    assert seq[6:] == ["engine_up", "rebench:start", "rebench:done", "engine_up", "stop"]
+    failed = next(e for e in local if e["kind"] == "engine_failed")
+    assert "reboot to load the new one" in failed["error"]
+    assert any("engine failed to start" in line and "trying again in 30 s" in line for line in log)
+    # the platform heard why, instead of a host gone silent
+    rejected = [e for e in platform.hosts[d.client.host_id].events if e["kind"] == "heartbeat_rejected"]
+    assert rejected and rejected[0]["reasons"][0] == ("engine unhealthy: the NVIDIA driver was updated while the "
+                                                      "machine was running; reboot to load the new one")
+    assert final["state"] == "stopped" and final["engine_error"] is None and final["last_rebench"]["ok"]
+
+
+async def test_a_version_the_lock_does_not_certify_still_stops_the_daemon(cfg, identity, report, clock):
+    from kwh_host.daemon import EngineRefused
+    engine = fast_engine()                               # reports version "0"; the lock says 0.30.0
+    pool, s = await platform_for(engine)
+    platform = MockPlatform(pool, s, clock=clock)
+    async with PlatformClient("http://mock", identity, transport=httpx.ASGITransport(app=create_app(platform)),
+                              clock=clock) as client:
+        await client.register(report)
+        d = Daemon(cfg, client, engine, log=lambda s: None, sampler=idle_gpu, clock=clock, wall_clock=clock,
+                   require_lock_version=True, jobs=False)
+        try:
+            await asyncio.wait_for(d.run(), timeout=30)
+            raise AssertionError("the daemon served an uncertified engine version")
+        except EngineRefused as e:
+            assert "refusing to serve" in str(e)

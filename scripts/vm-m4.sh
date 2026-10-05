@@ -10,6 +10,10 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/scripts/vm-m4.sh -o vm-m4.sh && bash vm-m4.sh
 #
+# `bash vm-m4.sh again` runs it once more on the same machine: the last run's results are kept aside,
+# and the report it certified is registered as it is, so a daemon on a machine that has changed
+# since (a driver updated and the machine rebooted, say) has to notice by itself and re-benchmark.
+#
 # Like vm-m3.sh: as root it creates a normal user, kwh, with passwordless sudo and runs everything as
 # that user; the test runs in the background and the command follows its output, so a dropped
 # connection does not stop it and the same command follows it again. Everything lands in ~/m4 of the
@@ -25,7 +29,7 @@ if [ "$(id -u)" -eq 0 ]; then
   fi
   # a new file, renamed into place: a test already running from the old one keeps reading it intact
   install -o kwh -g kwh -m 0755 "$SELF" /home/kwh/vm-m4.sh.new && mv -f /home/kwh/vm-m4.sh.new /home/kwh/vm-m4.sh || exit 1
-  exec sudo -iu kwh env KWH_REF="$REF" KWH_M4_COPY_TO="$HOME" bash /home/kwh/vm-m4.sh
+  exec sudo -iu kwh env KWH_REF="$REF" KWH_M4_COPY_TO="$HOME" bash /home/kwh/vm-m4.sh "$@"
 fi
 
 OUT="$HOME/m4"
@@ -34,6 +38,14 @@ if [ "${KWH_M4_RUN:-}" != 1 ]; then
   mkdir -p "$OUT"
   running() { [ -n "$1" ] && grep -qs vm-m4 "/proc/$1/cmdline"; }    # a zombie or a reused pid is not the test
   pid="$(cat "$OUT/pid" 2>/dev/null)"
+  if [ "${1:-}" = again ] && ! running "$pid" && [ -s "$OUT/console.log" ]; then
+    stamp="$(date -u +%Y%m%d-%H%M%S)"
+    mv "$OUT" "$OUT.run-$stamp" && mkdir -p "$OUT"
+    [ -f "$HOME/m4-out.tgz" ] && mv "$HOME/m4-out.tgz" "$HOME/m4-out.run-$stamp.tgz"
+    [ -f "$HOME/.kwh-host/events.jsonl" ] && mv "$HOME/.kwh-host/events.jsonl" "$HOME/.kwh-host/events.run-$stamp.jsonl"
+    echo "the last run is kept in $OUT.run-$stamp; starting again"
+    pid=""
+  fi
   if running "$pid"; then
     echo "the test is already running; following it (Ctrl+C stops following, not the test)"
   elif [ -f "$HOME/m4-out.tgz" ]; then
@@ -126,15 +138,26 @@ nvidia-smi --query-gpu=timestamp,power.draw,clocks.sm,clocks.mem,utilization.gpu
   --format=csv -l 5 > "$OUT/gpu-trace.csv" 2>&1 &
 TRACE=$!
 
-log "3. certified benchmark inside the sandbox, then register"
-as_docker kwh-host bench > "$OUT/bench.txt" 2>&1; log "bench exit $?"
+# report_says FIELD: a field of the certified report already here (none on a fresh machine)
+report_says() { python3 -c "import json,sys; r=json.load(open(sys.argv[1])); g=(r['hardware']['gpus'] or [{}])[0]; print({'certified': r.get('certified'), 'driver': g.get('driver_version'), 'finished': r.get('finished_at'), 'rate': r['score']['units_per_hour']}[sys.argv[2]])" "$KH/report.json" "$1" 2>/dev/null; }
+if [ "$(report_says certified)" = True ]; then
+  log "3. the certified report already here, registered as it is: $(report_says rate) units/hour, driver $(report_says driver), measured $(report_says finished)"
+  log "   this machine's driver now: $(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
+else
+  log "3. certified benchmark inside the sandbox, then register"
+  as_docker kwh-host bench > "$OUT/bench.txt" 2>&1; log "bench exit $?"
+  grep -E "units/hour|canary|certified" "$OUT/bench.txt" | tee -a "$OUT/steps.log"
+fi
 cp "$KH/report.json" "$OUT/report-first.json" 2>/dev/null
-grep -E "units/hour|canary|certified" "$OUT/bench.txt" | tee -a "$OUT/steps.log"
 as_docker kwh-host register > "$OUT/register.json" 2>&1; log "register: $(tr -d '\n ' < "$OUT/register.json")"
 
 log "4. the daemon, live, and buyer jobs"
 as_docker kwh-host run > "$OUT/run.log" 2>&1 &
+# up to 15 minutes: a report that no longer fits this machine is redone before the engine first starts
 wait_host "h.get('state') == 'live' and h.get('jobs_channel')" 300 && log "live, job channel open, engine $(container)" || log "NOT live"
+kwh-host events --kind rebench > "$OUT/rebench-at-start.txt" 2>&1
+grep -q "rebench" "$OUT/rebench-at-start.txt" && sed 's/^/   at start: /' "$OUT/rebench-at-start.txt" | tee -a "$OUT/steps.log"
+cp "$KH/report.json" "$OUT/report-start.json" 2>/dev/null
 kwh-host submit --platform "$PLATFORM" --max-tokens 128 --temperature 0 \
   --prompt "Explain how photosynthesis works to a ten-year-old." \
   --prompt "Write a Python function that checks whether a string is a palindrome." \
@@ -233,14 +256,20 @@ def report(n):
             "image": ((r.get("engine") or {}).get("extra") or {}).get("docker_image"),
             "gpu": gpus[0].get("uuid"), "driver": gpus[0].get("driver_version"), "finished_at": r.get("finished_at")}
 pev = lines("events-platform.jsonl")
+hev = lines("events-host.jsonl")
 cycles, cur = [], None
 for e in pev:
     k = e["kind"]
-    if k == "rebench_required":
-        cur = {"reasons": e.get("reasons"), "held_at": e["t"]}
+    if k == "rebench_required" and cur is None:
+        cur = {"trigger": "platform", "reasons": e.get("reasons"), "held_at": e["t"]}
         cycles.append(cur)
-    elif cur is not None and k == "rebench_started":
-        cur["started_at"] = e["t"]
+    elif k == "rebench_started":
+        if cur is None:          # the host decided by itself (its report no longer fit the machine)
+            mine = next((h for h in hev if h["kind"] == "rebench" and h.get("phase") == "start"
+                         and abs(h["t"] - e["t"]) < 120), {})
+            cur = {"trigger": "host", "reasons": mine.get("reasons"), "held_at": e["t"]}
+            cycles.append(cur)
+        cur.setdefault("started_at", e["t"])
     elif cur is not None and k == "re-benchmarked":
         cur.update(reported_at=e["t"], rate=e.get("rate"), previous_rate=e.get("previous_rate"))
     elif cur is not None and k == "state" and e.get("to") == "live" and "reported_at" in cur:
@@ -256,7 +285,6 @@ try:
     t_pause = float(text("t-pause").strip())
 except ValueError:
     t_pause = None
-hev = lines("events-host.jsonl")
 freeze = {}
 if t_pause:
     after = [e for e in hev if e["t"] >= t_pause]
@@ -275,7 +303,8 @@ print(json.dumps({
     "gpu": text("gpu.txt").strip().splitlines()[1:],
     "version": [x for x in text("steps.log").splitlines() if "installer exit" in x],
     "doctor": text("doctor.txt").strip().splitlines(),
-    "reports": {n: report(f"report-{n}.json") for n in ("first", "slow", "full")},
+    "reports": {n: report(f"report-{n}.json") for n in ("first", "start", "slow", "full")},
+    "host_rebench": [{k: v for k, v in e.items() if k != "kind"} for e in hev if e["kind"] in ("rebench", "engine_failed")],
     "rebench_cycles": cycles,
     "microbench_platform": micro,
     "jobs_during_rebench": {n: [{k: r.get(k) for k in ("status", "reason")} for r in

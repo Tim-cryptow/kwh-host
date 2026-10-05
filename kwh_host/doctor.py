@@ -22,6 +22,7 @@ from kwh_bench import reference as ref
 
 from .config import IMAGE_CUDA, TESTED_CUDA12, HostConfig, cuda_tuple, engine_image_for, image_label
 from .fetch import snapshot_dir
+from .gpu import reboot_hint
 
 MIN_VRAM_MIB = 16 * 1024 - 512           # "16 GB" cards report a little under 16384 MiB
 
@@ -67,9 +68,14 @@ def check_platform() -> Check:
 def check_gpu(cfg: HostConfig, run: Run = _run) -> Check:
     r = run(["nvidia-smi", "--query-gpu=index,name,memory.total,driver_version", "--format=csv,noheader,nounits"])
     if r.returncode != 0:
+        said = " ".join(((r.stdout or "") + " " + (r.stderr or "")).split())
+        if reboot_hint(said):
+            # An update replaced the driver's libraries; the old kernel module is still loaded.
+            return Check("NVIDIA driver", "fail", f"nvidia-smi: {said[:160]}",
+                         "the NVIDIA driver was updated while the machine was running: reboot (sudo reboot)")
         fix = ("install the NVIDIA driver for Windows (it brings the GPU into WSL2); nothing to install inside Linux"
                if is_wsl() else "install the NVIDIA driver: sudo ubuntu-drivers install, then reboot")
-        return Check("NVIDIA driver", "fail", "nvidia-smi did not run", fix)
+        return Check("NVIDIA driver", "fail", "nvidia-smi did not run" + (f": {said[:160]}" if said else ""), fix)
     gpus = {}
     for line in r.stdout.strip().splitlines():
         parts = [p.strip() for p in line.split(",")]

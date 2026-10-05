@@ -19,6 +19,27 @@ def _run(argv: list[str], timeout: float = 5.0) -> Optional[str]:
     return None
 
 
+REBOOT_HINT = "the NVIDIA driver was updated while the machine was running; reboot to load the new one"
+
+
+def reboot_hint(text: Optional[str]) -> Optional[str]:
+    """nvidia-smi and the container toolkit both say "driver/library version mismatch" when the
+    driver's libraries were replaced (an automatic update) but the old kernel module is still
+    loaded. Nothing new can use the GPU until a reboot."""
+    return REBOOT_HINT if "version mismatch" in (text or "").lower() else None
+
+
+def _run_said(argv: list[str], timeout: float = 5.0) -> tuple[bool, str]:
+    """(ran cleanly, its stdout) or (failed, what it said)."""
+    try:
+        out = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return False, f"{type(e).__name__}: {e}"
+    if out.returncode == 0:
+        return True, out.stdout.strip()
+    return False, " ".join(line.strip() for line in (out.stdout + "\n" + out.stderr).splitlines() if line.strip())
+
+
 def _f(s: str) -> Optional[float]:
     try:
         return float(s)
@@ -36,10 +57,11 @@ def sample(gpu_index: int = 0, own_pids: Optional[Iterable[int]] = None) -> dict
         return out
     # uuid and driver_version tell the GPU and driver apart from the ones benchmarked (§5); the
     # name goes last because it is the one field that could hold a comma.
-    q = _run(["nvidia-smi", "-i", str(gpu_index),
-              "--query-gpu=utilization.gpu,power.draw,memory.used,memory.total,temperature.gpu,uuid,driver_version,name",
-              "--format=csv,noheader,nounits"])
-    if not q:
+    ran, q = _run_said(["nvidia-smi", "-i", str(gpu_index),
+                        "--query-gpu=utilization.gpu,power.draw,memory.used,memory.total,temperature.gpu,uuid,driver_version,name",
+                        "--format=csv,noheader,nounits"])
+    if not ran or not q:
+        out["error"] = (q or "nvidia-smi said nothing")[:300]
         return out
     vals = [v.strip() for v in q.splitlines()[0].split(",")]
     if len(vals) < 8:

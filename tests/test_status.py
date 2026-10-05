@@ -129,3 +129,17 @@ def test_status_and_events_commands(cfg, identity):
     assert "live, accepted, minted 1 (12 ms)" in only.output
     bad = runner.invoke(main, ["events", "--since", "yesterday"])
     assert bad.exit_code != 0 and "30m" in bad.output
+
+
+def test_status_says_when_the_engine_cannot_start_and_why():
+    host = {"version": "0.3.0", "host_id": "h_abc", "platform": "https://platform.example"}
+    local = daemon_state(engine={"healthy": False, "running": False, "version": None, "launch_mode": "docker",
+                                 "image": DEFAULT_DOCKER_IMAGE},
+                         engine_error="RuntimeError: engine process exited early with code 125 (the NVIDIA driver was "
+                                      "updated while the machine was running; reboot to load the new one)",
+                         gpu={"available": False, "error": "Failed to initialize NVML: Driver/library version mismatch"})
+    text = render_status(host, local, None, now=NOW)
+    assert "Engine       engine, in Docker, vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…), NOT starting" in text
+    assert "reboot to load the new one" in text
+    assert "GPU          nvidia-smi fails: Failed to initialize NVML: Driver/library version mismatch" in text
+    assert describe_event({"kind": "engine_failed", "error": "RuntimeError: x"}) == "would not start: RuntimeError: x"
