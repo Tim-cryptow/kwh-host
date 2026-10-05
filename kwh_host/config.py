@@ -17,10 +17,27 @@ from typing import Optional
 # The certified engine (the version the lock pins) is published in two builds. The default one is
 # built on CUDA 13 and will not start under an older driver ("driver too old"); the cu129 build of
 # the same version runs on CUDA 12.x drivers. `kwh-host init` picks by the driver (engine_image_for).
-DEFAULT_DOCKER_IMAGE = "vllm/vllm-openai:v0.30.0"            # CUDA 13: driver 580 or newer
-CUDA12_DOCKER_IMAGE = "vllm/vllm-openai:v0.30.0-cu129"       # CUDA 12.9: drivers that support CUDA 12.x
+# Both are pinned by registry digest: a tag can be pushed again, a digest names exactly one image.
+# The digests are Docker Hub's for the two tags (multi-arch index); the CUDA 13 one is what a host
+# pulled by tag on 2026-10-05 and certified with (results/m3-vast-4090-2026-10-05).
+DEFAULT_DOCKER_IMAGE = "vllm/vllm-openai@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90"
+CUDA12_DOCKER_IMAGE = "vllm/vllm-openai@sha256:a67f8f186d4567612ac37a55bd82295006002b18858eb12a8af2f05f86c2ae3f"
+IMAGE_TAGS = {DEFAULT_DOCKER_IMAGE: "vllm/vllm-openai:v0.30.0",          # CUDA 13: driver 580 or newer
+              CUDA12_DOCKER_IMAGE: "vllm/vllm-openai:v0.30.0-cu129"}     # CUDA 12.9: drivers that support CUDA 12.x
 IMAGE_CUDA = {DEFAULT_DOCKER_IMAGE: (13, 0), CUDA12_DOCKER_IMAGE: (12, 0)}   # oldest driver CUDA each build runs on
 TESTED_CUDA12 = (12, 8)       # oldest 12.x driver the cu129 build has run on (RTX 3090, driver 570, bare metal, 2026-09-30)
+
+
+def pinned_image(image: str) -> str:
+    """A published engine build named by its tag becomes the same build pinned by digest; configs
+    written before the pin name the tag. Anything else is left as it is."""
+    return {tag: pinned for pinned, tag in IMAGE_TAGS.items()}.get(image, image)
+
+
+def image_label(image: str) -> str:
+    """For people: 'vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)'; other images as they are."""
+    tag = IMAGE_TAGS.get(image)
+    return f"{tag} ({image.split('@', 1)[1][:15]}…)" if tag else image
 
 
 def cuda_tuple(version: Optional[str]) -> Optional[tuple]:
@@ -59,6 +76,9 @@ class HostConfig:
     token: Optional[str] = None
     bare_metal_ok: bool = False                 # set by `init --allow-bare-metal` for pod testing
     extra: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.docker_image = pinned_image(self.docker_image)
 
     # -- paths ---------------------------------------------------------
     @property

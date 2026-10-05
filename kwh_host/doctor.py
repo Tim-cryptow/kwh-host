@@ -20,7 +20,7 @@ from typing import Callable, List, Optional
 
 from kwh_bench import reference as ref
 
-from .config import IMAGE_CUDA, TESTED_CUDA12, HostConfig, cuda_tuple, engine_image_for
+from .config import IMAGE_CUDA, TESTED_CUDA12, HostConfig, cuda_tuple, engine_image_for, image_label
 from .fetch import snapshot_dir
 
 MIN_VRAM_MIB = 16 * 1024 - 512           # "16 GB" cards report a little under 16384 MiB
@@ -103,7 +103,7 @@ def check_engine_build(cfg: HostConfig, run: Run = _run) -> Check:
     cuda = cuda_tuple(cuda_s)
     driver_fix = "update the NVIDIA driver" + (" for Windows" if is_wsl() else "")
     if cuda is None:
-        return Check(name, "warn", f"{image}; could not read the driver's CUDA version from nvidia-smi")
+        return Check(name, "warn", f"{image_label(image)}; could not read the driver's CUDA version from nvidia-smi")
     if cuda[0] < 12:
         return Check(name, "fail", f"the driver supports CUDA {cuda_s}; the engine needs CUDA 12.8 or newer",
                      driver_fix + " to version 570 or newer")
@@ -111,13 +111,13 @@ def check_engine_build(cfg: HostConfig, run: Run = _run) -> Check:
     if need is None:
         return Check(name, "warn", f"{image} is not a published build of the engine; cannot tell which CUDA it needs")
     if cuda < need:
-        return Check(name, "fail", f"{image} needs a CUDA {need[0]} driver (580 or newer); this one supports CUDA {cuda_s}",
-                     f"run kwh-host init again with the same options (it picks {engine_image_for(cuda_s)}), "
+        return Check(name, "fail", f"{image_label(image)} needs a CUDA {need[0]} driver (580 or newer); this one supports CUDA {cuda_s}",
+                     f"run kwh-host init again with the same options (it picks {image_label(engine_image_for(cuda_s))}), "
                      f"or {driver_fix} to 580 or newer")
     if cuda[0] == 12 and cuda < TESTED_CUDA12:
-        return Check(name, "warn", f"{image} on a CUDA {cuda_s} driver; it has run on 12.8 and newer",
+        return Check(name, "warn", f"{image_label(image)} on a CUDA {cuda_s} driver; it has run on 12.8 and newer",
                      f"if the engine does not start, {driver_fix} to 570 or newer")
-    return Check(name, "ok", f"{image}, on a driver that supports CUDA {cuda_s}")
+    return Check(name, "ok", f"{image_label(image)}, on a driver that supports CUDA {cuda_s}")
 
 
 def docker_info(run: Run = _run) -> Optional[dict]:
@@ -187,8 +187,8 @@ def check_transport(cfg: HostConfig, info: Optional[dict]) -> Check:
 def check_image(cfg: HostConfig, run: Run = _run) -> Check:
     r = run(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", cfg.docker_image])
     if r.returncode != 0:
-        return Check("engine image", "fail", f"{cfg.docker_image} is not pulled", "kwh-host fetch")
-    return Check("engine image", "ok", cfg.docker_image)
+        return Check("engine image", "fail", f"{image_label(cfg.docker_image)} is not pulled", "kwh-host fetch")
+    return Check("engine image", "ok", image_label(cfg.docker_image))
 
 
 def check_model(cfg: HostConfig, revision: Optional[str]) -> Check:

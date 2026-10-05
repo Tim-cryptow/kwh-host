@@ -76,7 +76,7 @@ def test_the_engine_build_follows_the_driver(home, monkeypatch):
     assert doctor.check_engine_build(default, smi("595.84", "13.2")).status == "ok"
     assert doctor.check_engine_build(cu12, smi("595.84", "13.2")).status == "ok"   # the 12.9 build on a newer driver
     old = doctor.check_engine_build(default, smi("570.195.03", "12.8"))         # would die with "driver too old"
-    assert old.status == "fail" and CUDA12_DOCKER_IMAGE in old.fix
+    assert old.status == "fail" and "vllm/vllm-openai:v0.30.0-cu129 (sha256:a67f8f18…)" in old.fix
     assert doctor.check_engine_build(cu12, smi("570.195.03", "12.8")).status == "ok"
     assert doctor.check_engine_build(cu12, smi("535.288.01", "12.2")).status == "warn"
     assert doctor.check_engine_build(cu12, smi("470.256.02", "11.4")).status == "fail"
@@ -164,3 +164,26 @@ def test_fetch_keeps_docker_pull_progress_off_stdout(monkeypatch):
     assert fetch.pull_image("vllm/vllm-openai:v0.30.0", log=lambda s: None) == "vllm/vllm-openai@sha256:8a69"
     pull = [kw for argv, kw in calls if argv[:2] == ["docker", "pull"]][0]
     assert pull.get("stdout") is sys.stderr
+
+
+def test_engine_images_are_pinned_by_digest(home):
+    """A tag can be pushed again; the engine a host runs is named by its registry digest."""
+    from kwh_host.config import IMAGE_TAGS, image_label, pinned_image
+    for image in (DEFAULT_DOCKER_IMAGE, CUDA12_DOCKER_IMAGE):
+        repo, _, digest = image.partition("@sha256:")
+        assert repo == "vllm/vllm-openai" and len(digest) == 64 and int(digest, 16) >= 0
+    assert IMAGE_TAGS[DEFAULT_DOCKER_IMAGE] == "vllm/vllm-openai:v0.30.0"
+    assert image_label(DEFAULT_DOCKER_IMAGE) == "vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)"
+    assert pinned_image("vllm/vllm-openai:v0.30.0-cu129") == CUDA12_DOCKER_IMAGE
+    assert pinned_image("kwh-fake-engine:test") == "kwh-fake-engine:test"      # anything else is left alone
+    # a config written before the pin names the tag; it loads pinned
+    cfg = HostConfig()
+    cfg.save()
+    data = json.loads(cfg.path.read_text())
+    data["docker_image"] = "vllm/vllm-openai:v0.30.0"
+    cfg.path.write_text(json.dumps(data))
+    assert HostConfig.load().docker_image == DEFAULT_DOCKER_IMAGE
+    pulled = doctor.check_image(HostConfig(), runner({"docker image inspect": (0, '["vllm/vllm-openai@sha256:8a69"]', "")}))
+    assert pulled.status == "ok" and pulled.detail == "vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…)"
+    missing = doctor.check_image(HostConfig(), runner({}))
+    assert missing.status == "fail" and "v0.30.0 (sha256:8a69ffad…) is not pulled" in missing.detail

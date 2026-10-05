@@ -12,7 +12,7 @@ import click
 from kwh_bench import reference as ref
 
 from . import __version__
-from .config import CUDA12_DOCKER_IMAGE, DEFAULT_DOCKER_IMAGE, HostConfig, engine_image_for, read_state
+from .config import CUDA12_DOCKER_IMAGE, DEFAULT_DOCKER_IMAGE, IMAGE_TAGS, HostConfig, engine_image_for, read_state
 from .identity import Identity
 
 
@@ -45,7 +45,8 @@ def main():
 @click.option("--platform", "platform_url", default="http://127.0.0.1:9000", show_default=True, help="Platform base URL.")
 @click.option("--engine", "engine_mode", type=click.Choice(["docker", "bare-metal"]), default="docker", show_default=True)
 @click.option("--docker-image", default=None,
-              help=f"Engine image. Default: {DEFAULT_DOCKER_IMAGE} for CUDA 13 drivers, {CUDA12_DOCKER_IMAGE} for CUDA 12.x.")
+              help=f"Engine image. Default: {IMAGE_TAGS[DEFAULT_DOCKER_IMAGE]} for CUDA 13 drivers, "
+                   f"{IMAGE_TAGS[CUDA12_DOCKER_IMAGE]} for CUDA 12.x, both pinned by digest.")
 @click.option("--port", type=int, default=8000, show_default=True, help="Engine port.")
 @click.option("--gpu", "gpu_index", type=int, default=0, show_default=True)
 @click.option("--hf-cache", default=None, help="Host HF cache dir to mount into the container.")
@@ -79,6 +80,7 @@ def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, all
            "max_model_len": cfg.max_model_len, "public_key": ident.public_key_hex, "registered": cfg.registered}
     if cfg.engine_mode == "docker":
         out["engine_image"] = cfg.docker_image
+        out["engine_build"] = IMAGE_TAGS.get(cfg.docker_image, cfg.docker_image)
         if driver_cuda:
             out["driver_cuda"] = driver_cuda
     click.echo(json.dumps(out, indent=2))

@@ -16,6 +16,8 @@ from typing import Callable, List, Optional
 from kwh_bench import reference as ref
 from kwh_bench.lockfile import Lock
 
+from .config import image_label
+
 Log = Callable[[str], None]
 
 
@@ -68,7 +70,8 @@ def verify_model(snapshot: Path, lock: Lock, log: Log = lambda s: None) -> List[
 
 def pull_image(image: str, log: Log) -> Optional[str]:
     """`docker pull`, progress on the terminal; returns the image's repo digest."""
-    log(f"pulling {image} (about {14 if 'cu129' in image else 9} GB the first time)")
+    label = image_label(image)
+    log(f"pulling {label} (about {14 if 'cu129' in label else 9} GB the first time)")
     # docker prints its progress on stdout; send it to stderr so `kwh-host fetch` prints only its JSON
     subprocess.run(["docker", "pull", image], check=True, stdout=sys.stderr)
     out = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", image],

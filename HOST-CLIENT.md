@@ -66,7 +66,7 @@ kwh-host (daemon, Python)
 
 **Language.** Python, importing `kwh_bench` as a library. The benchmark already contains the load generator, the canary scorer, the GPU probe/pre-flight, the report hasher and the verifier; a client in another language would reimplement all of it and drift from the spec. Packaging as a single file (PyInstaller) comes with the tray app, not before.
 
-**Engine sandbox.** One long-lived Docker container per GPU running the certified engine image at the locked version (`vllm/vllm-openai:v0.30.0`, built on CUDA 13 and so needing driver 580 or newer, or the same version's `v0.30.0-cu129` build on a driver that only supports CUDA 12.x, which `kwh-host init` picks from the driver; the lock pins the version string, which is what certification checks) with the pinned §5 flags from `kwh_bench.reference`, serving the Grade I reference model and nothing else. Grade I is one model, so a "job" is a batch of OpenAI-compatible requests to that container, not arbitrary code. The sandbox therefore isolates the host from **buyer inputs**, not from buyer programs. As built in M3 (`kwh_host/sandbox.py`):
+**Engine sandbox.** One long-lived Docker container per GPU running the certified engine image at the locked version (`vllm/vllm-openai:v0.30.0`, built on CUDA 13 and so needing driver 580 or newer, or the same version's `v0.30.0-cu129` build on a driver that only supports CUDA 12.x, which `kwh-host init` picks from the driver; both are pinned by registry digest, and the lock pins the version string, which is what certification checks) with the pinned §5 flags from `kwh_bench.reference`, serving the Grade I reference model and nothing else. Grade I is one model, so a "job" is a batch of OpenAI-compatible requests to that container, not arbitrary code. The sandbox therefore isolates the host from **buyer inputs**, not from buyer programs. As built in M3 (`kwh_host/sandbox.py`):
 
 | | How |
 | --- | --- |
@@ -75,7 +75,7 @@ kwh-host (daemon, Python)
 | No privileges | `--cap-drop ALL`, `no-new-privileges`, and the daemon's own uid; a daemon running as root gets an engine running as `nobody`. |
 | Bounded | `--memory` at 3/4 of RAM (at most 64 GiB, no swap), `--pids-limit 4096`, `--shm-size 2g`, one GPU (`--gpus device=N`). |
 | The checkpoint it certified | `kwh-host fetch` downloads the locked revision and checks every file against the lock's SHA-256 before the engine ever loads it. |
-| The engine it certified | `bench` and `run` use the same launch, and the report records it (with the home directory redacted, since reports are public). |
+| The engine it certified | `bench` and `run` use the same launch, image digest included, and the report records it (with the home directory redacted, since reports are public). |
 
 Docker Desktop (Windows, macOS) runs containers in its own VM, and a Unix socket cannot cross from there to the host. With it, `kwh-host init --engine-transport tcp` publishes the engine on 127.0.0.1 instead: still unreachable from the network, but no longer cut off from it. `kwh-host doctor` says which applies. The daemon itself runs as an ordinary user.
 
