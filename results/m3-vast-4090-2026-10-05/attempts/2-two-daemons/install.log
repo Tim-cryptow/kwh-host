@@ -1,0 +1,110 @@
+[1m==>[0m kWh host client installer
+    ok   Ubuntu 22.04.5 LTS
+[1m==>[0m NVIDIA GPU
+    ok   NVIDIA GeForce RTX 4090, 24 GB, driver 580.95.05 (CUDA 13.0)
+[1m==>[0m Docker
+    ok   Docker 28.1.1 on Ubuntu 22.04.5 LTS
+[1m==>[0m NVIDIA Container Toolkit
+Get:1 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease [1477 B]
+Get:2 https://download.docker.com/linux/ubuntu jammy InRelease [48.5 kB]
+Get:3 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  InRelease [1578 B]
+Get:4 https://download.docker.com/linux/ubuntu jammy/stable amd64 Packages [88.5 kB]
+Get:5 https://pkgs.tailscale.com/stable/ubuntu jammy InRelease
+Get:6 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  Packages [28.0 kB]
+Hit:7 http://archive.ubuntu.com/ubuntu jammy InRelease
+Get:8 https://pkgs.tailscale.com/stable/ubuntu jammy/main amd64 Packages [16.3 kB]
+Get:9 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+Get:10 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+Get:11 https://ppa.launchpadcontent.net/graphics-drivers/ppa/ubuntu jammy InRelease [24.3 kB]
+Get:12 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [3598 kB]
+Get:13 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+Get:14 https://ppa.launchpadcontent.net/graphics-drivers/ppa/ubuntu jammy/main amd64 Packages [28.6 kB]
+Get:15 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [3899 kB]
+Get:16 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  Packages [3045 kB]
+Get:17 https://ppa.launchpadcontent.net/graphics-drivers/ppa/ubuntu jammy/main Translation-en [6076 B]
+Get:18 http://security.ubuntu.com/ubuntu jammy-security/main Translation-en [504 kB]
+Get:19 http://security.ubuntu.com/ubuntu jammy-security/main amd64 c-n-f Metadata [14.7 kB]
+Get:20 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [6410 kB]
+Get:21 http://archive.ubuntu.com/ubuntu jammy-updates/main Translation-en [575 kB]
+Get:22 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 c-n-f Metadata [20.1 kB]
+Get:23 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [6701 kB]
+Get:24 http://security.ubuntu.com/ubuntu jammy-security/restricted Translation-en [1232 kB]
+Get:25 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 c-n-f Metadata [600 B]
+Get:26 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1052 kB]
+Get:27 http://security.ubuntu.com/ubuntu jammy-security/universe Translation-en [236 kB]
+Get:28 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 c-n-f Metadata [23.2 kB]
+Get:29 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [69.4 kB]
+Get:30 http://security.ubuntu.com/ubuntu jammy-security/multiverse Translation-en [12.9 kB]
+Get:31 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 c-n-f Metadata [544 B]
+Get:32 http://archive.ubuntu.com/ubuntu jammy-updates/restricted Translation-en [1287 kB]
+Get:33 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 c-n-f Metadata [584 B]
+Get:34 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1285 kB]
+Get:35 http://archive.ubuntu.com/ubuntu jammy-updates/universe Translation-en [325 kB]
+Get:36 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 c-n-f Metadata [30.8 kB]
+Get:37 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [76.8 kB]
+Get:38 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse Translation-en [15.9 kB]
+Get:39 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 c-n-f Metadata [756 B]
+Get:40 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [70.2 kB]
+Get:41 http://archive.ubuntu.com/ubuntu jammy-backports/main Translation-en [11.4 kB]
+Get:42 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 c-n-f Metadata [412 B]
+Get:43 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [30.8 kB]
+Get:44 http://archive.ubuntu.com/ubuntu jammy-backports/universe Translation-en [16.9 kB]
+Get:45 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 c-n-f Metadata [676 B]
+Fetched 31.2 MB in 4s (7109 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  libnvidia-container-tools libnvidia-container1 nvidia-container-toolkit-base
+The following NEW packages will be installed:
+  libnvidia-container-tools libnvidia-container1 nvidia-container-toolkit
+  nvidia-container-toolkit-base
+0 upgraded, 4 newly installed, 0 to remove and 313 not upgraded.
+Need to get 8757 kB of archives.
+After this operation, 37.7 MB of additional disk space will be used.
+Get:1 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  libnvidia-container1 1.20.1-1 [1237 kB]
+Get:2 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  libnvidia-container-tools 1.20.1-1 [22.1 kB]
+Get:3 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  nvidia-container-toolkit-base 1.20.1-1 [5995 kB]
+Get:4 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  nvidia-container-toolkit 1.20.1-1 [1503 kB]
+Fetched 8757 kB in 7s (1262 kB/s)
+Selecting previously unselected package libnvidia-container1:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 130734 files and directories currently installed.)
+Preparing to unpack .../libnvidia-container1_1.20.1-1_amd64.deb ...
+Unpacking libnvidia-container1:amd64 (1.20.1-1) ...
+Selecting previously unselected package libnvidia-container-tools.
+Preparing to unpack .../libnvidia-container-tools_1.20.1-1_amd64.deb ...
+Unpacking libnvidia-container-tools (1.20.1-1) ...
+Selecting previously unselected package nvidia-container-toolkit-base.
+Preparing to unpack .../nvidia-container-toolkit-base_1.20.1-1_amd64.deb ...
+Unpacking nvidia-container-toolkit-base (1.20.1-1) ...
+Selecting previously unselected package nvidia-container-toolkit.
+Preparing to unpack .../nvidia-container-toolkit_1.20.1-1_amd64.deb ...
+Unpacking nvidia-container-toolkit (1.20.1-1) ...
+Setting up nvidia-container-toolkit-base (1.20.1-1) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/nvidia-cdi-refresh.path → /lib/systemd/system/nvidia-cdi-refresh.path.
+Created symlink /etc/systemd/system/multi-user.target.wants/nvidia-cdi-refresh.service → /lib/systemd/system/nvidia-cdi-refresh.service.
+Setting up libnvidia-container1:amd64 (1.20.1-1) ...
+Setting up libnvidia-container-tools (1.20.1-1) ...
+Setting up nvidia-container-toolkit (1.20.1-1) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.9) ...
+NEEDRESTART-VER: 3.5
+NEEDRESTART-KCUR: 6.8.0-59-generic
+NEEDRESTART-KEXP: 6.8.0-59-generic
+NEEDRESTART-KSTA: 1
+time="2026-10-05T09:13:35Z" level=info msg="Loading config from /etc/docker/daemon.json"
+time="2026-10-05T09:13:35Z" level=info msg="Wrote updated config to /etc/docker/daemon.json"
+time="2026-10-05T09:13:35Z" level=info msg="It is recommended that docker daemon be restarted."
+    ok   toolkit installed; a test container sees the GPU
+[1m==>[0m Python and git
+    ok   Python 3.10
+[1m==>[0m kwh-host
+    ok   kwh-host, version 0.2.0.dev2 in /home/kwh/.kwh-host/venv, linked from ~/.local/bin/kwh-host
+
+[1m==>[0m Ready. Next:
+    kwh-host init --platform <platform URL>
+    kwh-host doctor            # every check should say ok
+    kwh-host fetch             # the model (~9 GB, hash-checked) and the engine image (~9 GB, ~14 GB for CUDA 12 drivers)
+    kwh-host bench             # the certified benchmark, ~10 minutes
+    kwh-host register
+    kwh-host service install   # runs in the background from now on, restarts on failure

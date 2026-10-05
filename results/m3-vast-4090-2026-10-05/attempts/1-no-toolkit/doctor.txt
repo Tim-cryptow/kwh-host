@@ -1,0 +1,9 @@
+[ok  ] platform: Linux 6.8.0-59-generic
+[ok  ] NVIDIA driver: GPU 0: NVIDIA GeForce RTX 4090, 24 GB, driver 580.95.05
+[ok  ] engine mode: docker, context 8192 tokens
+[ok  ] engine build: vllm/vllm-openai:v0.30.0, on a driver that supports CUDA 13.0
+[ok  ] Docker: Ubuntu 22.04.5 LTS, server 28.1.1
+[ok  ] GPU in containers: nvidia runtime
+[ok  ] engine network: none; the engine is reached through a Unix socket only
+[ok  ] engine image: vllm/vllm-openai:v0.30.0
+[ok  ] checkpoint: RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 @ 024e24c (kwh-host fetch checked its hashes)

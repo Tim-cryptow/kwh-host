@@ -149,3 +149,18 @@ def test_service_unit_runs_the_daemon_as_the_user(tmp_path, monkeypatch):
     assert done[0].startswith("wrote ")
     service.uninstall()
     assert not service.unit_path().exists()
+
+
+def test_fetch_keeps_docker_pull_progress_off_stdout(monkeypatch):
+    """On the GPU VM `kwh-host fetch > fetch.json` held docker's pull progress ahead of the JSON."""
+    import sys
+    calls = []
+
+    def fake_run(argv, **kw):
+        calls.append((argv, kw))
+        out = '["vllm/vllm-openai@sha256:8a69"]\n' if argv[:3] == ["docker", "image", "inspect"] else ""
+        return subprocess.CompletedProcess(argv, 0, out, "")
+    monkeypatch.setattr(fetch.subprocess, "run", fake_run)
+    assert fetch.pull_image("vllm/vllm-openai:v0.30.0", log=lambda s: None) == "vllm/vllm-openai@sha256:8a69"
+    pull = [kw for argv, kw in calls if argv[:2] == ["docker", "pull"]][0]
+    assert pull.get("stdout") is sys.stderr

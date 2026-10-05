@@ -1,0 +1,10 @@
+[
+  {
+    "job_id": "j_6c2e1cd8b6b6c3ff",
+    "status": "failed",
+    "reason": "no live host with capacity for this job",
+    "attempts": [],
+    "units_reserved": 0.008301,
+    "latency_ms": 0.0
+  }
+]

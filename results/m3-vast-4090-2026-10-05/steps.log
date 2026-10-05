@@ -1,0 +1,44 @@
+[09:31:37] 0. installer (--yes: Docker, NVIDIA Container Toolkit, kwh-host as needed)
+[09:31:52] installer exit 0
+[09:31:52] 1. init, doctor, fetch
+[09:32:05] fetch exit 0 in 5s
+[09:32:12] doctor exit 0
+[09:32:12] 2. mock platform: Docker hosts only (D4), certified reports only, the engine's tokenizer for buyers
+{"ok":true,"hosts":0,"job_channels":0,"tokenizer":true,"chat":true,"verifier":false}[09:32:14] 3. certified benchmark inside the sandbox
+[09:35:39] bench exit 0
+canary check
+  canary 16: mean logprob -1.1655 (reference -1.1655)
+  canary 48: mean logprob -1.1124 (reference -1.1124)
+  canary 80: mean logprob -1.3479 (reference -1.3479)
+  canary 112: mean logprob -1.2453 (reference -1.2453)
+  canary 144: mean logprob -1.1668 (reference -1.1668)
+  canary 176: mean logprob -1.1766 (reference -1.1766)
+  canary 208: mean logprob -1.5939 (reference -1.5939)
+  canary 240: mean logprob -1.6008 (reference -1.6008)
+units/hour: 101.508   median job: 35.4652 s   stability: 0.00155
+canary: PASS (mean delta 0.0000, tolerance 0.05; 8/8 canaries within it)
+certified: YES
+[09:35:40] register: {"host_id":"h_b8a119af8b6c","rate_units_per_hour":101.508,"bucket":"I-1/100"}
+[09:35:40] 4. the daemon, live in the sandbox
+[09:36:22] live, job channel open
+{"readonly_rootfs": true, "network": "none", "cap_drop": ["ALL"], "security_opt": ["no-new-privileges:true"], "pids_limit": 4096, "memory_gib": 35.0, "user": "1002:1002", "devices": [["0"]], "mounts": {"/cache": "rw", "/run/kwh": "rw", "/hf": "ro"}}
+network out:  OSError: [Errno 101] Network is unreachable
+dns:          socket.gaierror: [Errno -3] Temporary failure in name resolution
+write /usr:   OSError: [Errno 30] Read-only file system: '/usr/x'
+write /hf:    OSError: [Errno 30] Read-only file system: '/hf/x'
+uid, CapEff:  1002 0000000000000000
+gpu inside:   NVIDIA GeForce RTX 4090
+[09:36:22] 5. buyer jobs
+[09:36:26] greedy job: exit 0
+[09:36:26] sampled job: exit 0
+[09:36:28] 6,065-token job (needs D8's context): exit 0
+[09:36:28] too-long job (8,292 > 8,192, expected to fail): exit 1
+[09:36:44] daemon stopped, engine container removed
+[09:36:44] 6. a 4-bit substitute in the same sandbox
+[09:36:44] fetch AWQ exit 0
+[09:37:26] substitute failed its challenge
+[09:37:27] 7. systemd user service
+[09:37:27] service install exit 0
+[09:38:25] service: live
+[09:38:26] service uninstalled
+[09:38:26] 8. summary

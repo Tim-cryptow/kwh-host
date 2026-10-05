@@ -1,0 +1,23 @@
+kwh-host 0.2.0.dev3 starting engine (docker)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-1-fa74de08: pass (mean delta 0.0 over 4, 352 ms) -> live
+micro-benchmark discarded: a job arrived while it ran
+job j_3f9139168337148f.1: completed (2 request(s), 256 tokens)
+job j_f6d969c135e1cbaa.1: completed (1 request(s), 17 tokens)
+job j_0bfc72c9621818ec.1: completed (1 request(s), 64 tokens)
+micro-benchmark: 100.87 u/h equivalent in 4.46s -> within tolerance
+{
+  "state": "stopped",
+  "beats": 2,
+  "accepted_beats": 2,
+  "minted_total": 0,
+  "balance": 0,
+  "jobs": {
+    "completed": 3,
+    "failed": 0,
+    "rejected": 0,
+    "undelivered": 0,
+    "completion_tokens": 337
+  }
+}

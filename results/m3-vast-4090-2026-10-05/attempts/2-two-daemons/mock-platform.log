@@ -1,0 +1,120 @@
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+mock platform on http://127.0.0.1:9000  (challenges from the public lock; not a guard)
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/applications.py", line 1215, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/applications.py", line 96, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/routing.py", line 676, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 2786, in app
+    await route.handle(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 1310, in handle
+    await super().handle(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/routing.py", line 282, in handle
+    await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 165, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 151, in app
+    response = await f(request)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 727, in app
+    raw_response = await run_endpoint_function(
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 360, in run_endpoint_function
+    return await dependant.call(**values)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/kwh_host/platform/mock.py", line 821, in mock_jobs
+    reqs = tokenize_requests(body.get("requests") or [], tokenizer)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/kwh_host/platform/mock.py", line 714, in tokenize_requests
+    r["prompt_token_ids"] = tokenizer.chat(r.pop("messages"))
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/kwh_host/platform/mock.py", line 700, in chat
+    ids = self.tok.apply_chat_template(messages, add_generation_prompt=True, tokenize=True)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 3109, in apply_chat_template
+    rendered_chat, generation_indices = render_jinja_template(
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/utils/chat_template_utils.py", line 520, in render_jinja_template
+    compiled_template = _compile_jinja_template(chat_template)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/utils/chat_template_utils.py", line 427, in _compile_jinja_template
+    return _cached_compile_jinja_template(chat_template)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/utils/chat_template_utils.py", line 433, in _cached_compile_jinja_template
+    raise ImportError(
+ImportError: apply_chat_template requires jinja2 to be installed. Please install it using `pip install jinja2`.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/applications.py", line 1215, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/applications.py", line 96, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/routing.py", line 676, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 2786, in app
+    await route.handle(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 1310, in handle
+    await super().handle(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/routing.py", line 282, in handle
+    await self.app(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 165, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 151, in app
+    response = await f(request)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 727, in app
+    raw_response = await run_endpoint_function(
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/fastapi/routing.py", line 360, in run_endpoint_function
+    return await dependant.call(**values)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/kwh_host/platform/mock.py", line 821, in mock_jobs
+    reqs = tokenize_requests(body.get("requests") or [], tokenizer)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/kwh_host/platform/mock.py", line 714, in tokenize_requests
+    r["prompt_token_ids"] = tokenizer.chat(r.pop("messages"))
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/kwh_host/platform/mock.py", line 700, in chat
+    ids = self.tok.apply_chat_template(messages, add_generation_prompt=True, tokenize=True)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 3109, in apply_chat_template
+    rendered_chat, generation_indices = render_jinja_template(
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/utils/chat_template_utils.py", line 520, in render_jinja_template
+    compiled_template = _compile_jinja_template(chat_template)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/utils/chat_template_utils.py", line 427, in _compile_jinja_template
+    return _cached_compile_jinja_template(chat_template)
+  File "/home/kwh/.kwh-host/venv/lib/python3.10/site-packages/transformers/utils/chat_template_utils.py", line 433, in _cached_compile_jinja_template
+    raise ImportError(
+ImportError: apply_chat_template requires jinja2 to be installed. Please install it using `pip install jinja2`.

@@ -1,0 +1,6 @@
+network out:  OSError: [Errno 101] Network is unreachable
+dns:          socket.gaierror: [Errno -3] Temporary failure in name resolution
+write /usr:   OSError: [Errno 30] Read-only file system: '/usr/x'
+write /hf:    OSError: [Errno 30] Read-only file system: '/hf/x'
+uid, CapEff:  1002 0000000000000000
+gpu inside:   NVIDIA GeForce RTX 4090

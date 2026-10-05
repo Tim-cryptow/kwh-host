@@ -1,0 +1,4 @@
+probing hardware
+pre-flight: 100% VRAM free, GPU 2.0% busy, 62.6 W -> idle
+starting engine vllm
+error: RuntimeError: engine process exited early with code 125

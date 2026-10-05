@@ -1,0 +1,28 @@
+probing hardware
+pre-flight: 100% VRAM free, GPU 2.0% busy, 61.2 W -> idle
+starting engine vllm
+engine vllm 0.30.0 model=RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 mode=docker
+tokenizing prompt set
+warm-up job
+  warm-up 35.47s  1848 tok/s  failures=0
+  run 1/3  35.47s  1848 tok/s  failures=0
+  run 2/3  35.42s  1850 tok/s  failures=0
+  run 3/3  35.48s  1847 tok/s  failures=0
+canary check
+  canary 16: mean logprob -1.1655 (reference -1.1655)
+  canary 48: mean logprob -1.1124 (reference -1.1124)
+  canary 80: mean logprob -1.3479 (reference -1.3479)
+  canary 112: mean logprob -1.2453 (reference -1.2453)
+  canary 144: mean logprob -1.1668 (reference -1.1668)
+  canary 176: mean logprob -1.1766 (reference -1.1766)
+  canary 208: mean logprob -1.5939 (reference -1.5939)
+  canary 240: mean logprob -1.6008 (reference -1.6008)
+kWh Grade I  series I-1  spec 1.0.0-rc.6
+GPU: NVIDIA GeForce RTX 4090   engine: vllm 0.30.0 (docker)
+units/hour: 101.508   median job: 35.4652 s   stability: 0.00155
+mean power: 321.6 W   units per electric kWh: 315.63
+run 1: 1847.9 tok/s   TTFT p50 251.3ms p95 477.9ms   TPOT p50 16.3ms p95 16.9ms
+canary: PASS (mean delta 0.0000, tolerance 0.05; 8/8 canaries within it)
+certified: YES
+report sha256: b61ccf0f4ea3658b484c4fd0d9ab75c27f657ad76757c412c6bd30b5a86f0dfd
+report: /home/kwh/.kwh-host/report.json

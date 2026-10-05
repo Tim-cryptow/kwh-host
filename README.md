@@ -28,7 +28,7 @@ Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle,
 - [x] M0 — scope document, decisions recorded
 - [x] M1 — daemon skeleton + mock platform: `init → bench → register → run` reaches **live**, answers challenges, mints, micro-benchmarks. Proven on a RunPod RTX 3090 on 2026-09-30 (see below).
 - [x] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Proven on a RunPod A40 on 2026-10-02 (see below).
-- [ ] M3 — Docker sandbox, one-line install, WSL2 path. Built, and proven end to end without a GPU on every push: CI runs a stand-in engine inside the real sandbox through init, bench, register, live and a buyer job. Left: the same on a rented GPU machine (`scripts/vm-m3.sh`), then WSL2 on a real Windows PC.
+- [ ] M3 — Docker sandbox, one-line install, WSL2 path. Proven on Linux on a rented RTX 4090 VM on 2026-10-05 (see below): the one-line install, then a certified benchmark inside the sandbox, live, buyer jobs, a 4-bit substitute caught, and the background service. CI runs the same flow without a GPU on every push. Left: WSL2 on a real Windows PC.
 - [ ] M4 — reliability telemetry, `kwh-host status`
 - [ ] M5 — real platform (step 4), stake deposit
 
@@ -74,11 +74,36 @@ What it settled:
 - **Context length does not change the rate (D8):** 60.230 units/hour at 1,024, 60.228 at 8,192. Hosts now certify and serve at 8,192 by default.
 - One install snag: Ubuntu 24.04 ships `cryptography` 41.0.7 through apt, which pip cannot upgrade; kwh-host now accepts it.
 
+## M3 on real hardware (RTX 4090, Vast.ai VM, 2026-10-05)
+
+`scripts/vm-m3.sh` on a rented VM (Ubuntu 22.04, driver 580.95.05, CUDA 13.0, $0.51/hr; a whole VM, since RunPod pods cannot run Docker). It ran the one-line installer, then the Docker path for real: no bare metal anywhere, and a mock platform that accepts only Docker hosts with certified reports. Everything it wrote is in [results/m3-vast-4090-2026-10-05](results/m3-vast-4090-2026-10-05/).
+
+```
+installer: a test container sees the GPU        init: engine build vllm/vllm-openai:v0.30.0 for a CUDA 13.0 driver
+units/hour: 101.508   median job: 35.4652 s   stability: 0.00155   canary: PASS (mean delta 0.0000)   certified: YES
+live, job channel open                                                            42 s after `kwh-host run`
+engine container: read-only, network none, cap_drop ALL, no-new-privileges, user 1002:1002, /hf read-only
+  from inside: Network is unreachable / DNS fails / Read-only file system / CapEff 0000000000000000 / sees the RTX 4090
+jobs: chat greedy (256 tokens), chat sampled, a 6,065-token prompt: completed; an 8,292-token job: refused
+daemon stopped, engine container removed
+--- same sandbox, the 4-bit substitute (AWQ-INT4) ---
+platform: degraded (engine restarted; awaiting a challenge)
+challenge: FAIL (mean delta 0.12852 over 4) -> degraded
+service install -> live in 58 s; service uninstall -> removed
+```
+
+What it settled:
+
+- **The sandbox costs nothing.** Bare metal, the same card model scored 100.56 units/hour on RunPod. Inside a container with no network, a read-only root, no capabilities and an ordinary uid, it scored 101.51 here (101.59 on a second run), at the same 315 units per electric kWh. The report is the benchmark's second RTX 4090 row and its first certified run in Docker mode.
+- **The lockdown holds as built (§3),** checked from outside with `docker inspect` and from inside with `docker exec`.
+- **The installer has to try the GPU, not read settings.** This VM's template promised the NVIDIA Container Toolkit, but none of its programs were installed, while Docker still listed an `nvidia` runtime. The first attempt's engine died with `could not select device driver`. The installer now runs a test container on the GPU and installs the toolkit when that fails, which it did here. `doctor` runs `nvidia-smi` inside the engine image. An engine that dies at launch now shows its own error.
+- Two faults in the test script, not the client, cost a second attempt. Both are written up in the results folder.
+
 ## Try it without a GPU
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 67 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+python -m pytest -q          # 68 tests: signing, envelope, execution, the vLLM stream parser, verifier,
                              # platform state machine, sandbox, and jobs end to end over a real local server
 
 # the sandbox for real, with a stand-in engine (needs Docker; what CI runs on every push)

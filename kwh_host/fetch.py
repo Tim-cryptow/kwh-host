@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import subprocess
+import sys
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -68,7 +69,8 @@ def verify_model(snapshot: Path, lock: Lock, log: Log = lambda s: None) -> List[
 def pull_image(image: str, log: Log) -> Optional[str]:
     """`docker pull`, progress on the terminal; returns the image's repo digest."""
     log(f"pulling {image} (about {14 if 'cu129' in image else 9} GB the first time)")
-    subprocess.run(["docker", "pull", image], check=True)
+    # docker prints its progress on stdout; send it to stderr so `kwh-host fetch` prints only its JSON
+    subprocess.run(["docker", "pull", image], check=True, stdout=sys.stderr)
     out = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", image],
                          capture_output=True, text=True, timeout=30)
     digests = [d for d in (out.stdout.strip().strip("[]").replace('"', "").split(",")) if d]

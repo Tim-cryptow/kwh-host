@@ -1,0 +1,21 @@
+● kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status)
+     Loaded: loaded (/home/kwh/.config/systemd/user/kwh-host.service; enabled; vendor preset: enabled)
+     Active: active (running) since Mon 2026-10-05 09:37:27 UTC; 57s ago
+       Docs: https://github.com/Tim-cryptow/kwh-host
+   Main PID: 14671 (kwh-host)
+      Tasks: 12 (limit: 57779)
+     Memory: 44.8M
+        CPU: 910ms
+     CGroup: /user.slice/user-1002.slice/user@1002.service/app.slice/kwh-host.service
+             ├─14671 /home/kwh/.kwh-host/venv/bin/python3 /home/kwh/.kwh-host/venv/bin/kwh-host run
+             └─14731 docker run --rm --init --name kwh-engine-gpu0 --label kwh.engine=1 --user 1002:1002 --read-only --tmpfs /tmp:rw,exec,nosuid,nodev,size=4g --cap-drop ALL --security-opt no-new-privileges:true --pids-limit 4096 --memory 35g --memory-swap 35g --shm-size 2g -v /home/kwh/.kwh-host/hf:/hf:ro -v /home/kwh/.kwh-host/engine-cache:/cache:rw --gpus device=0 -e HOME=/cache/home -e USER=kwh -e LOGNAME=kwh -e HF_HOME=/hf -e HF_HUB_OFFLINE=1 -e TRANSFORMERS_OFFLINE=1 -e HF_HUB_DISABLE_TELEMETRY=1 -e VLLM_NO_USAGE_STATS=1 -e DO_NOT_TRACK=1 -e XDG_CACHE_HOME=/cache/xdg -e VLLM_CACHE_ROOT=/cache/vllm -e TRITON_CACHE_DIR=/cache/triton -e TORCHINDUCTOR_CACHE_DIR=/cache/inductor -e CUDA_CACHE_PATH=/cache/nv --network none -v /home/kwh/.kwh-host/run:/run/kwh:rw vllm/vllm-openai:v0.30.0 RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 --dtype auto --max-model-len 8192 --max-num-seqs 32 --no-enable-prefix-caching --seed 0 --gpu-memory-utilization 0.90 --revision 024e24cbe4153670f747383ea3265d0fb197c727 --uds /run/kwh/engine.sock
+
+Oct 05 09:37:27 ubuntu systemd[9659]: Started kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 05 09:37:28 ubuntu kwh-host[14671]: kwh-host 0.2.0.dev3 starting engine (docker)
+Oct 05 09:38:09 ubuntu kwh-host[14671]: engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+Oct 05 09:38:09 ubuntu kwh-host[14671]: job channel open (concurrency 32, context 8192)
+Oct 05 09:38:09 ubuntu kwh-host[14671]: platform: degraded (canary failed (mean delta 0.12852))
+Oct 05 09:38:09 ubuntu kwh-host[14671]: challenge ch-3-70b31f7f: pass (mean delta 0.0 over 4, 352 ms) -> degraded, 1 more pass(es) in a row needed
+Oct 05 09:38:14 ubuntu kwh-host[14671]: micro-benchmark: 100.37 u/h equivalent in 4.48s -> within tolerance
+Oct 05 09:38:24 ubuntu kwh-host[14671]: platform: degraded (challenge passed (mean delta 0.0); 1 more in a row before live)
+Oct 05 09:38:24 ubuntu kwh-host[14671]: challenge ch-4-74809c33: pass (mean delta 0.0 over 4, 214 ms) -> live

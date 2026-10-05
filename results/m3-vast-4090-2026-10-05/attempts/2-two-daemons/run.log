@@ -1,0 +1,32 @@
+kwh-host 0.2.0.dev2 starting engine (docker)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-1-e669583d: pass (mean delta 0.0 over 4, 348 ms) -> live
+micro-benchmark discarded: a job arrived while it ran
+job j_9508c48993e5c08d.1: completed (1 request(s), 64 tokens)
+micro-benchmark: 100.80 u/h equivalent in 4.46s -> within tolerance
+minted 1 unit(s), balance 1
+challenge ch-2-6fcad7f4: pass (mean delta 0.0 over 4, 211 ms) -> live
+minted 1 unit(s), balance 2
+platform: degraded (engine unhealthy; engine version None != lock '0.30.0')
+platform: degraded (engine unhealthy; engine version None != lock '0.30.0')
+platform: degraded (engine unhealthy; engine version None != lock '0.30.0')
+platform: degraded (engine unhealthy; engine version None != lock '0.30.0')
+platform: degraded (engine unhealthy; engine version None != lock '0.30.0')
+challenge scoring failed: HTTPStatusError: Client error '404 Not Found' for url 'http://engine/tokenize'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+challenge ch-3-9effc7c2: FAIL (mean delta None over 4, 0 ms) -> offline, 2 more pass(es) in a row needed
+{
+  "state": "stopped",
+  "beats": 13,
+  "accepted_beats": 9,
+  "minted_total": 2,
+  "balance": 2,
+  "jobs": {
+    "completed": 1,
+    "failed": 0,
+    "rejected": 0,
+    "undelivered": 0,
+    "completion_tokens": 64
+  }
+}

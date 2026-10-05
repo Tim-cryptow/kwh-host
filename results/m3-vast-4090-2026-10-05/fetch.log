@@ -1,0 +1,12 @@
+downloading RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 @ 024e24cbe4153670f747383ea3265d0fb197c727 into /home/kwh/.kwh-host/hf (about 9 GB the first time)
+Fetching 11 files:   0%|          | 0/11 [00:00<?, ?it/s]Fetching 11 files: 100%|██████████| 11/11 [00:00<00:00, 3081.99it/s]
+checking every file against the lock
+  config.json: ok
+  generation_config.json: ok
+  model-00001-of-00002.safetensors: ok
+  model-00002-of-00002.safetensors: ok
+  tokenizer.json: ok
+  tokenizer_config.json: ok
+pulling vllm/vllm-openai:v0.30.0 (about 9 GB the first time)
+downloading hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4 into /home/kwh/.kwh-host/hf (about 9 GB the first time)
+Fetching 12 files:   0%|          | 0/12 [00:00<?, ?it/s]Fetching 12 files: 100%|██████████| 12/12 [00:00<00:00, 3468.76it/s]

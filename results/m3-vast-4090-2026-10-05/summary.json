@@ -1,0 +1,140 @@
+{
+ "gpu": [
+  "NVIDIA GeForce RTX 4090, 580.95.05, 24564 MiB",
+  "CUDA Version: 13.0"
+ ],
+ "engine_image": "vllm/vllm-openai:v0.30.0",
+ "fetch": {
+  "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+ },
+ "doctor": [
+  "[ok  ] platform: Linux 6.8.0-59-generic",
+  "[ok  ] NVIDIA driver: GPU 0: NVIDIA GeForce RTX 4090, 24 GB, driver 580.95.05",
+  "[ok  ] engine mode: docker, context 8192 tokens",
+  "[ok  ] engine build: vllm/vllm-openai:v0.30.0, on a driver that supports CUDA 13.0",
+  "[ok  ] Docker: Ubuntu 22.04.5 LTS, server 28.1.1",
+  "[ok  ] GPU in containers: a container sees GPU 0: NVIDIA GeForce RTX 4090",
+  "[ok  ] engine network: none; the engine is reached through a Unix socket only",
+  "[ok  ] engine image: vllm/vllm-openai:v0.30.0",
+  "[ok  ] checkpoint: RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 @ 024e24c (kwh-host fetch checked its hashes)"
+ ],
+ "bench": {
+  "units_per_hour": 101.508,
+  "certified": true,
+  "reasons": [],
+  "canary_mean": 0.0,
+  "launch_mode": "docker",
+  "report_sha256": "b61ccf0f4ea3658b484c4fd0d9ab75c27f657ad76757c412c6bd30b5a86f0dfd"
+ },
+ "sandbox_probes": [
+  "network out:  OSError: [Errno 101] Network is unreachable",
+  "dns:          socket.gaierror: [Errno -3] Temporary failure in name resolution",
+  "write /usr:   OSError: [Errno 30] Read-only file system: '/usr/x'",
+  "write /hf:    OSError: [Errno 30] Read-only file system: '/hf/x'",
+  "uid, CapEff:  1002 0000000000000000",
+  "gpu inside:   NVIDIA GeForce RTX 4090"
+ ],
+ "jobs": {
+  "greedy": [
+   {
+    "status": "completed",
+    "units": 0.003553,
+    "latency_ms": 3967.0,
+    "reason": null,
+    "tokens": 256
+   }
+  ],
+  "sampled": [
+   {
+    "status": "completed",
+    "units": 0.000268,
+    "latency_ms": 189.0,
+    "reason": null,
+    "tokens": 17
+   }
+  ],
+  "long": [
+   {
+    "status": "completed",
+    "units": 0.005955,
+    "latency_ms": 1054.0,
+    "reason": null,
+    "tokens": 64
+   }
+  ],
+  "too-long": [
+   {
+    "status": "failed",
+    "units": null,
+    "latency_ms": 0.0,
+    "reason": "no live host with capacity for this job",
+    "tokens": null
+   }
+  ]
+ },
+ "host_after_jobs": [
+  {
+   "state": "live",
+   "jobs": {
+    "completed": 3,
+    "failed": 0,
+    "bad_results": 0,
+    "delivered_units": 0.009776,
+    "verifications_failed": 0
+   },
+   "last_challenge": {
+    "id": "ch-1-fa74de08",
+    "pass": true,
+    "delta": 0.0,
+    "deltas": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "continuations": [
+     "lock-208",
+     "lock-240",
+     "lock-112",
+     "lock-16"
+    ],
+    "elapsed_ms": 352,
+    "t": 1791192980.8420258
+   }
+  }
+ ],
+ "wrong_model": [
+  {
+   "state": "degraded",
+   "reasons": [
+    "canary failed (mean delta 0.12852)"
+   ],
+   "last_challenge": {
+    "id": "ch-2-9d5c99b7",
+    "pass": false,
+    "delta": 0.12852,
+    "deltas": [
+     0.05519,
+     0.21873,
+     0.0985,
+     0.14166
+    ],
+    "continuations": [
+     "lock-144",
+     "lock-240",
+     "lock-112",
+     "lock-176"
+    ],
+    "elapsed_ms": 419,
+    "t": 1791193046.506571
+   }
+  }
+ ],
+ "service": [
+  "wrote /home/kwh/.config/systemd/user/kwh-host.service",
+  "systemctl --user daemon-reload",
+  "systemctl --user enable --now kwh-host.service",
+  "systemctl --user disable --now kwh-host.service",
+  "removed /home/kwh/.config/systemd/user/kwh-host.service"
+ ]
+}

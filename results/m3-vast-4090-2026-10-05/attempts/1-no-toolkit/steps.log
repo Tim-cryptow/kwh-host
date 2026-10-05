@@ -1,0 +1,10 @@
+[08:49:28] 0. installer (--yes: Docker, NVIDIA Container Toolkit, kwh-host as needed)
+[08:49:45] installer exit 0
+[08:49:51] 1. init, doctor, fetch
+[08:53:22] fetch exit 0 in 207s
+[08:53:25] doctor exit 0
+[08:53:25] 2. mock platform: Docker hosts only (D4), certified reports only, the engine's tokenizer for buyers
+{"ok":true,"hosts":0,"job_channels":0,"tokenizer":true,"verifier":false}[08:53:27] 3. certified benchmark inside the sandbox
+[08:53:48] bench exit 2
+[08:53:49] register: Usage:kwh-hostregister[OPTIONS]Try'kwh-hostregister--help'forhelp.Error:noreportyet;run`kwh-hostbench`first
+[08:53:49] 4. the daemon, live in the sandbox

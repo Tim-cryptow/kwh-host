@@ -1,0 +1,10 @@
+{
+  "dir": "/home/kwh/.kwh-host",
+  "platform": "http://127.0.0.1:9000",
+  "engine": "docker",
+  "max_model_len": 8192,
+  "public_key": "29cf389ebef4217c7b2718d7de118c8c97c28e8685ec68ce2c93f9eb4e5a9b05",
+  "registered": false,
+  "engine_image": "vllm/vllm-openai:v0.30.0",
+  "driver_cuda": "13.0"
+}
