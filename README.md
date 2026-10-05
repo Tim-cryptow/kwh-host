@@ -17,6 +17,8 @@ kwh-host fetch             # the model at the locked revision, hash-checked, and
 kwh-host bench             # the certified benchmark, in the sandbox
 kwh-host register
 kwh-host service install   # runs in the background, restarts on failure
+kwh-host status            # state, rate, earnings, engine, GPU, last checks, reliability
+kwh-host events            # what happened: challenges, jobs, re-benchmarks, state changes
 ```
 
 On Windows, start with [docs/windows-wsl2.md](docs/windows-wsl2.md). The engine runs in a locked-down container: no network (the daemon reaches it through a Unix socket), read-only, no privileges, bounded memory and processes (HOST-CLIENT.md §3).
@@ -29,7 +31,7 @@ Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle,
 - [x] M1 — daemon skeleton + mock platform: `init → bench → register → run` reaches **live**, answers challenges, mints, micro-benchmarks. Proven on a RunPod RTX 3090 on 2026-09-30 (see below).
 - [x] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Proven on a RunPod A40 on 2026-10-02 (see below).
 - [ ] M3 — Docker sandbox, one-line install, WSL2 path. Proven on Linux on a rented RTX 4090 VM on 2026-10-05 (see below): the one-line install, then a certified benchmark inside the sandbox, live, buyer jobs, a 4-bit substitute caught, and the background service. CI runs the same flow without a GPU on every push. Left: WSL2 on a real Windows PC.
-- [ ] M4 — reliability telemetry, `kwh-host status`
+- [ ] M4 — reliability telemetry and re-benchmarking. Built and tested without a GPU on 2026-10-05 (see below), including a re-benchmark inside the real sandbox in CI. Left: one run on a real GPU.
 - [ ] M5 — real platform (step 4), stake deposit
 
 ## M1 on real hardware (RTX 3090, RunPod, 2026-09-30)
@@ -99,17 +101,50 @@ What it settled:
 - **The installer has to try the GPU, not read settings.** This VM's template promised the NVIDIA Container Toolkit, but none of its programs were installed, while Docker still listed an `nvidia` runtime. The first attempt's engine died with `could not select device driver`. The installer now runs a test container on the GPU and installs the toolkit when that fails, which it did here. `doctor` runs `nvidia-smi` inside the engine image. An engine that dies at launch now shows its own error.
 - Two faults in the test script, not the client, cost a second attempt. Both are written up in the results folder.
 
+## M4: reliability and re-benchmarking
+
+A report stops counting after seven days, or at once when the driver, the engine image or the GPU changes, or after two micro-benchmark misses. The platform then holds the host in `degraded` (no jobs, no mint) until a new report arrives, and the daemon produces one:
+
+1. It tells the platform it is re-benchmarking and turns away new jobs.
+2. It lets the jobs in flight finish.
+3. It benchmarks on a fresh engine and uploads the signed report.
+4. It serves again; the next passed challenge makes it live at the new rate.
+
+Heartbeats continue throughout, so the host is never seen as offline. An engine that stops answering is restarted.
+
+The platform counts what happens to each host in 5-minute buckets, kept for a week: time in each state, heartbeats, challenges, micro-benchmarks, jobs with latency, mints. It sums them over the last hour, day and week. Step 3 will score from those counts. The daemon logs the same events as it saw them to `~/.kwh-host/events.jsonl`. HOST-CLIENT.md §5 has the rules. This is `kwh-host status` from the CI run, right after a re-benchmark. The engine is the test stand-in, so the rate is not a GPU's:
+
+```
+Daemon       running (pid 1973), up 23 s
+State        live for 0 s
+Rate         1,882.85 units/hour (bucket I-1/1880)
+Engine       vLLM 0.30.0, in Docker, kwh-fake-engine:test, healthy
+Last checks  challenge 0 s ago: passed, mean delta 0.0000
+             report measured 4 s ago, re-benchmark due in 6 days
+             last re-benchmark 2026-10-05 11:36:29: 1,882.85 units/hour
+Reliability          last hour      last day     last week
+  live                    5.9%          5.9%          5.9%
+  beats ok               12/12         12/12         12/12
+  challenges               2/2           2/2           2/2
+  ...
+Recent (the platform's log; more: kwh-host events --remote)
+  11:36  re-benchmarked    new report: 1,882.85 units/hour (was 2,082.61)
+  11:36  rebench_ended     the host is serving again
+  11:36  state             degraded -> live
+```
+
 ## Try it without a GPU
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # 69 tests: signing, envelope, execution, the vLLM stream parser, verifier,
-                             # platform state machine, sandbox, and jobs end to end over a real local server
+python -m pytest -q          # 88 tests: signing, envelope, execution, the vLLM stream parser, verifier,
+                             # platform state machine, re-benchmarking and reliability counters, status,
+                             # sandbox, and jobs end to end over a real local server
 
 # the sandbox for real, with a stand-in engine (needs Docker; what CI runs on every push)
 docker build -t kwh-fake-engine:test tests/fake_engine
 KWH_TEST_ENGINE_IMAGE=kwh-fake-engine:test python -m pytest -q tests/test_sandbox_docker.py
-scripts/ci-sandbox.sh        # init, bench, register, run and a buyer job, all through the sandbox
+scripts/ci-sandbox.sh        # init, bench, register, run, a buyer job and a re-benchmark, all through the sandbox
 
 # terminal 1: the mock platform; --mock-challenges lets a mock-engine host pass its challenges
 kwh-host mock-platform --port 9000 --heartbeat 5 --challenge-every 10 --microbench-every 300 \
@@ -126,7 +161,10 @@ kwh-host run --mock-engine
 echo '{"requests": [{"prompt_token_ids": [128000, 9906], "max_tokens": 24, "temperature": 0.0}]}' > /tmp/job.json
 kwh-host submit --platform http://127.0.0.1:9000 --file /tmp/job.json
 kwh-host status
+kwh-host events
 ```
+
+`mock-platform --rebench-every 120` makes reports expire after two minutes, so the re-benchmark cycle can be watched (`kwh-host events --kind rebench`).
 
 Without `--mock-challenges` the mock platform serves the real lock canaries, the mock engine fails them, and the host sits in `degraded` with nothing minted and no jobs: the wrong-model guard doing its job.
 
@@ -151,14 +189,18 @@ Docker mode (`--engine docker`, the default and the only mode the real platform 
 ```
 kwh-host run ──▶ engine in the sandbox, over a Unix socket ← kwh_host.sandbox (vLLM, pinned flags)
       │  ├── heartbeat: engine health + GPU sample       POST /v1/hosts/{id}/heartbeat
+      │  │   + what the host saw since the last one
       │  ├── challenge: score 4 platform continuations   POST /v1/hosts/{id}/liveness
       │  ├── micro-benchmark when idle (1/8 job)         POST /v1/hosts/{id}/microbench
-      │  └── jobs: token ids in, signed token ids out    WS   /v1/hosts/{id}/jobs
+      │  ├── re-benchmark when the report expires         POST /v1/hosts/{id}/reports
+      │  ├── jobs: token ids in, signed token ids out    WS   /v1/hosts/{id}/jobs
+      │  └── events.jsonl (kwh-host events)               GET  /v1/hosts/{id}, /events (kwh-host status)
       ▼
 platform (mock in kwh_host/platform/mock.py; real one is step 4)
       ├── verifies signatures + report (kwh-bench verify)
-      ├── state machine: registered → live ⇄ degraded → offline
+      ├── state machine: registered → live ⇄ degraded → offline; holds a host whose report expired
       ├── accrual per accepted live heartbeat, integer mints, nothing ahead, nothing late
+      ├── reliability counters per host, 5-minute buckets, a week of them
       ├── router: tokenize, dispatch to a live host that fits, re-route on failure, meter
       └── verifier (step 3 prototype): teacher-force delivered greedy outputs through the reference
 ```
@@ -177,18 +219,22 @@ kwh_host/
   service.py            systemd user service
   gpu.py                nvidia-smi sample + foreign-process detection
   bench.py              full run, micro-benchmark, challenge scoring (all via kwh_bench)
+  rebench.py            when a report stops counting (shared with the platform)
   jobspec.py            job envelope, validation, provisional metering (shared with the platform)
   jobs.py               job execution: vLLM streaming executor, toy executor, signed results
-  daemon.py             the run loop: heartbeat + job channel
+  daemon.py             the run loop: heartbeat, job channel, re-benchmark, engine restart
+  events.py             events.jsonl, the daemon's own log
+  status.py             what kwh-host status and kwh-host events print
   mockmodel.py          deterministic toy language model (tests, GPU-free demo)
   experiments.py        verifier calibration on real cards
   platform/client.py    the §8 contract, client side
   platform/mock.py      the §8 contract, server side (in memory, FastAPI), router
   platform/verifier.py  teacher-forced greedy verification (step 3 prototype)
-  cli.py                init | fetch | doctor | bench | register | run | status | service | mock-platform | submit
+  cli.py                init | fetch | doctor | bench | register | run | status | events | service | mock-platform | submit
 install.sh              the one-line installer (Ubuntu, WSL2)
 docs/windows-wsl2.md    hosting on Windows
-tests/                  identity, jobs, verifier, platform state machine, router, sandbox (+ fake_engine/ for Docker)
+tests/                  identity, jobs, verifier, platform state machine, re-benchmark and reliability, status,
+                        router, sandbox (+ fake_engine/ for Docker)
 scripts/                real-GPU milestone runs (pod-m1.sh, pod-m2.sh, vm-m3.sh) and ci-sandbox.sh
 results/                what those runs wrote, one folder per run
 ```

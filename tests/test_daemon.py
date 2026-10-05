@@ -30,8 +30,11 @@ async def challenge_from(engine, prompt_id=0, continuation=None):
 
 async def test_daemon_reaches_live_mints_and_microbenches(cfg, identity, report, mock_engine, clock):
     pool = ChallengePool([await challenge_from(mock_engine, prompt_id=i) for i in range(6)])
+    # The mock engine's micro-benchmark takes 50 ms and is as noisy as that sounds; a wide tolerance
+    # keeps this test about the flow (two misses would rightly hold the host for a re-benchmark).
     settings = Settings(heartbeat_seconds=30, challenge_every_seconds=60, microbench_every_seconds=90,
-                        accept_uncertified=True, allow_bare_metal=True, require_engine_version=None)
+                        microbench_tolerance=10.0, accept_uncertified=True, allow_bare_metal=True,
+                        require_engine_version=None)
     platform = MockPlatform(pool, settings, clock=clock)
     app = create_app(platform)
     log = []

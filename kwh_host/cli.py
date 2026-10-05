@@ -1,4 +1,4 @@
-"""kwh-host command line: init | fetch | doctor | bench | register | run | status | service | mock-platform | submit."""
+"""kwh-host command line: init | fetch | doctor | bench | register | run | status | events | service | mock-platform | submit."""
 
 from __future__ import annotations
 
@@ -174,8 +174,9 @@ def register():
 @click.option("--mock-engine", is_flag=True, hidden=True)
 @click.option("--model", default=None, hidden=True, help="Serve this model instead of the reference (wrong-model tests).")
 @click.option("--no-jobs", is_flag=True, help="Heartbeat and challenges only; do not open the job channel.")
-def run(engine_log, beats, no_version_check, mock_engine, model, no_jobs):
-    """Start the engine, heartbeat, and serve jobs; stay live until stopped."""
+@click.option("--no-rebench", is_flag=True, hidden=True, help="Tests only: never re-benchmark (the platform holds the host degraded).")
+def run(engine_log, beats, no_version_check, mock_engine, model, no_jobs, no_rebench):
+    """Start the engine, heartbeat, serve jobs, and re-benchmark when due; stay live until stopped."""
     from .daemon import Daemon
     from .platform.client import PlatformClient
     cfg, ident = _load()
@@ -189,10 +190,16 @@ def run(engine_log, beats, no_version_check, mock_engine, model, no_jobs):
     engine = _engine(cfg, str(engine_log) if engine_log else str(cfg.dir / "engine.log"), mock_engine, model)
     no_version_check = no_version_check or mock_engine
 
+    def bench_engine():
+        """A re-benchmark (§5) runs on a fresh engine with its own log, like `kwh-host bench`."""
+        return _engine(cfg, str(cfg.dir / "engine-bench.log"), mock_engine, model)
+
     async def go():
+        from .events import EventLog
         async with PlatformClient(cfg.platform_url, ident, token=cfg.token, host_id=cfg.host_id) as c:
             d = Daemon(cfg, c, engine, log=_log, max_beats=beats, require_lock_version=not no_version_check,
-                       jobs=not no_jobs)
+                       jobs=not no_jobs, bench_engine_factory=bench_engine, events=EventLog(cfg.events_path),
+                       rebench=not no_rebench)
             loop = asyncio.get_running_loop()
             try:
                 import signal
@@ -211,25 +218,81 @@ def run(engine_log, beats, no_version_check, mock_engine, model, no_jobs):
                           indent=2))
 
 
+def _platform_call(cfg: HostConfig, ident: Identity, call):
+    """Run `call(client)` against the platform; returns (result, None) or (None, error text)."""
+    from .platform.client import PlatformClient, PlatformError
+
+    async def go():
+        async with PlatformClient(cfg.platform_url, ident, token=cfg.token, host_id=cfg.host_id, timeout=10.0) as c:
+            return await call(c)
+
+    try:
+        return asyncio.run(go()), None
+    except PlatformError as e:
+        return None, f"{e.status}: {e.detail}"
+    except Exception as e:  # noqa: BLE001 - unreachable, DNS, TLS: say so and show what we have
+        return None, f"{type(e).__name__}: {e}"[:300]
+
+
 @main.command()
-@click.option("--remote/--local", default=True, help="Ask the platform (default) or show the last local state only.")
-def status(remote):
-    """Show host state: platform verdict, rate, accrual, last checks."""
+@click.option("--remote/--local", default=True, help="Ask the platform (default) or show the daemon's last state only.")
+@click.option("--json", "as_json", is_flag=True, help="Everything, machine-readable.")
+def status(remote, as_json):
+    """Host state: the platform's verdict, rate, earnings, engine, GPU, last checks, reliability."""
+    from .config import image_label
+    from .status import render_status
     cfg, ident = _load()
     local = read_state(cfg)
-    out = {"host_id": cfg.host_id, "platform": cfg.platform_url, "engine": cfg.engine_mode, "local": local}
+    platform_view = None
     if remote and cfg.registered:
-        from .platform.client import PlatformClient, PlatformError
+        platform_view, err = _platform_call(cfg, ident, lambda c: c.status())
+        if err:
+            platform_view = {"error": err}
+    if as_json:
+        click.echo(json.dumps({"host_id": cfg.host_id, "platform": cfg.platform_url, "engine": cfg.engine_mode,
+                               "local": local, "platform_view": platform_view}, indent=2, default=str))
+        return
+    host = {"version": __version__, "host_id": cfg.host_id, "platform": cfg.platform_url,
+            "engine": cfg.engine_mode, "image": image_label(cfg.docker_image) if cfg.engine_mode == "docker" else None}
+    click.echo(render_status(host, local, platform_view))
 
-        async def go():
-            async with PlatformClient(cfg.platform_url, ident, token=cfg.token, host_id=cfg.host_id) as c:
-                return await c.status()
 
-        try:
-            out["platform_view"] = asyncio.run(go())
-        except (PlatformError, Exception) as e:  # noqa: BLE001
-            out["platform_view"] = {"error": str(e)}
-    click.echo(json.dumps(out, indent=2, default=str))
+@main.command()
+@click.option("--remote", is_flag=True, help="The platform's log of this host instead of the daemon's own.")
+@click.option("--since", default=None, help="Only events in the last e.g. 30m, 6h or 2d.")
+@click.option("--limit", type=int, default=50, show_default=True, help="The last N events.")
+@click.option("--kind", "kinds", multiple=True, help="Only this kind (repeat for more): heartbeat, challenge, job, rebench, state, ...")
+@click.option("--all", "show_all", is_flag=True, help="Include routine events (accepted heartbeats, issued challenges).")
+@click.option("--json", "as_json", is_flag=True, help="One JSON object per line.")
+def events(remote, since, limit, kinds, show_all, as_json):
+    """What happened: heartbeats, challenges, micro-benchmarks, jobs, re-benchmarks, state changes."""
+    import time as _time
+    from .events import EventLog
+    from .status import is_routine, parse_since, render_events
+    cfg, ident = _load()
+    try:
+        t_since = parse_since(since, _time.time())
+    except ValueError as e:
+        raise click.UsageError(str(e))
+    if remote:
+        if not cfg.registered:
+            raise click.UsageError("not registered; the platform has no log of this host")
+        out, err = _platform_call(cfg, ident, lambda c: c.events(since=t_since, limit=max(limit * 4, 200),
+                                                                 kinds=list(kinds) or None))
+        if err:
+            _log(f"platform: {err}")
+            sys.exit(1)
+        evs = out.get("events") or []
+    else:
+        evs = EventLog(cfg.events_path).read(since=t_since, kinds=kinds or None)
+    if not show_all and not kinds:
+        evs = [e for e in evs if not is_routine(e)]
+    evs = evs[-limit:]
+    if as_json:
+        for e in evs:
+            click.echo(json.dumps(e, default=str))
+    else:
+        click.echo(render_events(evs, show_all=True))
 
 
 @main.group()
@@ -273,6 +336,8 @@ def service_status():
 @click.option("--heartbeat", type=float, default=30.0, show_default=True, help="Seconds between heartbeats.")
 @click.option("--challenge-every", type=float, default=300.0, show_default=True)
 @click.option("--microbench-every", type=float, default=1800.0, show_default=True)
+@click.option("--rebench-every", type=float, default=7 * 86400.0, show_default=True,
+              help="Seconds before a report must be replaced (re-benchmark tests: e.g. 600).")
 @click.option("--accept-uncertified", is_flag=True, help="Tests only: accept uncertified reports and any engine version.")
 @click.option("--allow-bare-metal", is_flag=True, help="Pod testing: accept non-Docker engines (D4).")
 @click.option("--tokenizer/--no-tokenizer", "use_tokenizer", default=None,
@@ -283,14 +348,14 @@ def service_status():
 @click.option("--mock-challenges", is_flag=True, hidden=True, help="Challenges from the benchmark's mock engine (GPU-free demos).")
 @click.option("--challenges-from", default=None, hidden=True,
               help="Challenges scored by the vLLM-compatible server at this URL (tests with a fake engine).")
-def mock_platform(host, port, heartbeat, challenge_every, microbench_every, accept_uncertified, allow_bare_metal,
-                  use_tokenizer, verify_url, verify_fraction, verify_tau, mock_challenges, challenges_from):
+def mock_platform(host, port, heartbeat, challenge_every, microbench_every, rebench_every, accept_uncertified,
+                  allow_bare_metal, use_tokenizer, verify_url, verify_fraction, verify_tau, mock_challenges, challenges_from):
     """Run the in-memory mock platform (HOST-CLIENT.md §8) for local development."""
     import uvicorn
     from .platform.mock import ChallengePool, HFTokenizer, MockPlatform, Router, Settings, create_app
     from .platform.verifier import DEFAULT_TAU, VLLMScorer
     s = Settings(heartbeat_seconds=heartbeat, challenge_every_seconds=challenge_every, microbench_every_seconds=microbench_every,
-                 accept_uncertified=accept_uncertified, allow_bare_metal=allow_bare_metal,
+                 rebench_every_seconds=rebench_every, accept_uncertified=accept_uncertified, allow_bare_metal=allow_bare_metal,
                  verify_fraction=verify_fraction if verify_url else 0.0, verify_tau=verify_tau or DEFAULT_TAU)
     if challenges_from:
         from kwh_bench.engines import VLLMEngine

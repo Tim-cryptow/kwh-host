@@ -45,7 +45,7 @@ async def live(home):
     url = f"http://127.0.0.1:{server.servers[0].sockets[0].getsockname()[1]}"
     hosts = []
 
-    async def start_host(executor=None, wrong_model=False, max_concurrency=32, wait_live=True):
+    async def start_host(executor=None, wrong_model=False, max_concurrency=32, wait_live=True, **daemon_kw):
         ident = Identity.generate()
         report = ident.sign_report(await unsigned_mock_report())
         client = PlatformClient(url, ident)
@@ -61,7 +61,7 @@ async def live(home):
         log = []
         d = Daemon(HostConfig(platform_url=url, engine_mode="bare-metal"), client, engine, log=log.append,
                    sampler=idle_gpu, require_lock_version=False, max_concurrency=max_concurrency,
-                   executor_factory=lambda e, m: executor or MockExecutor())
+                   executor_factory=lambda e, m: executor or MockExecutor(), **daemon_kw)
         task = asyncio.create_task(d.run())
         h = SimpleNamespace(id=client.host_id, daemon=d, task=task, client=client, log=log, ident=ident)
         hosts.append(h)
@@ -184,3 +184,26 @@ async def test_busy_hosts_and_oversized_jobs_are_not_offered_work(live):
     assert (await first)["status"] == "completed"
     too_long = await live.router.submit([greedy([1] * 1000, 100)], timeout_s=2)   # 1,100 > the host's 1,024
     assert too_long["status"] == "failed" and too_long["attempts"] == []
+
+
+async def test_a_host_away_re_benchmarking_is_routed_around_and_comes_back(live):
+    """§5 with jobs: the platform says re-benchmark, the host drains and benchmarks, buyers are served
+    by the other host meanwhile, and the first one returns to live on its new report."""
+    a = await live.start_host(settle_seconds=0.05, rebench_runs=3)
+    b = await live.start_host()
+    rec_a = live.platform.hosts[a.id]
+    live.platform._require_rebench(rec_a, live.platform.clock(), ["told to re-benchmark (test)"])
+    assert rec_a.state == "degraded"
+    await until(lambda: a.daemon._benchmarking)
+    outs = []
+    while a.daemon._benchmarking:
+        outs.append(await live.router.submit([greedy([1, 2, 3])], timeout_s=5))
+    assert outs and all(o["status"] == "completed" and o["host_id"] == b.id for o in outs)
+    await until(lambda: rec_a.state == "live" and "re-benchmarked" in [e["kind"] for e in rec_a.events], timeout=30)
+    assert a.daemon.state["last_rebench"]["ok"] and a.daemon.state["engine_restarts"] == 1
+    assert not live.platform.hosts[a.id].rebench_required
+    out = await live.router.submit([greedy([4, 5])], timeout_s=5)
+    assert out["status"] == "completed"
+    # the platform counted what each host delivered, per 5 minutes (§5)
+    hour = live.platform.reliability(live.platform.hosts[b.id], live.platform.clock())["1h"]
+    assert hour["jobs"]["completed"] >= len(outs) and hour["jobs"]["latency_ms_p50"] is not None

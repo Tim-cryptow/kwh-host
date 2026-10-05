@@ -39,4 +39,4 @@ kwh-host init --platform http://127.0.0.1:9000 --engine bare-metal --allow-bare-
 kwh-host bench --engine-log /workspace/engine-bench.log
 kwh-host register
 kwh-host run --engine-log /workspace/engine-run.log --beats "$BEATS" 2>&1 | tee /workspace/kwh-host-run.log
-kwh-host status | tee /workspace/kwh-host-status.json
+kwh-host status --json | tee /workspace/kwh-host-status.json

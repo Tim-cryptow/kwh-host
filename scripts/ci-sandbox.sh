@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The Docker path end to end without a GPU: init (docker) -> bench -> register -> run -> a buyer
-# job, with tests/fake_engine standing in for vLLM inside the real sandbox. The platform here
+# job -> a re-benchmark -> another job, with tests/fake_engine standing in for vLLM inside the
+# real sandbox. The platform here
 # enforces D4 (no --allow-bare-metal). CI runs this on every push; so can anyone with Docker:
 #
 #   docker build -t kwh-fake-engine:test tests/fake_engine && scripts/ci-sandbox.sh
@@ -76,6 +77,29 @@ grep -q "readonly=true network=none capdrop=\[ALL\]" "$WORK/inspect.txt"
 log "a buyer job"
 echo '{"requests": [{"prompt_token_ids": [128000, 9906, 1917], "max_tokens": 16, "temperature": 0.0}]}' > "$WORK/job.json"
 kwh-host submit --platform "http://127.0.0.1:$PLATFORM_PORT" --file "$WORK/job.json" --out "$WORK/job-out.json"
+
+log "re-benchmark (§5): the platform asks; the daemon stops the engine, benchmarks in a fresh sandbox, serves again"
+HOST_ID="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['host_id'])" "$KWH_HOST_HOME/config.json")"
+curl -fs -X POST "http://127.0.0.1:$PLATFORM_PORT/v1/mock/hosts/$HOST_ID/rebench" >/dev/null
+back=""
+for _ in $(seq 1 300); do
+  if curl -fs "http://127.0.0.1:$PLATFORM_PORT/v1/mock/hosts" | python3 -c \
+    "import json,sys; h=json.load(sys.stdin)['hosts'][0]; sys.exit(0 if h['state']=='live' and not h['rebench_required'] else 1)"; then
+    back=1
+    break
+  fi
+  sleep 1
+done
+[ -n "$back" ] || { echo "not live again after the re-benchmark"; cat "$WORK/run.log"; exit 1; }
+kwh-host events --kind rebench --kind engine_up --kind engine_down | tee "$WORK/events.txt"
+grep -q "rebench  *done:" "$WORK/events.txt"
+[ "$(grep -c "engine_up" "$WORK/events.txt")" -eq 2 ]
+docker inspect kwh-engine-gpu0 --format 'readonly={{.HostConfig.ReadonlyRootfs}} network={{.HostConfig.NetworkMode}}' \
+  | grep -q "readonly=true network=none"
+kwh-host status | tee "$WORK/status.txt"
+grep -q "^State  *live" "$WORK/status.txt"
+grep -q "last re-benchmark" "$WORK/status.txt"
+kwh-host submit --platform "http://127.0.0.1:$PLATFORM_PORT" --file "$WORK/job.json" --out "$WORK/job-out-2.json"
 
 log "stop: the container goes with the daemon"
 kill -TERM "$RUN"

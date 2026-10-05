@@ -4,6 +4,7 @@
     identity.key   ed25519 private key (0600)
     report.json    the latest certified kwh-bench report, signed
     state.json     last known daemon state, for `kwh-host status` while the daemon is down
+    events.jsonl   what the daemon saw (heartbeats, challenges, jobs, re-benchmarks), for `kwh-host events`
 """
 
 from __future__ import annotations
@@ -100,6 +101,10 @@ class HostConfig:
     @property
     def state_path(self) -> Path:
         return self.dir / "state.json"
+
+    @property
+    def events_path(self) -> Path:
+        return self.dir / "events.jsonl"
 
     @property
     def hf_home(self) -> Path:

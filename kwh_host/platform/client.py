@@ -60,13 +60,16 @@ class PlatformClient:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
-    async def _call(self, method: str, path: str, body: Optional[dict] = None) -> dict:
+    async def _call(self, method: str, path: str, body: Optional[dict] = None, params: Optional[dict] = None) -> dict:
         # Sign exactly the bytes that go on the wire: a GET has an empty body, so it signs b"".
+        # A GET's query is not signed; it only narrows what the host reads about itself.
         raw = b"" if method == "GET" else canonical_bytes(body if body is not None else {})
         headers = self._headers(method, path, raw)
         if method != "GET":
             headers["Content-Type"] = "application/json"
-        r = await self._http.request(method, path, content=raw if method != "GET" else None, headers=headers)
+        query = {k: v for k, v in (params or {}).items() if v is not None}
+        r = await self._http.request(method, path, content=raw if method != "GET" else None, headers=headers,
+                                     params=query or None)
         if r.status_code >= 400:
             try:
                 detail = r.json().get("detail", r.text)
@@ -91,10 +94,14 @@ class PlatformClient:
         self.token = out["token"]
         return out
 
-    async def heartbeat(self, engine: dict, gpu_sample: dict, in_flight: int = 0, wants_mint: bool = True) -> dict:
+    async def heartbeat(self, engine: dict, gpu_sample: dict, in_flight: int = 0, wants_mint: bool = True,
+                        benchmarking: bool = False, telemetry: Optional[dict] = None) -> dict:
+        """`benchmarking`: the engine is down for a re-benchmark (§5). `telemetry`: what the host saw
+        since its last heartbeat reached the platform (failed sends, engine restarts, its jobs)."""
         return await self._call("POST", self._hp("/heartbeat"), {
             "engine": engine, "gpu_sample": gpu_sample, "in_flight": in_flight,
-            "wants_mint": wants_mint, "client_version": __version__,
+            "wants_mint": wants_mint, "benchmarking": benchmarking, "telemetry": telemetry or {},
+            "client_version": __version__,
         })
 
     async def liveness(self, challenge_id: str, mean_logprobs: List[Optional[float]], elapsed_ms: int) -> dict:
@@ -113,6 +120,11 @@ class PlatformClient:
 
     async def status(self) -> dict:
         return await self._call("GET", self._hp())
+
+    async def events(self, since: Optional[float] = None, limit: int = 200, kinds: Optional[List[str]] = None) -> dict:
+        """The platform's own log of this host: state changes, challenges, re-benchmarks, failures."""
+        return await self._call("GET", self._hp("/events"), params={
+            "since": since, "limit": limit, "kinds": ",".join(kinds) if kinds else None})
 
     # -- job channel (§7) ----------------------------------------------
     def jobs_url(self) -> str:

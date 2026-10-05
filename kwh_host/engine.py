@@ -55,6 +55,11 @@ async def health(engine: VLLMEngine) -> bool:
         return False
 
 
+def running_image(cfg: HostConfig) -> Optional[str]:
+    """The engine image the daemon launches (pinned by digest); None outside Docker."""
+    return cfg.docker_image if cfg.engine_mode == "docker" else None
+
+
 async def describe(engine: VLLMEngine, cfg: HostConfig) -> dict:
     """The `engine` block of a heartbeat."""
     ok = await health(engine)
@@ -66,7 +71,7 @@ async def describe(engine: VLLMEngine, cfg: HostConfig) -> dict:
         except Exception:  # noqa: BLE001
             ok = False
     return {"healthy": ok, "version": version, "served_model": served, "launch_mode": launch_mode(cfg),
-            "port": cfg.engine_port}
+            "image": running_image(cfg), "port": cfg.engine_port}
 
 
 def own_pids(engine: VLLMEngine, cfg: HostConfig) -> Optional[Set[int]]:

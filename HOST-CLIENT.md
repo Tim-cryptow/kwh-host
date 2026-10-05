@@ -38,14 +38,14 @@ installed ─▶ benchmarked ─▶ registered ─▶ live ⇄ degraded ─▶ o
 | installed → benchmarked | certified `kwh-bench` report written and verified locally |
 | benchmarked → registered | platform accepts the signed report, issues `host_id` + token |
 | registered → live | first accepted heartbeat with the engine healthy and a passed challenge |
-| live → degraded | failed challenge, micro-benchmark outside tolerance, foreign process on the GPU, engine unhealthy, engine restarted (a new instance id in the heartbeat: a restarted engine could be serving anything, so it is re-challenged before it gets more work) |
-| degraded → live | next passed challenge with a clean GPU sample; after a failed challenge, two passed challenges in a row (D9) |
+| live → degraded | failed challenge, micro-benchmark outside tolerance, foreign process on the GPU, engine unhealthy, engine restarted (a new instance id in the heartbeat: a restarted engine could be serving anything, so it is re-challenged before it gets more work), the report no longer counts or the host is re-benchmarking (§5) |
+| degraded → live | next passed challenge with a clean GPU sample; after a failed challenge, two passed challenges in a row (D9); a host that owes a re-benchmark stays degraded, unchallenged, until its new report is accepted |
 | degraded → offline | N consecutive failures (platform config, default 5) |
 | live/degraded → offline | no accepted heartbeat within the timeout (default 90 s) |
 | offline → live | accepted heartbeat + passed challenge (two in a row if the last one failed); accrual restarts from zero |
 
 - **installed**: binary present, keypair generated, Docker reachable, GPU visible.
-- **benchmarked**: a certified `kwh-bench` report exists for this GPU (UUID-bound). Re-done on a schedule (§5) and whenever the driver, engine image or GPU changes.
+- **benchmarked**: a certified `kwh-bench` report exists for this GPU (UUID-bound). Re-done every seven days and whenever the driver, engine image or GPU changes (§5).
 - **registered**: the platform has the signed report and has issued a `host_id` and token. The rig has a rate (units/hour) and a provisional bucket.
 - **live**: heartbeats accepted, last liveness challenge passed, engine serving. **Only in this state does the platform mint for this host.**
 - **degraded**: a check failed but the host is still reachable. No minting. Recovers to live on the next passing challenge; drops to offline after N consecutive failures.
@@ -61,7 +61,7 @@ kwh-host (daemon, Python)
 ├── jobs/        WebSocket consumer, request execution, signed results
 ├── platform/    API client (signed requests), mock server for local dev
 ├── identity/    keypair, token storage
-└── cli          kwh-host init | bench | register | run | status
+└── cli          kwh-host init | bench | register | run | status | events
 ```
 
 **Language.** Python, importing `kwh_bench` as a library. The benchmark already contains the load generator, the canary scorer, the GPU probe/pre-flight, the report hasher and the verifier; a client in another language would reimplement all of it and drift from the spec. Packaging as a single file (PyInstaller) comes with the tray app, not before.
@@ -102,8 +102,28 @@ The primer asks for "continuous heartbeat plus periodic micro-benchmarks". Three
 ## 5. Benchmark and re-benchmark
 
 - **First run:** `kwh-host bench` = `kwh-bench run` against the sandbox container (launched by the daemon with the pinned flags, so the report is certified rather than "attached"). Output is the standard report; `kwh-bench verify` must pass locally before registration is attempted.
-- **Re-benchmark:** every 7 days, and immediately on: driver change, engine image change, GPU UUID change, or two consecutive micro-benchmark misses. Uploaded as a new report; the platform replaces the rate. The rig is **degraded** (no minting) until the new report is accepted.
-- **Reliability baseline:** the client does not compute a score. It reports raw events (heartbeat sent/accepted, challenge pass/fail with delta, micro-benchmark rate, job accepted/completed/failed with latency). Scoring, bucketing and decay are step 3 and live on the platform, where they cannot be edited by the host.
+- **When a report stops counting.** A report measures one GPU, on one driver, with one engine build, at one time. It stops counting after **seven days**, and at once when the GPU's UUID, the driver version or the engine image differs from what it recorded, or after **two micro-benchmark misses** in a row. Platform and daemon apply the same rules (`kwh_host/rebench.py`). The platform, going by what the heartbeats say, holds the host **degraded**: its heartbeats are accepted, but it gets no challenges, no jobs and no mint, and a passed challenge does not lift the hold. The hold ends when a new report is accepted. The daemon usually notices first and produces one. A report's age counts from when it was measured, or from when the platform accepted it if that is earlier. A host that lies about its GPU or driver skips a re-benchmark. It does not skip the challenges and micro-benchmarks, which catch a rig that no longer does what its report says.
+- **The re-benchmark, as the daemon runs it (M4).**
+  1. It tells the platform first, with `benchmarking: true` in the heartbeat, so the router stops sending work. Jobs that arrive anyway are turned away with a signed `rejected` result and re-routed at once.
+  2. It lets the jobs in flight finish, for at most two minutes.
+  3. It stops the engine, runs the full certified benchmark on a fresh one, and uploads the signed report.
+  4. It starts the serving engine again. The next passed challenge makes the host live at the new rate.
+
+  Heartbeats carry on throughout, so a re-benchmarking host is reachable and degraded, not offline. The platform allows an hour of this; past that the heartbeats count as failures. On a 4090 it should take about five minutes, most of it the benchmark itself (3.5 minutes in M3). If the benchmark fails or the platform refuses the report, the host serves on its old report (which the platform still holds degraded) and the daemon tries again 30 minutes later. If the report needs redoing when the daemon starts, it benchmarks before the engine first starts.
+- **An engine that stops answering** `/health` for three heartbeats in a row is restarted. If it keeps dying, the pause between restarts doubles from 30 seconds up to 10 minutes. A restarted engine is a new instance, so the platform challenges it again (§2).
+- **Reliability: raw events, counted where the host cannot edit them.** The client does not compute a score, and neither does the platform yet. The platform keeps raw counters per host, in 5-minute buckets, for seven days:
+  - time in each state (an outage is booked from when the heartbeat timeout ran out, not from when someone noticed);
+  - heartbeats accepted and rejected;
+  - challenges passed and failed, with their deltas;
+  - micro-benchmark rates and misses;
+  - jobs completed, failed and malformed, with units and latency;
+  - units minted.
+
+  `GET /v1/hosts/{id}` returns them summed over the last hour, day and week, with the share of time live. Scoring, bucketing and decay are step 3's, computed from the same counters. Some things only the host can see, and those come with each heartbeat: heartbeats it could not send (with the last error), engine restarts, results it could not deliver, and its own job counts and latency since the last heartbeat that arrived. A host can under-report these; it cannot use them to look better than the platform's own counters say.
+- **The host's own log.** The daemon writes the same events, as it saw them, to `~/.kwh-host/events.jsonl` (rotated at 5 MB): each heartbeat and the platform's verdict on it, sends that failed, challenges, micro-benchmarks, jobs with their latency, engine starts and stops, re-benchmarks and state changes. Three commands read them:
+  - `kwh-host events` reads the daemon's log.
+  - `kwh-host events --remote` reads the platform's (`GET /v1/hosts/{id}/events`).
+  - `kwh-host status` puts both views on one page: state and for how long, rate, earnings, engine, GPU, the last challenge, micro-benchmark and report age, and the reliability table.
 
 ## 6. Minting
 
@@ -182,14 +202,17 @@ Base URL from config; JSON bodies; semantic versioning on the path. Every reques
 | Method | Path | Body → Response | Notes |
 | --- | --- | --- | --- |
 | `POST` | `/v1/hosts` | `{report, public_key, client_version}` → `{host_id, token, rate_units_per_hour, bucket, config}` | `report` is a certified kwh-bench report with `signature` filled (the schema already reserves the field). Platform runs `kwh-bench verify` on ingest. A report registers one host only: reports are public, and signing one proves who signed it, not who ran it. |
-| `POST` | `/v1/hosts/{id}/heartbeat` | `{engine, gpu_sample, in_flight, wants_mint, client_version}` → `{state, challenge?, accrual, balance, config}` | 30 s. `state` is the platform's verdict (live/degraded/offline). `challenge` is `{challenge_id, items: [{prompt_text, prompt_tokens, continuation_token_ids}] × 4}` when one is due (§4). |
+| `POST` | `/v1/hosts/{id}/heartbeat` | `{engine, gpu_sample, in_flight, wants_mint, benchmarking, telemetry, client_version}` → `{state, reasons, state_since, challenge?, minted, accrual, balance, rebench_required, rebench_reasons, config}` | 30 s. `state` is the platform's verdict (live/degraded/offline). `challenge` is `{challenge_id, items: [{prompt_text, prompt_tokens, continuation_token_ids}] × 4}` when one is due (§4). `engine` names its `image` and `gpu_sample` the GPU's `uuid` and `driver_version`, which the platform checks against the report (§5). `benchmarking` is true while the engine is down for a re-benchmark. `telemetry` is what the host saw since its last heartbeat arrived (§5). |
 | `POST` | `/v1/hosts/{id}/liveness` | `{challenge_id, mean_logprobs: [4], elapsed_ms}` → `{pass, delta, deltas, state, passes_needed}` | Answer to a challenge, one mean log-probability per continuation in the order sent. `delta` is the mean of `deltas`; `passes_needed` counts the passes still owed after a failure. |
 | `POST` | `/v1/hosts/{id}/microbench` | `{units_per_hour, job_seconds, gpu_sample}` → `{accepted, within_tolerance}` | |
-| `POST` | `/v1/hosts/{id}/reports` | `{report}` → `{rate_units_per_hour, bucket}` | Re-benchmark upload. |
+| `POST` | `/v1/hosts/{id}/reports` | `{report}` → `{rate_units_per_hour, bucket, previous_rate_units_per_hour}` | Re-benchmark upload; ends the hold (§5). |
 | `WS` | `/v1/hosts/{id}/jobs` | server → `job`, `cancel`; client → `hello` (once), `result` | Outbound from the host; handshake signed as a GET. §7. Reconnect with backoff; jobs in flight at a disconnect are re-routed by the platform and cancelled by the host. |
-| `GET` | `/v1/hosts/{id}` | → `{state, rate, bucket, accrual, balance, last_challenge, last_microbench}` | For `kwh-host status`. |
+| `GET` | `/v1/hosts/{id}` | → `{state, reasons, state_since, rate, bucket, accrual, balance, last_challenge, last_microbench, rebench_required, rebench_reasons, report_at, rebench_due_at, reliability, host_reported, events}` | For `kwh-host status`. `reliability` sums the §5 counters over 1 h, 24 h and 7 d; `events` are the last 20. |
+| `GET` | `/v1/hosts/{id}/events?since=&limit=&kinds=` | → `{events, more}` | The platform's log of this host, for `kwh-host events --remote`. The query is not signed: it only narrows what the host reads about itself. |
 
-Not in this contract, by design: wallet operations, listing/asks, stake, payouts, anything a buyer does. Those are steps 4 and 5 and get their own contracts. The mock platform also serves `POST /v1/mock/jobs` and `GET /v1/mock/hosts` as a stand-in for the buyer API; they are not part of the host contract.
+`config`, in the registration and heartbeat responses, carries the platform's cadences (heartbeat, challenge, micro-benchmark), its offline timeout and failure limit, and `rebench_every_seconds`.
+
+Not in this contract, by design: wallet operations, listing/asks, stake, payouts, anything a buyer does. Those are steps 4 and 5 and get their own contracts. The mock platform also serves `POST /v1/mock/jobs` and `GET /v1/mock/hosts` as a stand-in for the buyer API, and `POST /v1/mock/hosts/{id}/rebench` to ask a host for a re-benchmark on the spot (tests); they are not part of the host contract.
 
 **Identity.** An ed25519 keypair generated at `kwh-host init`, private key in the OS keyring where available, else a `0600` file. The public key is the host's durable identity across reinstalls; the token is a session credential the platform can revoke.
 
@@ -239,7 +262,7 @@ The rationale for D1–D5, as recorded before the decision:
 | M1 | Daemon skeleton + mock platform | `kwh-host init → bench → register → run` reaches **live** against the in-repo mock, with challenges answered and accrual ticking, on a RunPod 4090 (bare-metal mode for the test only). |
 | M2 | Jobs | Mock router dispatches jobs over the WebSocket to live hosts and re-routes on failure; signed results with token ids come back and greedy outputs are verified after delivery; a wrong-model host fails the challenge and never receives work. **Done 2026-10-02:** built and tested end to end in process, then proven on a RunPod A40 (README, [results/m2-a40-2026-10-02](results/m2-a40-2026-10-02/)). The same run showed that verification must judge hosts over a window, not requests (§7), and led to D8 and D9. |
 | M3 | Docker sandbox + install | One-line install on Ubuntu; engine container pinned to the lock; resource limits; WSL2 path documented and tested. **Built 2026-10-02:** the sandbox (§3), `fetch`, `doctor`, `service`, `install.sh`; proven end to end without a GPU on every push (CI runs a stand-in engine inside the real sandbox: init, bench, register, live, a buyer job). The engine image follows the driver: CUDA 13 build on 580+, the cu129 build on CUDA 12.x drivers. **Proven on a rented RTX 4090 VM 2026-10-05** (Vast.ai, `scripts/vm-m3.sh`, [results](results/m3-vast-4090-2026-10-05/)): the one-line install, a certified benchmark inside the sandbox at 101.51 units/hour (bare metal on the same card model: 100.56), the lockdown checked from outside and inside, live, buyer jobs up to the 8,192-token context, a 4-bit substitute caught (challenge mean delta 0.129), and the systemd service. The VM's toolkit was missing behind a registered `nvidia` runtime, so the installer and `doctor` now try the GPU in a real container instead of reading Docker's settings. Left: WSL2 on a real Windows PC. |
-| M4 | Reliability telemetry | Every event in §5 reported; `kwh-host status` shows state, rate, accrual, last checks. |
+| M4 | Reliability telemetry | Every event in §5 reported; `kwh-host status` shows state, rate, accrual, last checks. **Built 2026-10-05** (§5):<br>• re-benchmarking on every §5 trigger: the platform holds the host until the new report, and the daemon drains, benchmarks on a fresh engine, uploads and serves again;<br>• restarting an engine that stops answering;<br>• the platform's counters per host (1 h / 24 h / 7 d), plus what the host reports;<br>• `events.jsonl`, `kwh-host status` and `kwh-host events`.<br>Tested without a GPU, including a re-benchmark inside the real sandbox, which CI now runs on every push. The tests also caught a bug: a host owing a re-benchmark went back to live on its next passed challenge. Left: one run on a real GPU. |
 | M5 | Real platform | Base URL swap when step 4's ledger exists; stake deposit added to `kwh-host register`. |
 
 ## 11. Out of scope for v0

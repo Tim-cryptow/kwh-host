@@ -30,19 +30,23 @@ def sample(gpu_index: int = 0, own_pids: Optional[Iterable[int]] = None) -> dict
     """One nvidia-smi sample. `own_pids` are the engine's processes; anything else holding the
     GPU counts as foreign. With `own_pids=None` the foreign count is unknown (None), not zero."""
     out = {"available": False, "util_pct": None, "power_w": None, "mem_used_mib": None, "mem_total_mib": None,
-           "temp_c": None, "compute_processes": None, "foreign_processes": None, "foreign_pids": [],
-           "unattributed_processes": 0}
+           "temp_c": None, "uuid": None, "driver_version": None, "name": None,
+           "compute_processes": None, "foreign_processes": None, "foreign_pids": [], "unattributed_processes": 0}
     if not shutil.which("nvidia-smi"):
         return out
-    q = _run(["nvidia-smi", "-i", str(gpu_index), "--query-gpu=utilization.gpu,power.draw,memory.used,memory.total,temperature.gpu",
+    # uuid and driver_version tell the GPU and driver apart from the ones benchmarked (§5); the
+    # name goes last because it is the one field that could hold a comma.
+    q = _run(["nvidia-smi", "-i", str(gpu_index),
+              "--query-gpu=utilization.gpu,power.draw,memory.used,memory.total,temperature.gpu,uuid,driver_version,name",
               "--format=csv,noheader,nounits"])
     if not q:
         return out
     vals = [v.strip() for v in q.splitlines()[0].split(",")]
-    if len(vals) != 5:
+    if len(vals) < 8:
         return out
     out.update({"available": True, "util_pct": _f(vals[0]), "power_w": _f(vals[1]), "mem_used_mib": _f(vals[2]),
-                "mem_total_mib": _f(vals[3]), "temp_c": _f(vals[4])})
+                "mem_total_mib": _f(vals[3]), "temp_c": _f(vals[4]), "uuid": vals[5] or None,
+                "driver_version": vals[6] or None, "name": ",".join(vals[7:]).strip() or None})
     apps = _run(["nvidia-smi", "-i", str(gpu_index), "--query-compute-apps=pid,used_memory", "--format=csv,noheader,nounits"])
     pids: Set[int] = set()
     if apps:

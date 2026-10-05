@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import math
 import random
 import secrets
 import tempfile
@@ -33,6 +34,8 @@ from kwh_bench.verify import verify_report
 
 from ..identity import verify_report_signature, verify_request, verify_result_signature
 from ..jobspec import MAX_REQUESTS_PER_JOB, JobInvalid, job_hash, normalize_request, units_for
+from ..rebench import (MICROBENCH_REASON, REBENCH_EVERY_SECONDS, age_reason, change_reasons, iso_ts, report_gpus,
+                       report_image, span)
 from .verifier import DEFAULT_TAU, Scorer, verify_greedy_outputs
 
 STATES = ("registered", "live", "degraded", "offline")
@@ -148,11 +151,39 @@ class Settings:
     verify_fraction: float = 0.0           # share of completed jobs whose greedy outputs are verified
     verify_max_requests: int = 4           # greedy requests checked per verified job
     verify_tau: float = DEFAULT_TAU
+    # re-benchmark and reliability (§5)
+    rebench_every_seconds: float = REBENCH_EVERY_SECONDS   # a report older than this must be replaced
+    rebench_max_seconds: float = 3600.0                     # a re-benchmark that takes longer counts as failures
+    bucket_seconds: float = 300.0                 # reliability counters are kept per 5 minutes ...
+    history_seconds: float = 7 * 86400.0          # ... for 7 days
 
     def wire(self) -> dict:
         return {"heartbeat_seconds": self.heartbeat_seconds, "challenge_every_seconds": self.challenge_every_seconds,
                 "microbench_every_seconds": self.microbench_every_seconds,
-                "offline_after_seconds": self.offline_after_seconds, "max_failures": self.max_failures}
+                "offline_after_seconds": self.offline_after_seconds, "max_failures": self.max_failures,
+                "rebench_every_seconds": self.rebench_every_seconds}
+
+
+EVENTS_KEPT = 5000
+LATENCIES_PER_BUCKET = 1000
+WINDOWS = (("1h", 3600.0), ("24h", 86400.0), ("7d", 7 * 86400.0))
+
+
+def new_bucket() -> dict:
+    """Raw counters for one 5-minute slice of one host's life (§5). Step 3 scores from these."""
+    return {"state_s": {}, "beats_accepted": 0, "beats_rejected": 0, "minted": 0,
+            "challenges_passed": 0, "challenges_failed": 0, "challenge_deltas": [],
+            "microbench_uph": [], "microbench_misses": 0,
+            "jobs_completed": 0, "jobs_failed": 0, "bad_results": 0, "units": 0.0, "job_latency_ms": [],
+            "send_failures": 0, "engine_restarts": 0, "results_undelivered": 0}
+
+
+def percentile(values: List[float], q: float) -> Optional[float]:
+    """Nearest-rank percentile; None for no values."""
+    if not values:
+        return None
+    s = sorted(values)
+    return s[min(len(s) - 1, max(0, math.ceil(q / 100.0 * len(s)) - 1))]
 
 
 @dataclass
@@ -186,17 +217,42 @@ class HostRecord:
     delivered_units: float = 0.0           # what the host is paid for (step 4 settles it)
     verifications_failed: int = 0
     events: List[dict] = field(default_factory=list)
+    # re-benchmark (§5): what the current report was measured on, and why a new one is owed
+    state_since: float = 0.0
+    accounted_to: float = 0.0              # state time is in the buckets up to here
+    report_at: float = 0.0                 # the report's age counts from here
+    report_accepted_at: float = 0.0
+    report_gpus: Dict[str, Optional[str]] = field(default_factory=dict)   # GPU uuid -> driver version
+    report_image: Optional[str] = None
+    rebench_reasons: List[str] = field(default_factory=list)
+    benchmarking: bool = False
+    benchmarking_since: Optional[float] = None
+    rejected_reasons: Optional[List[str]] = None   # of the last rejected beat, so a run of them is one event
+    telemetry: dict = field(default_factory=dict)  # the host's own counters, as of its last heartbeat
+    buckets: Dict[int, dict] = field(default_factory=dict)                # reliability counters, per 5 minutes
 
     def event(self, now: float, kind: str, **data) -> None:
         self.events.append({"t": now, "kind": kind, **data})
-        if len(self.events) > 500:
-            del self.events[:-500]
+        if len(self.events) > EVENTS_KEPT:
+            del self.events[:-EVENTS_KEPT]
+
+    def take_report(self, report: dict, now: float) -> None:
+        """Remember what this report was measured on, so a change can be told apart from it. Its
+        age counts from when it was measured, or from now if it claims to be from the future."""
+        measured = iso_ts(report.get("finished_at"))
+        self.report_accepted_at = now
+        self.report_at = min(now, measured) if measured is not None else now
+        self.report_gpus = report_gpus(report)
+        self.report_image = report_image(report)
+        self.rebench_required, self.rebench_reasons, self.microbench_misses = False, [], 0
 
     def summary(self) -> dict:
-        return {"host_id": self.host_id, "state": self.state, "reasons": self.reasons, "rate_units_per_hour": self.rate,
-                "bucket": self.bucket, "accrual": round(self.accrual, 4), "balance": self.balance,
-                "failures": self.failures, "last_beat_at": self.last_beat_at, "last_challenge": self.last_challenge,
+        return {"host_id": self.host_id, "state": self.state, "reasons": self.reasons, "state_since": self.state_since,
+                "rate_units_per_hour": self.rate, "bucket": self.bucket, "accrual": round(self.accrual, 4),
+                "balance": self.balance, "failures": self.failures, "last_beat_at": self.last_beat_at,
+                "last_challenge": self.last_challenge, "passes_needed": self.passes_needed,
                 "last_microbench": self.last_microbench, "rebench_required": self.rebench_required,
+                "rebench_reasons": self.rebench_reasons, "benchmarking": self.benchmarking,
                 "report_sha256": self.report_sha256,
                 "jobs": {"completed": self.jobs_completed, "failed": self.jobs_failed, "bad_results": self.bad_results,
                          "delivered_units": round(self.delivered_units, 6),
@@ -238,18 +294,179 @@ class MockPlatform:
         return next((h for h in self.hosts.values() if h.public_key == pub), None)
 
     def _sweep(self, rec: HostRecord, now: float) -> None:
-        """Lazy offline detection: no accepted heartbeat within the timeout."""
-        if rec.state in ("live", "degraded") and rec.last_accepted_beat_at is not None \
-                and now - rec.last_accepted_beat_at > self.s.offline_after_seconds:
-            self._set_state(rec, now, "offline", ["no accepted heartbeat within timeout"])
+        """Lazy offline detection: no accepted heartbeat within the timeout. The host went offline
+        when the timeout ran out, not when someone noticed, and its state time says so."""
+        if rec.state in ("live", "degraded") and rec.last_accepted_beat_at is not None:
+            lapsed = rec.last_accepted_beat_at + self.s.offline_after_seconds
+            if now > lapsed:
+                self._set_state(rec, now, "offline", ["no accepted heartbeat within timeout"], at=lapsed)
 
-    def _set_state(self, rec: HostRecord, now: float, state: str, reasons: List[str]) -> None:
+    def _set_state(self, rec: HostRecord, now: float, state: str, reasons: List[str], at: Optional[float] = None) -> None:
+        at = now if at is None else at
+        self._account(rec, at)
         if state == "offline":
             rec.accrual = 0.0          # never minted late (§6)
             rec.pending = None
         if state != rec.state:
-            rec.event(now, "state", **{"from": rec.state, "to": state, "reasons": reasons})
+            rec.event(at, "state", **{"from": rec.state, "to": state, "reasons": reasons})
+            rec.state_since = at
         rec.state, rec.reasons = state, list(reasons)
+
+    # -- reliability counters (§5) -------------------------------------
+    def _bucket(self, rec: HostRecord, t: float) -> dict:
+        k = int(t // self.s.bucket_seconds)
+        b = rec.buckets.get(k)
+        if b is None:
+            b = rec.buckets[k] = new_bucket()
+            oldest = int((t - self.s.history_seconds) // self.s.bucket_seconds)
+            for old in [x for x in rec.buckets if x < oldest]:
+                del rec.buckets[old]
+        return b
+
+    def _account(self, rec: HostRecord, until: float) -> None:
+        """Book the time since the last booking to the current state, split at bucket edges."""
+        t = max(rec.accounted_to, until - self.s.history_seconds)
+        bs = self.s.bucket_seconds
+        while t < until:
+            step = min((int(t // bs) + 1) * bs, until) - t
+            b = self._bucket(rec, t)
+            b["state_s"][rec.state] = b["state_s"].get(rec.state, 0.0) + step
+            t += step
+        rec.accounted_to = max(rec.accounted_to, until)
+
+    def _take_telemetry(self, rec: HostRecord, b: dict, tel: Any, now: float) -> None:
+        """What the host saw since its last heartbeat reached us: beats it could not send, engine
+        restarts, results it could not deliver. The host can under-report these; it cannot use them
+        to look better than the platform's own counters say."""
+        if not isinstance(tel, dict):
+            return
+
+        def count(k: str) -> int:
+            try:
+                return max(0, min(int(tel.get(k) or 0), 1_000_000))
+            except (TypeError, ValueError):
+                return 0
+        sent, restarts, undelivered = count("send_failures"), count("engine_restarts"), count("results_undelivered")
+        b["send_failures"] += sent
+        b["engine_restarts"] += restarts
+        b["results_undelivered"] += undelivered
+        err = str(tel.get("last_error") or "")[:200] or None
+        rec.telemetry = {"uptime_s": tel.get("uptime_s") if isinstance(tel.get("uptime_s"), (int, float)) else None,
+                         "send_failures": sent, "engine_restarts": restarts, "results_undelivered": undelivered,
+                         "last_error": err, "t": now}
+        if sent or restarts or undelivered:
+            rec.event(now, "host_reported", send_failures=sent, engine_restarts=restarts,
+                      results_undelivered=undelivered, last_error=err)
+
+    def job_outcome(self, rec: HostRecord, now: float, outcome: str, latency_ms: Optional[float] = None,
+                    units: float = 0.0) -> None:
+        b = self._bucket(rec, now)
+        if outcome == "completed":
+            b["jobs_completed"] += 1
+            b["units"] += units
+            if latency_ms is not None and len(b["job_latency_ms"]) < LATENCIES_PER_BUCKET:
+                b["job_latency_ms"].append(latency_ms)
+        elif outcome == "bad_result":
+            b["bad_results"] += 1
+        else:
+            b["jobs_failed"] += 1
+
+    def reliability(self, rec: HostRecord, now: float) -> dict:
+        """Raw aggregates over the last hour, day and week, to the nearest 5 minutes. Not a score:
+        scoring, bucketing and decay are step 3's, computed from the same counters."""
+        self._account(rec, now)
+        bs, hb = self.s.bucket_seconds, self.s.heartbeat_seconds
+        out = {}
+        for name, window in WINDOWS:
+            if window > self.s.history_seconds:
+                continue
+            first = int((now - window) // bs)
+            sel = [b for k, b in rec.buckets.items() if k > first]
+            states: Dict[str, float] = {}
+            for b in sel:
+                for st, secs in b["state_s"].items():
+                    states[st] = states.get(st, 0.0) + secs
+            observed = sum(states.values())
+
+            def total(key: str) -> float:
+                return sum(b[key] for b in sel)
+
+            deltas = [d for b in sel for d in b["challenge_deltas"]]
+            uph = [u for b in sel for u in b["microbench_uph"]]
+            lat = [x for b in sel for x in b["job_latency_ms"]]
+            out[name] = {
+                "observed_s": round(observed),
+                "state_s": {st: round(v) for st, v in sorted(states.items())},
+                "live_fraction": round(states.get("live", 0.0) / observed, 4) if observed else None,
+                "heartbeats": {"accepted": total("beats_accepted"), "rejected": total("beats_rejected"),
+                               "expected": int(observed // hb)},
+                "challenges": {"passed": total("challenges_passed"), "failed": total("challenges_failed"),
+                               "mean_delta": round(sum(deltas) / len(deltas), 5) if deltas else None,
+                               "max_delta": max(deltas) if deltas else None},
+                "microbench": {"runs": len(uph), "misses": total("microbench_misses"),
+                               "median_units_per_hour": percentile(uph, 50)},
+                "jobs": {"completed": total("jobs_completed"), "failed": total("jobs_failed"),
+                         "bad_results": total("bad_results"), "units": round(total("units"), 6),
+                         "latency_ms_p50": percentile(lat, 50), "latency_ms_p95": percentile(lat, 95)},
+                "minted": total("minted"),
+                "host_reported": {"send_failures": total("send_failures"), "engine_restarts": total("engine_restarts"),
+                                  "results_undelivered": total("results_undelivered")},
+            }
+        return out
+
+    # -- re-benchmark (§5) ---------------------------------------------
+    def _rebench_held(self, rec: HostRecord) -> List[str]:
+        return ["re-benchmark required: " + "; ".join(rec.rebench_reasons)]
+
+    def _require_rebench(self, rec: HostRecord, now: float, reasons: List[str]) -> None:
+        """The report no longer describes this host: degraded, no challenges, until a new one is accepted."""
+        new = [r for r in reasons if r and r not in rec.rebench_reasons]
+        if not new:
+            return
+        rec.rebench_required = True
+        rec.rebench_reasons = rec.rebench_reasons + new
+        rec.event(now, "rebench_required", reasons=new)
+        if rec.state == "live" or (rec.state == "degraded" and not rec.benchmarking):
+            self._set_state(rec, now, "degraded", self._rebench_held(rec))
+
+    def _rebench_triggers(self, rec: HostRecord, eng: dict, gs: dict, now: float) -> List[str]:
+        out = change_reasons(rec.report_gpus, rec.report_image, gs.get("uuid"), gs.get("driver_version"), eng.get("image"))
+        old = age_reason(rec.report_at, now, self.s.rebench_every_seconds)
+        return out + ([old] if old else [])
+
+    def _benchmarking_beat(self, rec: HostRecord, now: float) -> List[str]:
+        """A re-benchmarking host has stopped its engine on purpose. Its beat is accepted without
+        the engine and GPU checks (the benchmark's own engine is on the GPU), so it does not slide
+        to offline, and it stays degraded: no challenge, no jobs, no mint. Not forever, though."""
+        if not rec.benchmarking:
+            rec.benchmarking, rec.benchmarking_since = True, now
+            rec.pending = None
+            rec.event(now, "rebench_started", reasons=list(rec.rebench_reasons))
+        if now - rec.benchmarking_since > self.s.rebench_max_seconds:
+            return [f"re-benchmark running longer than {span(self.s.rebench_max_seconds)}"]
+        if rec.state in ("live", "degraded", "offline"):      # offline: it is back, and says what it is doing
+            self._set_state(rec, now, "degraded", ["re-benchmarking"])
+        return []
+
+    def _beat_problems(self, rec: HostRecord, eng: dict, gs: dict, now: float) -> List[str]:
+        reasons: List[str] = []
+        if not eng.get("healthy"):
+            reasons.append("engine unhealthy")
+        if self.s.require_engine_version and eng.get("version") != self.s.require_engine_version:
+            reasons.append(f"engine version {eng.get('version')!r} != lock {self.s.require_engine_version!r}")
+        if eng.get("launch_mode") != "docker" and not self.s.allow_bare_metal:
+            reasons.append("engine not sandboxed (D4)")
+        # A restarted engine is a new engine: it could be serving anything. No more work until it
+        # passes a challenge (a host that lies about the restart is left to output verification).
+        inst = eng.get("instance")
+        if inst and rec.engine_instance and inst != rec.engine_instance and rec.state == "live":
+            self._set_state(rec, now, "degraded", ["engine restarted; awaiting a challenge"])
+            rec.pending = None
+        if inst:
+            rec.engine_instance = inst
+        if gs.get("available") and (gs.get("foreign_processes") or 0) > 0:
+            reasons.append(f"host_contention: {gs['foreign_processes']} foreign process(es) on the GPU")
+        return reasons
 
     def _check_report(self, report: dict, public_key: str) -> List[str]:
         problems: List[str] = []
@@ -292,14 +509,15 @@ class MockPlatform:
             host_id = "h_" + hashlib.sha256(public_key.encode()).hexdigest()[:12]
             rec = HostRecord(host_id=host_id, public_key=public_key, token=secrets.token_urlsafe(24), rate=rate,
                              bucket=bucket_for(rate), report_sha256=report["report_sha256"],
-                             launch_mode=report["engine"]["launch_mode"], registered_at=now)
+                             launch_mode=report["engine"]["launch_mode"], registered_at=now,
+                             state_since=now, accounted_to=now)
             self.hosts[host_id] = rec
             rec.event(now, "registered", rate=rate)
         else:
             rec.token = secrets.token_urlsafe(24)
             rec.rate, rec.bucket, rec.report_sha256 = rate, bucket_for(rate), report["report_sha256"]
-            rec.rebench_required = False
             rec.event(now, "re-registered", rate=rate)
+        rec.take_report(report, now)
         return {"host_id": rec.host_id, "token": rec.token, "rate_units_per_hour": rec.rate, "bucket": rec.bucket,
                 "config": self.s.wire()}
 
@@ -307,25 +525,17 @@ class MockPlatform:
         now = self.clock()
         rec = self.host(host_id)
         self._sweep(rec, now)
-        reasons: List[str] = []
-        eng = body.get("engine") or {}
-        if not eng.get("healthy"):
-            reasons.append("engine unhealthy")
-        if self.s.require_engine_version and eng.get("version") != self.s.require_engine_version:
-            reasons.append(f"engine version {eng.get('version')!r} != lock {self.s.require_engine_version!r}")
-        if eng.get("launch_mode") != "docker" and not self.s.allow_bare_metal:
-            reasons.append("engine not sandboxed (D4)")
-        # A restarted engine is a new engine: it could be serving anything. No more work until it
-        # passes a challenge (a host that lies about the restart is left to output verification).
-        inst = eng.get("instance")
-        if inst and rec.engine_instance and inst != rec.engine_instance and rec.state == "live":
-            self._set_state(rec, now, "degraded", ["engine restarted; awaiting a challenge"])
-            rec.pending = None
-        if inst:
-            rec.engine_instance = inst
-        gs = body.get("gpu_sample") or {}
-        if gs.get("available") and (gs.get("foreign_processes") or 0) > 0:
-            reasons.append(f"host_contention: {gs['foreign_processes']} foreign process(es) on the GPU")
+        b = self._bucket(rec, now)
+        self._take_telemetry(rec, b, body.get("telemetry"), now)
+        eng, gs = body.get("engine") or {}, body.get("gpu_sample") or {}
+        if body.get("benchmarking"):
+            reasons = self._benchmarking_beat(rec, now)
+        else:
+            if rec.benchmarking:
+                rec.benchmarking, rec.benchmarking_since = False, None
+                rec.event(now, "rebench_ended", rebench_required=rec.rebench_required)
+            reasons = self._beat_problems(rec, eng, gs, now)
+            self._require_rebench(rec, now, self._rebench_triggers(rec, eng, gs, now))
 
         interval = 0.0
         if rec.last_accepted_beat_at is not None:
@@ -334,24 +544,34 @@ class MockPlatform:
         minted = 0
         challenge: Optional[Challenge] = None
         if not reasons:
+            b["beats_accepted"] += 1
+            rec.rejected_reasons = None
             if rec.state == "live" and body.get("wants_mint", True) and interval > 0:
                 rec.accrual += rec.rate * interval / 3600.0
                 minted = int(rec.accrual)
                 if minted:
                     rec.accrual -= minted
                     rec.balance += minted
-                    rec.event(now, "mint", units=minted, balance=rec.balance)
+                    b["minted"] += minted
             rec.last_accepted_beat_at = now
-            due = rec.pending is None and (
-                rec.state != "live" or rec.last_challenge_at is None
-                or now - rec.last_challenge_at >= self.s.challenge_every_seconds)
-            if due:
-                challenge = self.pool.issue()
-                rec.pending = challenge
-                rec.event(now, "challenge", id=challenge.id)
-            if rec.state == "degraded" and rec.reasons and not rec.pending:
-                pass  # recovery needs a passed challenge; the one just issued decides
+            if rec.rebench_required and not rec.benchmarking:
+                # Reachable and healthy, but its report no longer counts: nothing to challenge for.
+                held = self._rebench_held(rec)
+                if rec.state != "degraded" or rec.reasons != held:
+                    self._set_state(rec, now, "degraded", held)
+            elif not rec.benchmarking:
+                due = rec.pending is None and (
+                    rec.state != "live" or rec.last_challenge_at is None
+                    or now - rec.last_challenge_at >= self.s.challenge_every_seconds)
+                if due:
+                    challenge = self.pool.issue()
+                    rec.pending = challenge
+                    rec.event(now, "challenge", id=challenge.id)
         else:
+            b["beats_rejected"] += 1
+            if reasons != rec.rejected_reasons:
+                rec.event(now, "heartbeat_rejected", reasons=reasons)
+                rec.rejected_reasons = reasons
             rec.failures += 1
             if rec.state == "live":
                 self._set_state(rec, now, "degraded", reasons)
@@ -361,9 +581,10 @@ class MockPlatform:
                 self._set_state(rec, now, "offline", reasons + [f"{rec.failures} consecutive failures"])
         rec.last_beat_at = now
         return {"state": rec.state, "reasons": reasons or rec.reasons, "accepted": not reasons,
-                "challenge": challenge.to_wire() if challenge else None, "minted": minted,
-                "accrual": round(rec.accrual, 4), "balance": rec.balance,
-                "rebench_required": rec.rebench_required, "config": self.s.wire()}
+                "state_since": rec.state_since, "challenge": challenge.to_wire() if challenge else None,
+                "minted": minted, "accrual": round(rec.accrual, 4), "balance": rec.balance,
+                "rebench_required": rec.rebench_required, "rebench_reasons": rec.rebench_reasons,
+                "benchmarking": rec.benchmarking, "config": self.s.wire()}
 
     def liveness(self, host_id: str, body: dict) -> dict:
         now = self.clock()
@@ -378,12 +599,19 @@ class MockPlatform:
         rec.last_challenge = {"id": ch.id, "pass": passed, "delta": delta, "deltas": verdict["deltas"],
                               "continuations": [c.id for c in ch.items], "elapsed_ms": body.get("elapsed_ms"), "t": now}
         rec.event(now, "liveness", id=ch.id, passed=passed, delta=delta)
+        b = self._bucket(rec, now)
+        b["challenges_passed" if passed else "challenges_failed"] += 1
+        if delta is not None:
+            b["challenge_deltas"].append(delta)
         if passed:
             rec.failures = 0
             rec.passes_needed = max(0, rec.passes_needed - 1)
             healthy_now = rec.last_accepted_beat_at is not None and rec.last_accepted_beat_at == rec.last_beat_at
             if rec.state != "live" and healthy_now:
-                if rec.passes_needed:
+                if rec.rebench_required:
+                    self._set_state(rec, now, "degraded", [f"challenge passed (mean delta {delta}); "
+                                                           + self._rebench_held(rec)[0]])
+                elif rec.passes_needed:
                     # After a failed challenge one pass is not enough: a substitute model can get lucky
                     # once; it does not get lucky twice in a row (D9).
                     self._set_state(rec, now, "degraded", [f"challenge passed (mean delta {delta}); "
@@ -406,14 +634,15 @@ class MockPlatform:
         within = rec.rate > 0 and abs(uph - rec.rate) / rec.rate <= self.s.microbench_tolerance
         rec.last_microbench = {"units_per_hour": uph, "job_seconds": body.get("job_seconds"), "within": within, "t": now}
         rec.event(now, "microbench", units_per_hour=uph, within=within)
+        b = self._bucket(rec, now)
+        b["microbench_uph"].append(uph)
         if within:
             rec.microbench_misses = 0
         else:
             rec.microbench_misses += 1
+            b["microbench_misses"] += 1
             if rec.microbench_misses >= 2:
-                rec.rebench_required = True
-                if rec.state == "live":
-                    self._set_state(rec, now, "degraded", [f"micro-benchmark {uph:.2f} u/h outside 10% of {rec.rate:.2f}, twice"])
+                self._require_rebench(rec, now, [MICROBENCH_REASON])
         return {"accepted": True, "within_tolerance": within, "rebench_required": rec.rebench_required}
 
     def upload_report(self, host_id: str, body: dict) -> dict:
@@ -425,18 +654,34 @@ class MockPlatform:
             raise Rejected(400, "report rejected: " + " | ".join(problems))
         if any(h.report_sha256 == report["report_sha256"] and h is not rec for h in self.hosts.values()):
             raise Rejected(409, "this benchmark report is already registered to another host")
+        previous = rec.rate
         rec.rate = float(report["score"]["units_per_hour"])
         rec.bucket, rec.report_sha256 = bucket_for(rec.rate), report["report_sha256"]
-        rec.rebench_required, rec.microbench_misses = False, 0
-        rec.event(now, "re-benchmarked", rate=rec.rate)
-        return {"rate_units_per_hour": rec.rate, "bucket": rec.bucket}
+        rec.take_report(report, now)
+        rec.event(now, "re-benchmarked", rate=rec.rate, previous_rate=previous)
+        if rec.state == "degraded" and not rec.benchmarking:
+            rec.reasons = ["new report accepted; awaiting a challenge"]
+        return {"rate_units_per_hour": rec.rate, "bucket": rec.bucket, "previous_rate_units_per_hour": previous}
 
     def status(self, host_id: str) -> dict:
+        now = self.clock()
+        rec = self.host(host_id)
+        self._sweep(rec, now)
+        out = rec.summary()
+        out.update({"now": now, "registered_at": rec.registered_at, "report_at": rec.report_at,
+                    "report_accepted_at": rec.report_accepted_at,
+                    "rebench_due_at": rec.report_at + self.s.rebench_every_seconds,
+                    "host_reported": rec.telemetry, "reliability": self.reliability(rec, now),
+                    "config": self.s.wire(), "events": rec.events[-20:]})
+        return out
+
+    def events(self, host_id: str, since: Optional[float] = None, limit: int = 200,
+               kinds: Optional[List[str]] = None) -> dict:
         rec = self.host(host_id)
         self._sweep(rec, self.clock())
-        out = rec.summary()
-        out["events"] = rec.events[-20:]
-        return out
+        sel = [e for e in rec.events if (since is None or e["t"] > since) and (not kinds or e["kind"] in kinds)]
+        limit = max(1, min(int(limit), EVENTS_KEPT))
+        return {"host_id": host_id, "events": sel[-limit:], "more": len(sel) > limit}
 
 
 # --- router (§7) ----------------------------------------------------------------
@@ -621,6 +866,7 @@ class Router:
                     attempt.update(outcome="bad_result", problems=problems)
                     rec.bad_results += 1
                     rec.event(now, "bad_result", job_id=job["job_id"], problems=problems)
+                    self.p.job_outcome(rec, now, "bad_result")
                     attempts.append(attempt)
                     continue
                 if result["status"] == "completed":
@@ -629,7 +875,9 @@ class Router:
                     return await self._deliver(conn, rec, job, result, attempts, units_reserved, started)
                 attempt.update(outcome=result["status"], reason=result.get("reason"))
             rec.jobs_failed += 1
-            rec.event(now, "job_failed", job_id=job["job_id"], outcome=attempt["outcome"], reason=attempt.get("reason"))
+            rec.event(now, "job_failed", job_id=job["job_id"], outcome=attempt["outcome"], reason=attempt.get("reason"),
+                      latency_ms=attempt["latency_ms"])
+            self.p.job_outcome(rec, now, attempt["outcome"], attempt["latency_ms"])
             attempts.append(attempt)
         reason = "no live host with capacity for this job" if not attempts else f"{len(attempts)} attempt(s) failed"
         out = {"job_id": base_id, "status": "failed", "reason": reason, "attempts": attempts,
@@ -643,7 +891,8 @@ class Router:
         units = units_for(usage["prompt_tokens"], usage["completion_tokens"])
         rec.jobs_completed += 1
         rec.delivered_units += units
-        rec.event(self.p.clock(), "job_completed", job_id=job["job_id"], units=round(units, 6))
+        # Counted, not logged one by one: a busy host completes thousands a day (§5's counters).
+        self.p.job_outcome(rec, self.p.clock(), "completed", attempts[-1]["latency_ms"], units)
         keep = ("index", "text", "token_ids", "finish_reason", "stop_reason", "ttft_ms", "total_ms", "logprobs")
         out = {"job_id": job["job_id"].rsplit(".", 1)[0], "status": "completed", "host_id": conn.host_id,
                "attempts": attempts, "units": round(units, 6), "units_reserved": round(units_reserved, 6),
@@ -787,6 +1036,15 @@ def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenize
         await _auth(request, host_id)
         return platform.status(host_id)
 
+    @app.get("/v1/hosts/{host_id}/events")
+    async def events(host_id: str, request: Request, since: Optional[float] = None, limit: int = 200,
+                     kinds: Optional[str] = None):
+        # Signed like every GET: over the path, without the query, which only narrows what the
+        # host may read anyway.
+        await _auth(request, host_id)
+        return platform.events(host_id, since=since, limit=limit,
+                               kinds=[k for k in (kinds or "").split(",") if k] or None)
+
     @app.websocket("/v1/hosts/{host_id}/jobs")
     async def jobs(websocket: WebSocket, host_id: str):
         rec = platform.hosts.get(host_id)
@@ -837,6 +1095,13 @@ def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenize
     @app.get("/v1/mock/hosts")
     async def mock_hosts():
         return {"hosts": router.hosts_view(), "recent_jobs": router.recent[-20:]}
+
+    @app.post("/v1/mock/hosts/{host_id}/rebench")
+    async def mock_rebench(host_id: str):
+        """Hold a host for a re-benchmark now, as if its report had expired (tests and GPU runs)."""
+        rec = platform.host(host_id)
+        platform._require_rebench(rec, platform.clock(), ["re-benchmark requested on the mock platform"])
+        return rec.summary()
 
     @app.get("/healthz")
     async def healthz():

@@ -149,6 +149,18 @@ class MockExecutor:
 
 # --- one job ----------------------------------------------------------------------
 
+def reject_job(job: dict, reason: str, *, identity: Identity, host_id: str, engine: dict,
+               clock: Callable[[], float] = time.time, received_at: Optional[float] = None) -> dict:
+    """A signed `rejected` result: nothing ran, the platform re-routes the job at once."""
+    now = clock()
+    return identity.sign_result({
+        "job_id": job.get("job_id") if isinstance(job, dict) else None, "job_sha256": job_hash(job),
+        "host_id": host_id, "engine": engine, "received_at": now if received_at is None else received_at,
+        "status": "rejected", "reason": reason[:MAX_ERROR_CHARS], "outputs": [],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0}, "finished_at": now,
+        "result_sha256": None, "signature": None})
+
+
 async def execute_job(job: dict, executor: Executor, sem: asyncio.Semaphore, *, identity: Identity, host_id: str,
                       engine: dict, max_model_len: int, clock: Callable[[], float] = time.time) -> dict:
     """Run every request in the job and return the signed result.
@@ -162,9 +174,8 @@ async def execute_job(job: dict, executor: Executor, sem: asyncio.Semaphore, *, 
     try:
         specs = parse_job(job, max_model_len)
     except JobInvalid as e:
-        return identity.sign_result({**base, "status": "rejected", "reason": f"invalid: {e}"[:MAX_ERROR_CHARS],
-                                     "outputs": [], "usage": {"prompt_tokens": 0, "completion_tokens": 0},
-                                     "finished_at": clock(), "result_sha256": None, "signature": None})
+        return reject_job(job, f"invalid: {e}", identity=identity, host_id=host_id, engine=engine, clock=clock,
+                          received_at=received_at)
     timeout = float(job["timeout_s"])
 
     async def one(spec: RequestSpec) -> dict:
