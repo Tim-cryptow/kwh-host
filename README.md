@@ -30,7 +30,7 @@ Build step 2 of 7. **[HOST-CLIENT.md](HOST-CLIENT.md)** is the scope: lifecycle,
 - [x] M0 — scope document, decisions recorded
 - [x] M1 — daemon skeleton + mock platform: `init → bench → register → run` reaches **live**, answers challenges, mints, micro-benchmarks. Proven on a RunPod RTX 3090 on 2026-09-30 (see below).
 - [x] M2 — jobs: the router dispatches to live hosts over their WebSocket and re-routes on failure; hosts return signed results with generated token ids; greedy outputs are verified after delivery by teacher-forced scoring under the reference model; a wrong-model host never receives work. Proven on a RunPod A40 on 2026-10-02 (see below).
-- [ ] M3 — Docker sandbox, one-line install, WSL2 path. Proven on Linux on a rented RTX 4090 VM on 2026-10-05 (see below): the one-line install, then a certified benchmark inside the sandbox, live, buyer jobs, a 4-bit substitute caught, and the background service. CI runs the same flow without a GPU on every push. Left: WSL2 on a real Windows PC.
+- [ ] M3 — Docker sandbox, one-line install, WSL2 path. Proven on Linux on a rented RTX 4090 VM on 2026-10-05 (see below): the one-line install, then a certified benchmark inside the sandbox, live, buyer jobs, a 4-bit substitute caught, and the background service. CI runs the same flow without a GPU on every push. The Windows path without a GPU, on a Windows 11 laptop on 2026-10-06 (see below): the installer inside WSL2, the sandbox, the service, and keeping it running with no window open. Left: the GPU through WSL2.
 - [x] M4 — reliability telemetry and re-benchmarking. Proven on a rented RTX 4090 VM on 2026-10-05 (see below): a driver change found by the daemon itself, a slowed card held and re-rated within 5 minutes and re-rated back when it recovered, and a frozen engine replaced in under 2 minutes. CI runs a re-benchmark in the real sandbox on every push.
 - [ ] M5 — real platform (step 4), stake deposit
 
@@ -131,6 +131,26 @@ What it settled:
   - The daemon now reports and retries an engine that will not start.
   - `doctor` and `kwh-host status` say to reboot.
   - The installer offers to keep the driver out of the automatic updates.
+
+## The Windows path on a real PC (no GPU, 2026-10-06)
+
+`scripts/wsl-check.sh` (in Ubuntu) and `scripts/wsl-keepalive.ps1` (in PowerShell) ran on a Windows 11 laptop with no NVIDIA card, starting from a PC without WSL. The files are in [results/wsl-windows11-2026-10-06](results/wsl-windows11-2026-10-06/).
+
+```
+installer      Docker Engine 29.8.2 inside Ubuntu 24.04 (WSL 3.0.1), the docker group, kwh-host: exit 0, 2 min 23 s
+sandbox        CI's script end to end: bench, register, live, lockdown, a buyer job, a re-benchmark: ok
+service        live 3 s after kwh-host service install
+guide's task   "Access is denied" for an ordinary user; registers with -User. Defaults: no start on battery, 72 h limit
+no window      with the task: 3 min, 17/17 heartbeats accepted. With instanceIdleTimeout=-1 and no task: kept running
+logon          after wsl --shutdown, the task alone started Ubuntu; the host's engine was running ~6 s later
+default        WSL stopped Ubuntu 17 s after its last session ended
+```
+
+What it settled:
+
+- **Everything but the GPU works on Windows.** That covers the installer inside WSL2, the sandbox, the service, and a host that survives a closed window and comes back at logon.
+- **The guide's keep-alive step did not, as written.** An ordinary user cannot register the task without `-User`. Its defaults would also stop it on a laptop. Step 5 is rewritten: a `.wslconfig` setting keeps Ubuntu running, and a task only starts it at logon.
+- **Ubuntu's clock ran about 5% slow there.** Windows pulls it back every half minute or so, by a jump of about 2 seconds. The benchmark times itself on that clock, so it would read about 5% high in WSL2 on that laptop. That has to be checked on the PC with an NVIDIA card before Windows hosts are rated (HOST-CLIENT.md §12).
 
 ## Try it without a GPU
 

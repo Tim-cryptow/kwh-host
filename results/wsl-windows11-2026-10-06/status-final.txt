@@ -1,0 +1,8 @@
+kwh-host 0.3.0.dev1 · h_e9cf191805d6 · http://127.0.0.1:9000
+
+Daemon       stopped 4 s ago
+Platform     unreachable: ConnectError: All connection attempts failed; below is what the daemon last heard
+State        stopped
+Rate         1,313.82 units/hour
+Earnings     0 units minted, 0.00 accruing
+Jobs         0 completed, 0 failed, 0 turned away since the daemon started; job channel closed

@@ -166,7 +166,14 @@ has_systemd() { command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system
 start_docker() { if has_systemd; then sudo systemctl enable --now docker; else sudo service docker start; fi; }
 restart_docker() { if has_systemd; then sudo systemctl restart docker; else sudo service docker restart; fi; }
 if ! command -v docker >/dev/null 2>&1; then
-  install_docker() { wait_for_apt; curl -fsSL https://get.docker.com | sudo sh; }
+  install_docker() {
+    wait_for_apt
+    if [ "$WSL" = 1 ]; then
+      echo "    Docker's script will recommend Docker Desktop and wait 20 seconds. Let it carry on:"
+      echo "    Docker Engine inside Ubuntu is the setup the host client wants (HOST-CLIENT.md §12)."
+    fi
+    curl -fsSL https://get.docker.com | sudo sh
+  }
   change "Install Docker Engine (Docker's official script, needs sudo)" install_docker && ok "Docker installed" || true
 fi
 DESKTOP=""
@@ -296,5 +303,9 @@ cat <<EOF
     kwh-host service install   # runs in the background from now on, restarts on failure
 EOF
 if [ "$WSL" = 1 ]; then
-  echo "    WSL2: keep the Ubuntu window (or a WSL session) open while hosting; see HOST-CLIENT.md §12."
+  if [ "$USE_SG" = 1 ]; then
+    echo "    WSL2: first run   wsl --shutdown   in PowerShell and open Ubuntu again, so the docker group"
+    echo "          you were just added to reaches everything, the background service included."
+  fi
+  echo "    WSL2: to keep hosting with no Ubuntu window open, and from logon on: docs/windows-wsl2.md, step 5."
 fi

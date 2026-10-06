@@ -1,0 +1,18 @@
+== 2026-10-06T08:43:25Z probe start 0
+== ps -p 1
+      1     167 systemd
+== systemctl --user status kwh-host
+● kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status)
+     Loaded: loaded (/home/user/.config/systemd/user/kwh-host.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-10-06 09:42:38 WAT; 47s ago
+       Docs: https://github.com/Tim-cryptow/kwh-host
+   Main PID: 2039 (kwh-host)
+      Tasks: 12 (limit: 18996)
+     Memory: 43.7M (peak: 58.4M)
+        CPU: 978ms
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/kwh-host.service
+             ├─2039 /home/user/.kwh-host/venv/bin/python3 /home/user/.kwh-host/venv/bin/kwh-host run
+             └─2107 docker run --rm --init --name kwh-engine-gpu0 --label kwh.engine=1 --user 1000:1000 --read-only --tmpfs /tmp:rw,exec,nosuid,nodev,size=4g --cap-drop ALL --security-opt no-new-privileges:true --pids-limit 4096 --memory 2g --memory-swap 2g --shm-size 2g -v /home/user/.kwh-host/hf:/hf:ro -v /home/user/.kwh-host/engine-cache:/cache:rw -e HOME=/cache/home -e USER=kwh -e LOGNAME=kwh -e HF_HOME=/hf -e HF_HUB_OFFLINE=1 -e TRANSFORMERS_OFFLINE=1 -e HF_HUB_DISABLE_TELEMETRY=1 -e VLLM_NO_USAGE_STATS=1 -e DO_NOT_TRACK=1 -e XDG_CACHE_HOME=/cache/xdg -e VLLM_CACHE_ROOT=/cache/vllm -e TRITON_CACHE_DIR=/cache/triton -e TORCHINDUCTOR_CACHE_DIR=/cache/inductor -e CUDA_CACHE_PATH=/cache/nv --network none -v /home/user/.kwh-host/run:/run/kwh:rw kwh-fake-engine:test RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 --dtype auto --max-model-len 8192 --max-num-seqs 32 --no-enable-prefix-caching --seed 0 --gpu-memory-utilization 0.90 --revision 024e24cbe4153670f747383ea3265d0fb197c727 --uds /run/kwh/engine.sock
+
+== docker ps -a
+kwh-engine-gpu0  Up 46 seconds

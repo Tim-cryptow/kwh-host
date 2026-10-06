@@ -1,0 +1,134 @@
+Oct 06 09:42:38 DESKTOP-BG7E924 systemd[573]: Started kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 06 09:42:38 DESKTOP-BG7E924 kwh-host[2039]: kwh-host 0.3.0.dev1 starting engine (docker)
+Oct 06 09:42:39 DESKTOP-BG7E924 kwh-host[2039]: engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+Oct 06 09:42:40 DESKTOP-BG7E924 kwh-host[2039]: job channel open (concurrency 32, context 8192)
+Oct 06 09:42:40 DESKTOP-BG7E924 kwh-host[2039]: challenge ch-1-faff0c1d: pass (mean delta 0.0 over 4, 36 ms) -> live
+Oct 06 09:42:40 DESKTOP-BG7E924 kwh-host[2039]: micro-benchmark: 2935.42 u/h equivalent in 0.15s -> OUTSIDE tolerance
+Oct 06 09:42:50 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 3
+Oct 06 09:43:00 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 7
+Oct 06 09:43:12 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 11
+Oct 06 09:43:22 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 15
+Oct 06 09:43:32 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 19
+Oct 06 09:43:43 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 23
+Oct 06 09:43:43 DESKTOP-BG7E924 kwh-host[2039]: challenge ch-2-bec9bfef: pass (mean delta 0.0 over 4, 45 ms) -> live
+Oct 06 09:43:54 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 26
+Oct 06 09:44:04 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 30
+Oct 06 09:44:15 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 34
+Oct 06 09:44:25 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 38
+Oct 06 09:44:35 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 42
+Oct 06 09:44:45 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 45
+Oct 06 09:44:46 DESKTOP-BG7E924 kwh-host[2039]: challenge ch-3-de83b9e7: pass (mean delta 0.0 over 4, 33 ms) -> live
+Oct 06 09:44:56 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 49
+Oct 06 09:45:08 DESKTOP-BG7E924 kwh-host[2039]: minted 5 unit(s), balance 54
+Oct 06 09:45:18 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 57
+Oct 06 09:45:28 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 61
+Oct 06 09:45:40 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 65
+Oct 06 09:45:50 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 69
+Oct 06 09:45:50 DESKTOP-BG7E924 kwh-host[2039]: challenge ch-4-186e4c35: pass (mean delta 0.0 over 4, 32 ms) -> live
+Oct 06 09:46:00 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 73
+Oct 06 09:46:11 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 77
+Oct 06 09:46:21 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 80
+Oct 06 09:46:31 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 84
+Oct 06 09:46:42 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 88
+Oct 06 09:46:52 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 91
+Oct 06 09:46:52 DESKTOP-BG7E924 kwh-host[2039]: challenge ch-5-9bd55ec9: pass (mean delta 0.0 over 4, 38 ms) -> live
+Oct 06 09:47:03 DESKTOP-BG7E924 kwh-host[2039]: minted 5 unit(s), balance 96
+Oct 06 09:47:13 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 99
+Oct 06 09:47:23 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 103
+Oct 06 09:47:35 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 107
+Oct 06 09:47:45 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 111
+Oct 06 09:47:55 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 115
+Oct 06 09:47:55 DESKTOP-BG7E924 kwh-host[2039]: challenge ch-6-36cfa5bd: pass (mean delta 0.0 over 4, 44 ms) -> live
+Oct 06 09:48:07 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 119
+Oct 06 09:48:17 DESKTOP-BG7E924 kwh-host[2039]: minted 4 unit(s), balance 123
+Oct 06 09:48:27 DESKTOP-BG7E924 kwh-host[2039]: minted 3 unit(s), balance 126
+Oct 06 09:48:32 DESKTOP-BG7E924 systemd[573]: Stopping kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status)...
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]: {
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:   "state": "stopped",
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:   "beats": 34,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:   "accepted_beats": 34,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:   "minted_total": 126,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:   "balance": 126,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:   "jobs": {
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:     "completed": 0,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:     "failed": 0,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:     "rejected": 0,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:     "undelivered": 0,
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:     "completion_tokens": 0
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]:   }
+Oct 06 09:48:32 DESKTOP-BG7E924 kwh-host[2039]: }
+Oct 06 09:48:32 DESKTOP-BG7E924 systemd[573]: Stopped kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 06 09:48:32 DESKTOP-BG7E924 systemd[573]: kwh-host.service: Consumed 2.580s CPU time, 71.0M memory peak, 0B memory swap peak.
+-- Boot bca916676a344b61bc978abfef02eb95 --
+Oct 06 09:48:38 DESKTOP-BG7E924 systemd[250]: Started kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 06 09:48:39 DESKTOP-BG7E924 kwh-host[315]: kwh-host 0.3.0.dev1 starting engine (docker)
+Oct 06 09:48:40 DESKTOP-BG7E924 kwh-host[315]: engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+Oct 06 09:48:40 DESKTOP-BG7E924 kwh-host[315]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:48:40 DESKTOP-BG7E924 kwh-host[315]: platform unreachable: ConnectError: All connection attempts failed; retrying in 1s
+Oct 06 09:48:41 DESKTOP-BG7E924 kwh-host[315]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:48:41 DESKTOP-BG7E924 kwh-host[315]: platform unreachable: ConnectError: All connection attempts failed; retrying in 2s
+Oct 06 09:48:43 DESKTOP-BG7E924 kwh-host[315]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:48:44 DESKTOP-BG7E924 kwh-host[315]: platform unreachable: ConnectError: All connection attempts failed; retrying in 4s
+Oct 06 09:48:47 DESKTOP-BG7E924 kwh-host[315]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:48:48 DESKTOP-BG7E924 kwh-host[315]: platform unreachable: ConnectError: All connection attempts failed; retrying in 8s
+Oct 06 09:48:55 DESKTOP-BG7E924 kwh-host[315]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:48:56 DESKTOP-BG7E924 kwh-host[315]: platform unreachable: ConnectError: All connection attempts failed; retrying in 16s
+Oct 06 09:49:10 DESKTOP-BG7E924 systemd[250]: Stopping kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status)...
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]: {
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:   "state": "stopped",
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:   "beats": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:   "accepted_beats": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:   "minted_total": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:   "balance": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:   "jobs": {
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:     "completed": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:     "failed": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:     "rejected": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:     "undelivered": 0,
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:     "completion_tokens": 0
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]:   }
+Oct 06 09:49:10 DESKTOP-BG7E924 kwh-host[315]: }
+Oct 06 09:49:10 DESKTOP-BG7E924 systemd[250]: Stopped kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 06 09:49:10 DESKTOP-BG7E924 systemd[250]: kwh-host.service: Consumed 1.190s CPU time, 238.7M memory peak, 0B memory swap peak.
+-- Boot c7a7411d40cb4a9887b94e3cab4965ba --
+Oct 06 09:49:15 DESKTOP-BG7E924 systemd[257]: Started kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 06 09:49:16 DESKTOP-BG7E924 kwh-host[323]: kwh-host 0.3.0.dev1 starting engine (docker)
+Oct 06 09:49:18 DESKTOP-BG7E924 kwh-host[323]: engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+Oct 06 09:49:18 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:49:18 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 1s
+Oct 06 09:49:19 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:49:19 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 2s
+Oct 06 09:49:21 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:49:21 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 4s
+Oct 06 09:49:25 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:49:25 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 8s
+Oct 06 09:49:33 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:49:33 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 16s
+Oct 06 09:49:49 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:49:49 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 32s
+Oct 06 09:50:19 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:50:21 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 60s
+Oct 06 09:50:51 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:51:23 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:51:26 DESKTOP-BG7E924 kwh-host[323]: platform unreachable: ConnectError: All connection attempts failed; retrying in 60s
+Oct 06 09:51:53 DESKTOP-BG7E924 kwh-host[323]: job channel: ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)
+Oct 06 09:52:17 DESKTOP-BG7E924 systemd[257]: Stopping kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status)...
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]: {
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:   "state": "stopped",
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:   "beats": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:   "accepted_beats": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:   "minted_total": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:   "balance": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:   "jobs": {
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:     "completed": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:     "failed": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:     "rejected": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:     "undelivered": 0,
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:     "completion_tokens": 0
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]:   }
+Oct 06 09:52:18 DESKTOP-BG7E924 kwh-host[323]: }
+Oct 06 09:52:18 DESKTOP-BG7E924 systemd[257]: Stopped kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 06 09:52:18 DESKTOP-BG7E924 systemd[257]: kwh-host.service: Consumed 1.323s CPU time, 237.2M memory peak, 0B memory swap peak.
+-- Boot b1d2ab96b88d479e8c508ad80dcc6e7b --
+Oct 06 09:52:20 DESKTOP-BG7E924 systemd[228]: Started kwh-host.service - kWh Exchange host client (sells this GPU's work; see kwh-host status).
+Oct 06 09:52:22 DESKTOP-BG7E924 kwh-host[289]: kwh-host 0.3.0.dev1 starting engine (docker)

@@ -1,0 +1,16 @@
+{"t": 1791276135.4799495, "kind": "registered", "rate": 1313.821}
+{"t": 1791276160.0891263, "kind": "jobs_connected", "max_concurrency": 32, "max_model_len": 8192}
+{"t": 1791276160.1091592, "kind": "challenge", "id": "ch-1-faff0c1d"}
+{"t": 1791276160.1476457, "kind": "liveness", "id": "ch-1-faff0c1d", "passed": true, "delta": 0.0}
+{"t": 1791276160.1476457, "kind": "state", "from": "registered", "to": "live", "reasons": []}
+{"t": 1791276160.3043656, "kind": "microbench", "units_per_hour": 2935.421, "within": false}
+{"t": 1791276223.9296482, "kind": "challenge", "id": "ch-2-bec9bfef"}
+{"t": 1791276223.977821, "kind": "liveness", "id": "ch-2-bec9bfef", "passed": true, "delta": 0.0}
+{"t": 1791276285.983204, "kind": "challenge", "id": "ch-3-de83b9e7"}
+{"t": 1791276286.0192728, "kind": "liveness", "id": "ch-3-de83b9e7", "passed": true, "delta": 0.0}
+{"t": 1791276350.2640686, "kind": "challenge", "id": "ch-4-186e4c35"}
+{"t": 1791276350.2990491, "kind": "liveness", "id": "ch-4-186e4c35", "passed": true, "delta": 0.0}
+{"t": 1791276412.0749118, "kind": "challenge", "id": "ch-5-9bd55ec9"}
+{"t": 1791276412.1162179, "kind": "liveness", "id": "ch-5-9bd55ec9", "passed": true, "delta": 0.0}
+{"t": 1791276475.6023374, "kind": "challenge", "id": "ch-6-36cfa5bd"}
+{"t": 1791276475.649839, "kind": "liveness", "id": "ch-6-36cfa5bd", "passed": true, "delta": 0.0}

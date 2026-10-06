@@ -1,0 +1,84 @@
+{"t":1791276158.832,"kind":"start","version":"0.3.0.dev1","engine_mode":"docker","image":"kwh-fake-engine:test","host_id":"h_e9cf191805d6"}
+{"t":1791276160.062,"kind":"engine_up","instance":"0998870796b10e5f","version":"0.30.0","served_model":"RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8","image":"kwh-fake-engine:test","context":8192}
+{"t":1791276160.089,"kind":"jobs_channel","open":true,"context":8192}
+{"t":1791276160.11,"kind":"heartbeat","state":"registered","accepted":true,"minted":0,"rtt_ms":3.1}
+{"t":1791276160.148,"kind":"challenge","id":"ch-1-faff0c1d","passed":true,"delta":0.0,"deltas":[0.0,0.0,0.0,0.0],"elapsed_ms":36,"state":"live","passes_needed":0}
+{"t":1791276160.148,"kind":"state","from":"registered","to":"live","reasons":[]}
+{"t":1791276160.305,"kind":"microbench","units_per_hour":2935.421,"job_seconds":0.1533,"within":false,"rebench_required":false}
+{"t":1791276170.354,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":2.9}
+{"t":1791276180.394,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.7}
+{"t":1791276192.097,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":5.4}
+{"t":1791276202.138,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.6}
+{"t":1791276212.186,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":3.1}
+{"t":1791276223.931,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.8}
+{"t":1791276223.978,"kind":"challenge","id":"ch-2-bec9bfef","passed":true,"delta":0.0,"deltas":[0.0,0.0,0.0,0.0],"elapsed_ms":45,"state":"live","passes_needed":0}
+{"t":1791276234.019,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":2.6}
+{"t":1791276244.06,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.8}
+{"t":1791276255.831,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":3.0}
+{"t":1791276265.875,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":5.6}
+{"t":1791276275.942,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":3.1}
+{"t":1791276285.984,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":3.0}
+{"t":1791276286.02,"kind":"challenge","id":"ch-3-de83b9e7","passed":true,"delta":0.0,"deltas":[0.0,0.0,0.0,0.0],"elapsed_ms":33,"state":"live","passes_needed":0}
+{"t":1791276296.059,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.8}
+{"t":1791276308.507,"kind":"heartbeat","state":"live","accepted":true,"minted":5,"rtt_ms":2.7}
+{"t":1791276318.558,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":2.9}
+{"t":1791276328.601,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.7}
+{"t":1791276340.22,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.7}
+{"t":1791276350.265,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.8}
+{"t":1791276350.3,"kind":"challenge","id":"ch-4-186e4c35","passed":true,"delta":0.0,"deltas":[0.0,0.0,0.0,0.0],"elapsed_ms":32,"state":"live","passes_needed":0}
+{"t":1791276360.356,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":3.7}
+{"t":1791276371.897,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.7}
+{"t":1791276381.935,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":2.6}
+{"t":1791276391.978,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.8}
+{"t":1791276402.026,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.8}
+{"t":1791276412.076,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":3.2}
+{"t":1791276412.117,"kind":"challenge","id":"ch-5-9bd55ec9","passed":true,"delta":0.0,"deltas":[0.0,0.0,0.0,0.0],"elapsed_ms":38,"state":"live","passes_needed":0}
+{"t":1791276423.842,"kind":"heartbeat","state":"live","accepted":true,"minted":5,"rtt_ms":2.7}
+{"t":1791276433.888,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":2.5}
+{"t":1791276443.941,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.4}
+{"t":1791276455.514,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":3.1}
+{"t":1791276465.557,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.7}
+{"t":1791276475.603,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":3.0}
+{"t":1791276475.65,"kind":"challenge","id":"ch-6-36cfa5bd","passed":true,"delta":0.0,"deltas":[0.0,0.0,0.0,0.0],"elapsed_ms":44,"state":"live","passes_needed":0}
+{"t":1791276487.429,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.9}
+{"t":1791276497.468,"kind":"heartbeat","state":"live","accepted":true,"minted":4,"rtt_ms":2.4}
+{"t":1791276507.511,"kind":"heartbeat","state":"live","accepted":true,"minted":3,"rtt_ms":2.6}
+{"t":1791276512.479,"kind":"engine_down","instance":"0998870796b10e5f","reason":"stop"}
+{"t":1791276512.728,"kind":"stop","state":"stopped"}
+{"t":1791276519.552,"kind":"start","version":"0.3.0.dev1","engine_mode":"docker","image":"kwh-fake-engine:test","host_id":"h_e9cf191805d6"}
+{"t":1791276520.846,"kind":"engine_up","instance":"3cec971619c55d10","version":"0.30.0","served_model":"RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8","image":"kwh-fake-engine:test","context":8192}
+{"t":1791276520.885,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276520.912,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276521.887,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276521.957,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276523.891,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276524.004,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276527.897,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276528.046,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276535.907,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276536.084,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276550.579,"kind":"engine_down","instance":"3cec971619c55d10","reason":"stop"}
+{"t":1791276550.837,"kind":"stop","state":"stopped"}
+{"t":1791276556.348,"kind":"start","version":"0.3.0.dev1","engine_mode":"docker","image":"kwh-fake-engine:test","host_id":"h_e9cf191805d6"}
+{"t":1791276558.659,"kind":"engine_up","instance":"fd703e7c2eb95ac9","version":"0.30.0","served_model":"RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8","image":"kwh-fake-engine:test","context":8192}
+{"t":1791276558.7,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276558.726,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276559.703,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276559.768,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276561.709,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276561.809,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276565.716,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276565.847,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276573.726,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276573.885,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276589.747,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276589.928,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276619.766,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276621.986,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276651.908,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276683.926,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276686.142,"kind":"heartbeat_failed","error":"ConnectError: All connection attempts failed"}
+{"t":1791276713.959,"kind":"jobs_channel","open":false,"error":"ConnectionRefusedError: [Errno 111] Connect call failed ('127.0.0.1', 9000)"}
+{"t":1791276737.704,"kind":"engine_down","instance":"fd703e7c2eb95ac9","reason":"stop"}
+{"t":1791276738.023,"kind":"stop","state":"stopped"}
+{"t":1791276742.194,"kind":"start","version":"0.3.0.dev1","engine_mode":"docker","image":"kwh-fake-engine:test","host_id":"h_e9cf191805d6"}

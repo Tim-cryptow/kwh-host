@@ -1,0 +1,49 @@
+{
+  "client_version": "0.3.0.dev1",
+  "pid": 323,
+  "started_at": 1791276556.3474398,
+  "state": "stopped",
+  "reasons": [],
+  "state_since": null,
+  "beats": 0,
+  "accepted_beats": 0,
+  "send_failures": 8,
+  "accrual": 0.0,
+  "balance": 0,
+  "minted_total": 0,
+  "last_challenge": null,
+  "last_microbench": null,
+  "rebench_required": false,
+  "rebench_reasons": [],
+  "benchmarking": false,
+  "last_rebench": null,
+  "engine": null,
+  "engine_restarts": 0,
+  "gpu": null,
+  "errors": 8,
+  "jobs_channel": "closed",
+  "jobs": {
+    "completed": 0,
+    "failed": 0,
+    "rejected": 0,
+    "undelivered": 0,
+    "completion_tokens": 0
+  },
+  "report": {
+    "units_per_hour": 1313.821,
+    "finished_at": "2026-10-06T08:42:14Z",
+    "report_sha256": "26542fed2849a082321e722f02042c149bbee695980e552c91c38c66a361e6dc",
+    "certified": false
+  },
+  "platform_config": {
+    "heartbeat_seconds": 10.0,
+    "challenge_every_seconds": 60.0,
+    "microbench_every_seconds": 3600.0,
+    "rebench_every_seconds": 604800.0,
+    "offline_after_seconds": 90.0,
+    "max_failures": 5
+  },
+  "engine_error": null,
+  "updated_at": 1791276738.0229864,
+  "in_flight": 0
+}

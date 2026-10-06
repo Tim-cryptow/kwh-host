@@ -1,0 +1,120 @@
+[ci-sandbox] a fake engine on the host scores the platform's challenge continuations (the reference node's job)
+[ci-sandbox] mock platform: Docker hosts only (D4), uncertified reports accepted (the fake fails its canaries)
+[ci-sandbox] init: docker engine, Unix socket, no GPU (CI)
+{
+  "dir": "/tmp/tmp.ZmA3qWObPa/h",
+  "platform": "http://127.0.0.1:19431",
+  "engine": "docker",
+  "max_model_len": 8192,
+  "public_key": "bc535b5268f3cf5c63c0181b23a124cda0d67e620bab25e5b4de4f4bbaee8765",
+  "registered": false,
+  "engine_image": "kwh-fake-engine:test",
+  "engine_build": "kwh-fake-engine:test"
+}
+[ci-sandbox] bench in the sandbox
+report: docker, sandboxed, signed; 1819.652 u/h (fake engine)
+[ci-sandbox] register
+{
+  "host_id": "h_88c3543ced32",
+  "rate_units_per_hour": 1819.652,
+  "bucket": "I-1/1800"
+}
+[ci-sandbox] run: the daemon starts the engine in the sandbox, answers challenges, opens the job channel
+host h_88c3543ced32 live last challenge {'id': 'ch-1-88877cdc', 'pass': True, 'delta': 0.0, 'deltas': [0.0, 0.0, 0.0, 0.0], 'continuations': ['engine-3', 'engine-1', 'engine-0', 'engine-2'], 'elapsed_ms': 40, 't': 1791276090.2182155}
+[ci-sandbox] the running engine, as Docker sees it
+readonly=true network=none capdrop=[ALL] user=1000:1000 pids=4096
+[ci-sandbox] a buyer job
+j_80ed8b30648cab76: completed on h_88c3543ced32  units 0.00022  4.0 ms  attempts ['completed']
+  [0] length 16 tok:  t508 t216 t491 t468 t334 t397 t72 t284 t307 t16 t90 t509 t420 t176 t315 t476
+responses: /tmp/tmp.ZmA3qWObPa/job-out.json
+[ci-sandbox] re-benchmark (§5): the platform asks; the daemon stops the engine, benchmarks in a fresh sandbox, serves again
+2026-10-06 09:41:30  engine_up         0.30.0 serving, context 8,192, kwh-fake-engine:test
+2026-10-06 09:41:32  engine_down       stopped (rebench)
+2026-10-06 09:41:32  rebench           started: re-benchmark requested on the mock platform
+2026-10-06 09:41:48  rebench           done: 1,859.89 units/hour (was 1,819.65), 15 s
+2026-10-06 09:41:51  engine_up         0.30.0 serving, context 8,192, kwh-fake-engine:test
+kwh-host 0.3.0.dev1 · h_88c3543ced32 · http://127.0.0.1:19431
+
+Daemon       running (pid 1095), up 25 s
+State        live for 2 s
+Rate         1,859.89 units/hour (bucket I-1/1840)
+Earnings     0 units minted, 0.00 accruing
+Engine       vLLM 0.30.0, in Docker, kwh-fake-engine:test, healthy
+Last checks  challenge 2 s ago: passed, mean delta 0.0000
+             micro-benchmark 24 s ago: 2,437.70 units/hour, OUTSIDE 10%
+             report measured 6 s ago, re-benchmark due in 6 days
+             last re-benchmark 2026-10-06 09:41:32: 1,859.89 units/hour
+Jobs         1 completed, 0 failed, 0 turned away since the daemon started; job channel open
+
+Reliability          last hour      last day     last week
+  observed                26 s          26 s          26 s
+  live                   11.6%         11.6%         11.6%
+  beats ok               12/12         12/12         12/12
+  beats missed               1             1             1
+  challenges               2/2           2/2           2/2
+  jobs done                  1             1             1
+  jobs failed                0             0             0
+  latency p50             4 ms          4 ms          4 ms
+  latency p95             4 ms          4 ms          4 ms
+  micro-bench         2,437.70      2,437.70      2,437.70
+  minted                     0             0             0
+
+Recent (the platform's log; more: kwh-host events --remote)
+  09:41  state             live -> degraded: re-benchmark required: re-benchmark requested on the mock platform
+  09:41  rebench_started   the host stopped its engine to re-benchmark: re-benchmark requested on the mock platform
+  09:41  re-benchmarked    new report: 1,859.89 units/hour (was 1,819.65)
+  09:41  host_reported     the host saw 1 engine restart(s)
+  09:41  rebench_ended     the host is serving again
+  09:41  state             degraded -> live
+j_c612f116a702d40a: completed on h_88c3543ced32  units 0.00022  19.0 ms  attempts ['completed']
+  [0] length 16 tok:  t508 t216 t491 t468 t334 t397 t72 t284 t307 t16 t90 t509 t420 t176 t315 t476
+responses: /tmp/tmp.ZmA3qWObPa/job-out-2.json
+[ci-sandbox] stop: the container goes with the daemon
+kwh-host 0.3.0.dev1 starting engine (docker)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-1-88877cdc: pass (mean delta 0.0 over 4, 40 ms) -> live
+micro-benchmark: 2437.70 u/h equivalent in 0.18s -> OUTSIDE tolerance
+job j_80ed8b30648cab76.1: completed (1 request(s), 16 tokens)
+platform: degraded (re-benchmark required: re-benchmark requested on the mock platform)
+platform: degraded (re-benchmarking)
+re-benchmarking: re-benchmark requested on the mock platform
+probing hardware
+pre-flight: nvidia-smi unavailable, skipping
+starting engine vllm
+engine vllm 0.30.0 model=RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 mode=docker
+tokenizing prompt set
+warm-up job
+  warm-up 2.23s  29369 tok/s  failures=0
+  run 1/3  1.94s  33858 tok/s  failures=0
+  run 2/3  1.91s  34371 tok/s  failures=0
+  run 3/3  2.03s  32341 tok/s  failures=0
+canary check
+  canary 16: mean logprob -5.2687 (reference -1.1655)
+  canary 48: mean logprob -5.1969 (reference -1.1124)
+  canary 80: mean logprob -4.1406 (reference -1.3479)
+  canary 112: mean logprob -4.5438 (reference -1.2453)
+  canary 144: mean logprob -4.4781 (reference -1.1668)
+  canary 176: mean logprob -4.5438 (reference -1.1766)
+  canary 208: mean logprob -4.6375 (reference -1.5939)
+  canary 240: mean logprob -4.2344 (reference -1.6008)
+re-benchmark accepted: 1859.888 units/hour (was 1819.652)
+engine 0.30.0 serving RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 (docker)
+job channel open (concurrency 32, context 8192)
+challenge ch-2-d36ae20b: pass (mean delta 0.0 over 4, 59 ms) -> live
+job j_c612f116a702d40a.1: completed (1 request(s), 16 tokens)
+{
+  "state": "stopped",
+  "beats": 12,
+  "accepted_beats": 12,
+  "minted_total": 0,
+  "balance": 0,
+  "jobs": {
+    "completed": 2,
+    "failed": 0,
+    "rejected": 0,
+    "undelivered": 0,
+    "completion_tokens": 32
+  }
+}
+[ci-sandbox] ok

@@ -1,0 +1,36 @@
+[08:35:11] 1. WSL, systemd and the installer
+[08:35:11] systemd: degraded
+[08:37:34] installer exit 0
+[08:37:34] installed. Now restart WSL so the docker group takes effect: in PowerShell run   wsl --shutdown
+[08:37:34] then open Ubuntu again and run   bash ~/wsl-check.sh   once more
+[08:40:50] 2. the sandbox end to end, then the service
+[08:40:50] Docker: Ubuntu 24.04.5 LTS, server 29.8.2, cgroup v2
+[08:40:52] source: d9842d3 Windows check without a GPU: WSL2, the installer, the sandbox, the service, keeping Ubuntu running
+[08:41:16] stand-in engine image built
+[ci-sandbox] a fake engine on the host scores the platform's challenge continuations (the reference node's job)
+[ci-sandbox] mock platform: Docker hosts only (D4), uncertified reports accepted (the fake fails its canaries)
+[ci-sandbox] init: docker engine, Unix socket, no GPU (CI)
+[ci-sandbox] bench in the sandbox
+[ci-sandbox] register
+[ci-sandbox] run: the daemon starts the engine in the sandbox, answers challenges, opens the job channel
+[ci-sandbox] the running engine, as Docker sees it
+readonly=true network=none capdrop=[ALL] user=1000:1000 pids=4096
+[ci-sandbox] a buyer job
+[ci-sandbox] re-benchmark (§5): the platform asks; the daemon stops the engine, benchmarks in a fresh sandbox, serves again
+2026-10-06 09:41:32  rebench           started: re-benchmark requested on the mock platform
+2026-10-06 09:41:48  rebench           done: 1,859.89 units/hour (was 1,819.65), 15 s
+State        live for 2 s
+[ci-sandbox] stop: the container goes with the daemon
+[ci-sandbox] ok
+[08:41:56] sandbox end to end: ok
+[08:41:56] the service: a host that stays up after this script ends
+[ok  ] platform: WSL2 (Windows)
+[ok  ] Docker: Ubuntu 24.04.5 LTS, server 29.8.2
+[FAIL] GPU in containers: a test container could not use GPU 0: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during cont
+[ok  ] engine network: none; the engine is reached through a Unix socket only
+[08:42:38] lingering on
+[08:42:38] service install exit 0
+[08:42:41] service: live
+[08:42:41] stage 2 done; the keep-alive check is next: C:\Users\USER\code\wsl-keepalive.ps1
+[08:52:22] collect
+[08:52:23] the test host's service is removed

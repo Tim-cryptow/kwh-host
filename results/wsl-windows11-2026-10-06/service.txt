@@ -1,0 +1,5 @@
+wrote /home/user/.config/systemd/user/kwh-host.service
+systemctl --user daemon-reload
+systemctl --user enable --now kwh-host.service
+systemctl --user disable --now kwh-host.service
+removed /home/user/.config/systemd/user/kwh-host.service

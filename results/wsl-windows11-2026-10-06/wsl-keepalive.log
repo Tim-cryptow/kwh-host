@@ -1,0 +1,57 @@
+[08:43:25] keep-alive check for Ubuntu-24.04
+[08:43:25] Windows: Microsoft Windows 11 Pro, build 26200; battery: True; PowerShell 5.1.26100.9168; as administrator: False
+[08:43:25]   WSL version: 3.0.1.0
+[08:43:25]   Kernel version: 6.18.40.1-1
+[08:43:25]   WSLg version: 1.0.79
+[08:43:25]   MSRDC version: 1.2.7214
+[08:43:25]   Direct3D version: 1.611.1-81528511
+[08:43:25]   DXCore version: 10.0.26100.1-240331-1435.ge-release
+[08:43:25]   Windows version: 10.0.26200.9168
+[08:43:25] 0. The test host, before anything
+[08:43:26]     Ubuntu up 2 min 48 s; kwh-host service active (since 2 min 0 s after Ubuntu started); engine container running (since 2 min 1 s after)
+[08:43:26]     platform: live, last heartbeat 4 s ago
+[08:43:26] 1. The guide's task, exactly as written (docs/windows-wsl2.md, step 5)
+[08:43:29] 1a. The guide's commands do NOT register the task: Access is denied.
+[08:43:29]     With the trigger limited to this user (New-ScheduledTaskTrigger -AtLogOn -User DESKTOP-BG7E924\USER) it registers.
+[08:43:30]     the task's settings: stops after PT72H; starts on battery: False; stops on battery: True; runs as USER (Interactive)
+[08:43:35]     started: task Running, wsl.exe processes now 4
+      Did a new window (or a new tab in Terminal) open just now? y
+[08:44:56] 1b. Starting the task opens a window.
+[08:45:30]     Ubuntu windows closed
+[08:48:32]     Ubuntu up 7 min 41 s; kwh-host service active (since 1 min 47 s after Ubuntu started); engine container running (since 1 min 48 s after)
+[08:48:32]     heartbeats in the last 3 min 1 s: 17 sent, 17 accepted; the first 9 s in, the longest gap 12 s
+[08:48:32]     platform: live, last heartbeat 5 s ago
+[08:48:32] 1c. With the task and no Ubuntu window for 181 s, Ubuntu kept running and the host stayed live (heartbeats at most 12 s apart).
+[08:48:32] 2. The logon path: Ubuntu stopped, then started by the task alone
+[08:48:34]     Ubuntu stopped (wsl --shutdown); starting the task, as Windows does at logon
+[08:48:36]     the task started Ubuntu in 2 s; now waiting for the host's service, with no Ubuntu window
+[08:48:52]     Ubuntu up 16 s; kwh-host service active (since 1 s after Ubuntu started); engine container running (since 3 s after)
+[08:48:52]     platform: not answering
+[08:48:52] 2. Started by the task alone, Ubuntu brought the host back by itself: its service 1 s and its engine 3 s after Ubuntu started. (Its heartbeats fail now: the test platform does not survive a restart.)
+[08:48:54]     the task is removed
+[08:48:54] 3. Instead of a task that runs forever: instanceIdleTimeout=-1 in .wslconfig
+      This adds [general] instanceIdleTimeout=-1 to C:\Users\USER\.wslconfig for about 5 minutes, then puts the file back as it was. Go ahead? y
+[08:49:10]     C:\Users\USER\.wslconfig for now:
+[08:49:10]       [general]
+[08:49:10]       instanceIdleTimeout=-1
+[08:49:15]     Ubuntu started by a command that ended at once: no window, no task, nothing holding it
+[08:52:16]     Ubuntu up 2 min 58 s; kwh-host service active (since -5 s after Ubuntu started); engine container running (since -3 s after)
+[08:52:16]     heartbeats in the last 3 min 0 s: 8 sent, 0 accepted; the first 1 s in, the longest gap 64 s
+[08:52:16]     platform: not answering
+[08:52:16] 3. With instanceIdleTimeout=-1, Ubuntu kept running for 180 s, but the host did not: service active, engine running, longest heartbeat gap 64 s, Ubuntu up 177 s.
+[08:52:16]     C:\Users\USER\.wslconfig is back as it was
+[08:52:18] 4. The results
+[08:52:23]     [08:52:22] collect
+[08:52:23]     [08:52:23] the test host's service is removed
+[08:52:23]     [08:52:23] results: C:\Users\USER\code\wsl-check.tgz
+[08:52:23] 5. The default: no task, no setting
+[08:52:40] 5. With nothing holding it, WSL stopped Ubuntu 17 s after its last session ended.
+[08:52:40] Summary
+[08:52:40]   1a. The guide's commands do NOT register the task: Access is denied.
+[08:52:40]       With the trigger limited to this user (New-ScheduledTaskTrigger -AtLogOn -User DESKTOP-BG7E924\USER) it registers.
+[08:52:40]   1b. Starting the task opens a window.
+[08:52:40]   1c. With the task and no Ubuntu window for 181 s, Ubuntu kept running and the host stayed live (heartbeats at most 12 s apart).
+[08:52:40]   2. Started by the task alone, Ubuntu brought the host back by itself: its service 1 s and its engine 3 s after Ubuntu started. (Its heartbeats fail now: the test platform does not survive a restart.)
+[08:52:40]   3. With instanceIdleTimeout=-1, Ubuntu kept running for 180 s, but the host did not: service active, engine running, longest heartbeat gap 64 s, Ubuntu up 177 s.
+[08:52:40]   5. With nothing holding it, WSL stopped Ubuntu 17 s after its last session ended.
+[08:52:40] Results: C:\Users\USER\code\wsl-check.tgz and C:\Users\USER\code\wsl-keepalive.log

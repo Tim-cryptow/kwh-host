@@ -1,0 +1,6 @@
+{"t": 1791276135.4799495, "kind": "registered", "rate": 1313.821}
+{"t": 1791276160.0891263, "kind": "jobs_connected", "max_concurrency": 32, "max_model_len": 8192}
+{"t": 1791276160.1091592, "kind": "challenge", "id": "ch-1-faff0c1d"}
+{"t": 1791276160.1476457, "kind": "liveness", "id": "ch-1-faff0c1d", "passed": true, "delta": 0.0}
+{"t": 1791276160.1476457, "kind": "state", "from": "registered", "to": "live", "reasons": []}
+{"t": 1791276160.3043656, "kind": "microbench", "units_per_hour": 2935.421, "within": false}

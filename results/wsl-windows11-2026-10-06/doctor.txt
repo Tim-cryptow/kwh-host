@@ -1,0 +1,11 @@
+[ok  ] platform: WSL2 (Windows)
+[FAIL] NVIDIA driver: nvidia-smi did not run: nvidia-smi: not found
+         fix: install the NVIDIA driver for Windows (it brings the GPU into WSL2); nothing to install inside Linux
+[ok  ] engine mode: docker, context 8192 tokens
+[ok  ] Docker: Ubuntu 24.04.5 LTS, server 29.8.2
+[FAIL] GPU in containers: a test container could not use GPU 0: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during cont
+         fix: rerun the installer (it tries a GPU container and installs the toolkit if that fails), or install nvidia-container-toolkit, then: sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker
+[ok  ] engine network: none; the engine is reached through a Unix socket only
+[ok  ] engine image: kwh-fake-engine:test
+[FAIL] checkpoint: RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 @ 024e24c not in /home/user/.kwh-host/hf
+         fix: kwh-host fetch

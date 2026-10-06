@@ -79,7 +79,8 @@ function Ask([string]$q) {
 
 function Invoke-Probe([string]$label, [int]$window = 0, [switch]$Quiet) {
   # wsl-check.sh probe: the host's state inside Ubuntu, ending with "RESULT key=value ..."
-  $out = Clean (& wsl.exe -d $Distro --exec bash -c "$CheckScript probe $label $window 2>&1")
+  $ms = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()      # Windows' clock, to measure Ubuntu's against
+  $out = Clean (& wsl.exe -d $Distro --exec bash -c "$CheckScript probe $label $window $ms 2>&1")
   $r = @{ exit = $LASTEXITCODE; lines = @() }
   foreach ($l in $out) {
     if ($l.StartsWith("RESULT ")) {
@@ -96,6 +97,12 @@ function Invoke-Probe([string]$label, [int]$window = 0, [switch]$Quiet) {
 }
 
 function Num($v) { if ($null -eq $v -or "$v" -eq "") { return -1 }; return [int]$v }
+
+function Up-Since($p, [int]$since) {
+  # Ubuntu was not restarted during the last $since seconds. Its uptime is counted by its own clock,
+  # which ran about 5% slow against Windows' on the first PC this ran on, so allow 10%.
+  return (Num $p.up) -ge [int]($since * 0.9)
+}
 
 function Remove-Task {
   if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
@@ -220,11 +227,17 @@ try {
     if (Test-Running) {
       $p = Invoke-Probe "task-hold" $since
       $gap = Num $p.gap
-      if ($p.exit -eq 0 -and $p.platform -eq "live" -and $gap -ge 0 -and $gap -le 30 -and (Num $p.up) -ge $since) {
+      if ($p.exit -eq 0 -and $p.platform -eq "live" -and $gap -ge 0 -and $gap -le 30 -and (Up-Since $p $since)) {
         Verdict ("1c. With the task and no Ubuntu window for {0} s, Ubuntu kept running and the host stayed live (heartbeats at most {1} s apart)." -f $since, $gap)
       } else {
         $info = "1c. With the task and no Ubuntu window for {0} s, Ubuntu kept running but the host did NOT stay live: service {1}, engine {2}, platform {3}, longest heartbeat gap {4} s, Ubuntu up {5} s."
         Verdict ($info -f $since, $p.service, $p.engine, $p.platform, $gap, $p.up)
+      }
+      if ($p.clock_pct) {
+        $pct = "" + $p.clock_pct
+        $how = "slow"
+        if ($pct.StartsWith("-")) { $how = "fast"; $pct = $pct.Substring(1) }
+        Verdict ("1d. Ubuntu's clock ran {0}% {1} against Windows' over {2} s." -f $pct, $how, $p.clock_span)
       }
     } else {
       Verdict "1c. With the task running, Ubuntu STOPPED anyway once its windows were closed."
@@ -278,7 +291,7 @@ try {
     if (Test-Running) {
       $p = Invoke-Probe "setting-hold" $since
       $gap = Num $p.gap
-      if ($p.exit -eq 0 -and $gap -ge 0 -and $gap -le 75 -and (Num $p.up) -ge $since) {
+      if ($p.exit -eq 0 -and $gap -ge 0 -and $gap -le 75 -and (Up-Since $p $since)) {
         Verdict ("3. With instanceIdleTimeout=-1 and nothing holding it, Ubuntu kept running for {0} s and so did the host (service up {1} s after Ubuntu started; it kept heartbeating, at most {2} s apart, into the platform that is gone)." -f $since, $p.svc_boot, $gap)
       } else {
         Verdict ("3. With instanceIdleTimeout=-1, Ubuntu kept running for {0} s, but the host did not: service {1}, engine {2}, longest heartbeat gap {3} s, Ubuntu up {4} s." -f $since, $p.service, $p.engine, $gap, $p.up)

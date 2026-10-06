@@ -1,0 +1,10 @@
+{
+  "dir": "/home/user/.kwh-host",
+  "platform": "http://127.0.0.1:9000",
+  "engine": "docker",
+  "max_model_len": 8192,
+  "public_key": "50c7375f501ba0360e38a859f5a9eebcdc5cd014989a57d11dd3ed6955192311",
+  "registered": false,
+  "engine_image": "kwh-fake-engine:test",
+  "engine_build": "kwh-fake-engine:test"
+}

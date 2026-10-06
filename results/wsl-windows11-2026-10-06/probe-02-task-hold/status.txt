@@ -1,0 +1,29 @@
+kwh-host 0.3.0.dev1 · h_e9cf191805d6 · http://127.0.0.1:9000
+
+Daemon       running (pid 2039), up 5 min
+State        live for 5 min
+Rate         1,313.82 units/hour (bucket I-1/1300)
+Earnings     126 units minted, 0.78 accruing
+Engine       vLLM 0.30.0, in Docker, kwh-fake-engine:test, healthy
+Last checks  challenge 36 s ago: passed, mean delta 0.0000
+             micro-benchmark 5 min ago: 2,935.42 units/hour, OUTSIDE 10%
+             report measured 6 min ago, re-benchmark due in 6 days
+Jobs         0 completed, 0 failed, 0 turned away since the daemon started; job channel open
+
+Reliability          last hour      last day     last week
+  observed               6 min         6 min         6 min
+  live                   93.5%         93.5%         93.5%
+  beats ok               34/34         34/34         34/34
+  beats missed               3             3             3
+  challenges               6/6           6/6           6/6
+  jobs done                  0             0             0
+  jobs failed                0             0             0
+  latency p50                -             -             -
+  latency p95                -             -             -
+  micro-bench         2,935.42      2,935.42      2,935.42
+  minted                   126           126           126
+
+Recent (the platform's log; more: kwh-host events --remote)
+  09:42  registered        rate 1,313.82 units/hour
+  09:42  state             registered -> live
+  09:42  microbench        2,935.42 units/hour, OUTSIDE tolerance

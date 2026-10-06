@@ -57,17 +57,21 @@ grep -qi microsoft /proc/version 2>/dev/null || [ -n "${KWH_WSL_CHECK_ANYWHERE:-
   || { echo "This is for Ubuntu inside WSL2 on Windows; /proc/version does not mention Microsoft."; exit 1; }
 
 # --- probe: the host's state, for wsl-keepalive.ps1 -----------------------------------------------
-#   probe LABEL [SECONDS]   with SECONDS, also the heartbeats of the last SECONDS
+#   probe LABEL [SECONDS [WINDOWS_MS]]
+# SECONDS: also judge the heartbeats of the last SECONDS. WINDOWS_MS: Windows' clock when PowerShell
+# asked (Unix ms), to measure Ubuntu's clock against it (on the first test PC it ran about 5% slow).
 # Saves what it saw in probe-NN-LABEL/ and ends with one line, RESULT key=value ..., for PowerShell.
 # Exit 0 when the service is active and its engine container is running.
 if [ "${1:-}" = probe ]; then
-  label="${2:-now}"; window="${3:-0}"
+  read -r up0 _ < /proc/uptime; rt0="$(date +%s.%N)"      # first, before anything slow
+  label="${2:-now}"; window="${3:-0}"; winms="${4:-0}"
   n="$(find "$OUT" -maxdepth 1 -name 'probe-*' | wc -l)"
   d="$OUT/probe-$(printf %02d $((n + 1)))-$label"
   mkdir -p "$d"
   {
-    echo "== $(date -u +%FT%TZ) probe $label $window"
+    echo "== $(date -u +%FT%TZ) probe $label $window $winms"
     echo "== ps -p 1"; ps -o pid=,etimes=,comm= -p 1
+    echo "== clocksource"; cat /sys/devices/system/clocksource/clocksource0/current_clocksource
     echo "== systemctl --user status kwh-host"; timeout 20 systemctl --user status --no-pager kwh-host 2>&1 | head -12
     echo "== docker ps -a"; timeout 20 docker ps -a --format '{{.Names}}  {{.Status}}' 2>&1
   } > "$d/state.txt" 2>&1
@@ -77,12 +81,13 @@ if [ "${1:-}" = probe ]; then
   else
     rm -f "$d/platform-hosts.json"
   fi
-  "$KH/venv/bin/python" - "$d" "$label" "$window" "$KH" <<'PY'
-import json, os, re, subprocess, sys, time
-from datetime import datetime
+  "$KH/venv/bin/python" - "$d" "$label" "$window" "$KH" "$up0" "$rt0" "$winms" "$OUT/clock.csv" <<'PY'
+import json, os, subprocess, sys, time
 
 d, label, window, kh = sys.argv[1], sys.argv[2], float(sys.argv[3]), sys.argv[4]
+up0, rt0, winms, clock_csv = float(sys.argv[5]), float(sys.argv[6]), int(sys.argv[7]), sys.argv[8]
 now = time.time()
+HZ = os.sysconf("SC_CLK_TCK")
 
 
 def sh(*argv):
@@ -92,10 +97,12 @@ def sh(*argv):
         return ""
 
 
-def iso(s):
+def started(pid):
+    """Seconds after boot that a process started, by Ubuntu's own uptime clock (immune to clock jumps)."""
     try:
-        return datetime.fromisoformat(re.sub(r"(\.\d{6})\d+", r"\1", s).replace("Z", "+00:00")).timestamp()
-    except ValueError:
+        stat = open(f"/proc/{pid}/stat").read()
+        return int(stat[stat.rindex(")") + 2:].split()[19]) / HZ
+    except (OSError, ValueError, IndexError):
         return None
 
 
@@ -104,18 +111,29 @@ def span(s):
     return f"{s // 60} min {s % 60} s" if s >= 60 else f"{s} s"
 
 
-try:
-    import psutil
-    boot = psutil.Process(1).create_time()          # Ubuntu's own start (systemd), not Windows'
-except Exception:
-    boot = now - float(open("/proc/uptime").read().split()[0])
-
+# Everything below is measured on Ubuntu's uptime clock, never its wall clock: under WSL2 the wall
+# clock is pulled to Windows' time in jumps, so differences of wall times can come out negative.
+uptime = float(open("/proc/uptime").read().split()[0])
+boot_s = started(1) or 0.0                     # systemd, Ubuntu's PID 1
+up = uptime - boot_s
 service = sh("systemctl", "--user", "is-active", "kwh-host") or "unknown"
-m = re.search(r"@(\d+)", sh("systemctl", "--user", "show", "kwh-host", "-p", "ActiveEnterTimestamp", "--timestamp=unix"))
-service_at = float(m.group(1)) if m and service == "active" else None
-eng = sh("docker", "inspect", "-f", "{{.State.Running}} {{.State.StartedAt}}", "kwh-engine-gpu0").split()
-engine_running = bool(eng) and eng[0] == "true"
-engine_at = iso(eng[1]) if engine_running and len(eng) > 1 else None
+mono = sh("systemctl", "--user", "show", "kwh-host", "-p", "ActiveEnterTimestampMonotonic", "--value")
+service_s = int(mono) / 1e6 if service == "active" and mono.isdigit() and int(mono) > 0 else None
+eng = sh("docker", "inspect", "-f", "{{.State.Running}} {{.State.Pid}}", "kwh-engine-gpu0").split()
+engine_running = len(eng) == 2 and eng[0] == "true"
+engine_s = started(eng[1]) if engine_running else None
+
+
+def after_boot(t):
+    return int(round(t - boot_s)) if t is not None else -1
+
+
+out = {"label": label, "up": int(up), "service": service, "svc_boot": after_boot(service_s),
+       "engine": "running" if engine_running else "down", "eng_boot": after_boot(engine_s)}
+print(f"Ubuntu up {span(up)}; kwh-host service {service}"
+      + (f" (since {span(service_s - boot_s)} after Ubuntu started)" if service_s is not None else "")
+      + f"; engine container {'running' if engine_running else 'not running'}"
+      + (f" (since {span(engine_s - boot_s)} after)" if engine_s is not None else ""))
 
 events = []
 try:
@@ -127,31 +145,6 @@ try:
                 pass
 except OSError:
     pass
-daemon_at = next((e["t"] for e in events if e.get("kind") == "start" and e.get("t", 0) >= boot - 1), None)
-
-platform = "down"
-plat_line = "platform: not answering"
-try:
-    hs = json.load(open(os.path.join(d, "platform-hosts.json")))["hosts"]
-    if hs:
-        platform = hs[0]["state"]
-        last = hs[0].get("last_beat_at")
-        plat_line = f"platform: {platform}" + (f", last heartbeat {now - last:.0f} s ago" if last else "")
-except (OSError, ValueError, KeyError):
-    pass
-
-
-def after_boot(t):
-    return int(round(t - boot)) if t else -1
-
-
-out = {"label": label, "up": int(now - boot), "service": service, "svc_boot": after_boot(service_at),
-       "engine": "running" if engine_running else "down", "eng_boot": after_boot(engine_at),
-       "daemon_boot": after_boot(daemon_at), "platform": platform}
-print(f"Ubuntu up {span(now - boot)}; kwh-host service {service}"
-      + (f" (since {span(service_at - boot)} after Ubuntu started)" if service_at else "")
-      + f"; engine container {'running' if engine_running else 'not running'}"
-      + (f" (since {span(engine_at - boot)} after)" if engine_at else ""))
 if window > 0:
     lo = now - window
     beats = [e["t"] for e in events if e.get("kind") in ("heartbeat", "heartbeat_failed") and e.get("t", 0) >= lo]
@@ -166,7 +159,39 @@ if window > 0:
               f"{lead:.0f} s in, the longest gap {gap:.0f} s")
     else:
         print(f"heartbeats in the last {span(window)}: none")
+
+platform = "down"
+plat_line = "platform: not answering"
+try:
+    hs = json.load(open(os.path.join(d, "platform-hosts.json")))["hosts"]
+    if hs:
+        platform = hs[0]["state"]
+        last = hs[0].get("last_beat_at")
+        plat_line = f"platform: {platform}" + (f", last heartbeat {now - last:.0f} s ago" if last else "")
+except (OSError, ValueError, KeyError):
+    pass
+out["platform"] = platform
 print(plat_line)
+
+# Ubuntu's clock against Windows': this sample, and the first one taken since this boot.
+if winms > 0:
+    boot_id = open("/proc/sys/kernel/random/boot_id").read().strip()
+    first = None
+    try:
+        for row in open(clock_csv):
+            f = row.strip().split(",")
+            if len(f) == 5 and f[4] == boot_id and first is None:
+                first = (float(f[1]), float(f[3]))
+    except OSError:
+        pass
+    with open(clock_csv, "a") as f:
+        f.write(f"{label},{winms / 1000:.3f},{rt0:.3f},{up0:.3f},{boot_id}\n")
+    if first and winms / 1000 - first[0] >= 60:
+        win_s, up_s = winms / 1000 - first[0], up0 - first[1]
+        pct = (1 - up_s / win_s) * 100
+        out.update(clock_pct=f"{pct:.1f}", clock_span=int(win_s))
+        print(f"Ubuntu's clock: {up_s:.0f} s in {win_s:.0f} s of Windows time "
+              f"({abs(pct):.1f}% {'slow' if pct >= 0 else 'fast'})")
 print("RESULT " + " ".join(f"{k}={v}" for k, v in out.items()))
 sys.exit(0 if service == "active" and engine_running else 1)
 PY
@@ -216,6 +241,7 @@ if ! command -v docker >/dev/null 2>&1 || [ ! -x "$KH/venv/bin/kwh-host" ]; then
     echo "== os"; grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release
     echo "== /etc/wsl.conf"; cat /etc/wsl.conf 2>&1
     echo "== cpus and memory"; nproc; free -g
+    echo "== clocksource"; cat /sys/devices/system/clocksource/clocksource0/{current,available}_clocksource
     echo "== pid 1"; ps -o comm= -p 1
     echo "== systemd"; systemctl is-system-running 2>&1
     echo "== nvidia-smi"; nvidia-smi 2>&1 | head -3

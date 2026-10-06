@@ -1,0 +1,26 @@
+== distro
+Ubuntu-24.04
+== /proc/version
+Linux version 6.18.40.1-microsoft-standard-WSL2 (root@71c659030f6c) (gcc (GCC) 13.2.0, GNU ld (GNU Binutils) 2.41) #1 SMP PREEMPT_DYNAMIC Fri Jul 31 22:12:15 UTC 2026
+== wslinfo
+3.0.1.0
+== os
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+VERSION_ID="24.04"
+== /etc/wsl.conf
+[boot]
+systemd=true
+
+[user]
+default=user
+== cpus and memory
+8
+               total        used        free      shared  buff/cache   available
+Mem:              15           0          14           0           0          14
+Swap:              4           0           4
+== pid 1
+systemd
+== systemd
+degraded
+== nvidia-smi
+/home/user/wsl-check.sh: line 221: nvidia-smi: command not found

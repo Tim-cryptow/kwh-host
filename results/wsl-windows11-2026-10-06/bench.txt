@@ -1,0 +1,29 @@
+probing hardware
+pre-flight: nvidia-smi unavailable, skipping
+starting engine vllm
+engine vllm 0.30.0 model=RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a8 mode=docker
+tokenizing prompt set
+warm-up job
+  warm-up 2.59s  25349 tok/s  failures=0
+  run 1/3  2.74s  23917 tok/s  failures=0
+  run 2/3  3.11s  21081 tok/s  failures=0
+  run 3/3  2.42s  27027 tok/s  failures=0
+canary check
+  canary 16: mean logprob -5.2687 (reference -1.1655)
+  canary 48: mean logprob -5.1969 (reference -1.1124)
+  canary 80: mean logprob -4.1406 (reference -1.3479)
+  canary 112: mean logprob -4.5438 (reference -1.2453)
+  canary 144: mean logprob -4.4781 (reference -1.1668)
+  canary 176: mean logprob -4.5438 (reference -1.1766)
+  canary 208: mean logprob -4.6375 (reference -1.5939)
+  canary 240: mean logprob -4.2344 (reference -1.6008)
+kWh Grade I  series I-1  spec 1.0.0-rc.6
+GPU: no GPU detected   engine: vllm 0.30.0 (docker)
+units/hour: 1313.821   median job: 2.7401 s   stability: 0.24963
+run 1: 23917.38 tok/s   TTFT p50 290.4ms p95 409.7ms   TPOT p50 0.0ms p95 0.1ms
+canary: FAIL (mean delta 3.3293, tolerance 0.05; 0/8 canaries within it)
+certified: NO
+  - unstable: stability 0.24963 > 0.1
+  - canary: mean delta 3.32932 > 0.05 nats
+report sha256: 26542fed2849a082321e722f02042c149bbee695980e552c91c38c66a361e6dc
+report: /home/user/.kwh-host/report.json
