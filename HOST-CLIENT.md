@@ -1,6 +1,6 @@
 # kWh Host Client — scope (v0)
 
-**Build step:** 2 of 7 (primer §10). **Upstream:** [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark) 1.0.0-rc.6, series I-1.
+**Build step:** 2 of 7 (primer §10). **Upstream:** [kwh-benchmark](https://github.com/Tim-cryptow/kwh-benchmark) 1.0.0-rc.7, series I-1.
 **Definition of done (primer):** Linux + Windows. Docker sandbox, benchmark run, liveness heartbeat, stake deposit, mint. Reports units/hour and reliability.
 
 This document draws the line for the first cut. The host client is the program a GPU owner installs to turn a rig into supply. Everything it does is in service of one rule from the primer: *units are minted only against live capacity*. The client's job is to prove capacity is live, continuously, cheaply, and in a way the platform can check.
@@ -279,8 +279,8 @@ Two things differ from Linux:
 - **WSL stops Ubuntu about 15 seconds after its last session ends**, services or not (17 s measured on WSL 3.0.1), and hosting stops with it. Until the tray app exists, the guide's step 5 handles it. `instanceIdleTimeout=-1` in `.wslconfig` (WSL 2.5.4 and later) keeps Ubuntu running with no window open, and a scheduled task starts it at logon. Both were tested on Windows 11 on 2026-10-06 ([results](results/wsl-windows11-2026-10-06/)): the host stayed live with no window open, and came back by itself when the task started Ubuntu.
 - **`nvidia-smi` lists no processes under WSL2**, so the heartbeat cannot see another program using the GPU. Contention then shows up only as a slower micro-benchmark.
 
-One more needs checking before Windows hosts are rated:
+And one the benchmark now guards against:
 
-- **Ubuntu's clock under WSL2 ran about 5% slow** on that laptop, pulled back to Windows' time by a jump of about 2 seconds every half minute. The benchmark times its jobs and integrates power on that clock, so a report made there would read about 5% high, in units per hour and per kWh. If the PC with an NVIDIA card shows the same, two fixes would work. The benchmark could compare its elapsed time with the wall clock and refuse to certify when they disagree. Or the platform could time micro-benchmarks itself, which also covers a host whose clock is wrong on purpose.
+- **Ubuntu's clock under WSL2 ran about 5% slow** on that laptop, pulled back to Windows' time by a jump of about 2 seconds every half minute. The benchmark times its jobs and integrates power on that clock, so a report made there would have read about 5% high, in units per hour and per kWh. Since rc.7 the benchmark times its measured runs on both clocks and does not certify when they disagree by more than 1% (reason `clock`), so a machine like that cannot be rated until its clock is right. Still to learn: whether WSL2 on a PC with an NVIDIA card drifts the same way. A clock that is wrong on purpose is the platform's to catch, by timing micro-benchmarks itself.
 
 Docker Desktop with its WSL2 integration also works, with `--engine-transport tcp` (§3). A native tray app that starts the WSL2 daemon, keeps it running and shows status is the first thing after M5, because that is the install experience gamers will judge.

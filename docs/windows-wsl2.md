@@ -116,4 +116,4 @@ Docker Desktop runs containers in its own virtual machine. A Unix socket can't c
 
 - `nvidia-smi` lists no processes under WSL2, so the host client can't see another program (a game, a miner) using the card. You'll see it as slower micro-benchmarks, and the platform will too.
 - Sleep and hibernate stop hosting. Set Windows power settings to keep the PC awake while you host.
-- On the laptop we tested, Ubuntu's clock under WSL2 ran about 5% slow and was pulled back to Windows' time in jumps ([results](../results/wsl-windows11-2026-10-06/)). The benchmark times itself on that clock. Until this is checked on a PC with an NVIDIA card, a benchmark run in WSL2 may read high by as much.
+- On the laptop we tested, Ubuntu's clock under WSL2 ran about 5% slow and was pulled back to Windows' time in jumps ([results](../results/wsl-windows11-2026-10-06/)). The benchmark times itself on that clock, so since rc.7 it checks the clock against the wall clock and does not certify a run where they disagree (`kwh-host bench` shows the reason, `clock: ...`). Whether this happens on PCs with an NVIDIA card is not known yet.

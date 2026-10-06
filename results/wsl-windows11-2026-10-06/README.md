@@ -40,6 +40,8 @@ This needs checking on the PC with an NVIDIA card before Windows hosts are rated
 
 The check now measures Ubuntu's clock against Windows' on every run.
 
+Since then the benchmark has taken the first: from rc.7 it times its measured runs on both clocks and does not certify when they disagree by more than 1%.
+
 ## What it changed
 
 - **docs/windows-wsl2.md, step 5, rewritten.** `instanceIdleTimeout=-1` keeps Ubuntu running with no window open (WSL 2.5.4 and later). A scheduled task starts Ubuntu at logon. The task is registered for the user (`-User`), set to run on battery and without a time limit, and only starts Ubuntu, so its window closes by itself. Older WSL keeps the task that holds a window open, with the same fixes. Step 3 now says `wsl --shutdown` after the installer rather than "open a new window". A new window is not enough for the background service: systemd's user manager runs it with the groups the manager started with.

@@ -150,7 +150,7 @@ What it settled:
 
 - **Everything but the GPU works on Windows.** That covers the installer inside WSL2, the sandbox, the service, and a host that survives a closed window and comes back at logon.
 - **The guide's keep-alive step did not, as written.** An ordinary user cannot register the task without `-User`. Its defaults would also stop it on a laptop. Step 5 is rewritten: a `.wslconfig` setting keeps Ubuntu running, and a task only starts it at logon.
-- **Ubuntu's clock ran about 5% slow there.** Windows pulls it back every half minute or so, by a jump of about 2 seconds. The benchmark times itself on that clock, so it would read about 5% high in WSL2 on that laptop. That has to be checked on the PC with an NVIDIA card before Windows hosts are rated (HOST-CLIENT.md §12).
+- **Ubuntu's clock ran about 5% slow there.** Windows pulls it back every half minute or so, by a jump of about 2 seconds. The benchmark times itself on that clock, so it would have read about 5% high in WSL2 on that laptop. Benchmark rc.7 now times its runs on both clocks and does not certify when they disagree (HOST-CLIENT.md §12). Whether WSL2 drifts like that on a PC with an NVIDIA card is still to learn.
 
 ## Try it without a GPU
 
