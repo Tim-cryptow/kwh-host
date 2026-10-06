@@ -220,6 +220,8 @@ Base URL from config; JSON bodies; semantic versioning on the path. Every reques
 | `GET` | `/v1/hosts/{id}` | → `{state, reasons, state_since, rate, bucket, accrual, balance, last_challenge, last_microbench, rebench_required, rebench_reasons, report_at, rebench_due_at, reliability, host_reported, events}` | For `kwh-host status`. `reliability` sums the §5 counters over 1 h, 24 h and 7 d; `events` are the last 20. |
 | `GET` | `/v1/hosts/{id}/events?since=&limit=&kinds=` | → `{events, more}` | The platform's log of this host, for `kwh-host events --remote`. The query is not signed: it only narrows what the host reads about itself. |
 
+A platform that registers invited hosts only answers `403` to a key it has not invited, and nothing else answers 403 at registration. `kwh-host register --wait <minutes>` keeps asking every 30 s on a 403, or while the platform cannot be reached, and prints the key to send the operator.
+
 `config`, in the registration and heartbeat responses, carries the platform's cadences (heartbeat, challenge, micro-benchmark), its offline timeout and failure limit, and `rebench_every_seconds`.
 
 Not in this contract, by design: wallet operations, listing/asks, stake, payouts, anything a buyer does. Those are steps 4 and 5 and get their own contracts. The mock platform also serves `POST /v1/mock/jobs` and `GET /v1/mock/hosts` as a stand-in for the buyer API, and `POST /v1/mock/hosts/{id}/rebench` to ask a host for a re-benchmark on the spot (tests); they are not part of the host contract.

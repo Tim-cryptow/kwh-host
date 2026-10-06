@@ -211,7 +211,16 @@ The platform keeps no GPU. Its challenges (fresh continuations, HOST-CLIENT.md Â
 KWH_BURST_TOKEN=... kwh-host burst --pause-service
 ```
 
-It does nothing unless the platform needs it. Otherwise it pauses the host's own service (one engine fits on the card), runs the certified engine in the sandbox, posts what it made, and starts the service again.
+It does nothing unless the platform needs it. Otherwise it pauses the host's own service (one engine fits on the card), runs the certified engine in the sandbox, posts what it made, and starts the service again. Without `KWH_BURST_TOKEN` it reads the token from `~/.kwh-host/burst-token`.
+
+On a rented VM, one command as root does the whole setup:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/scripts/vm-host.sh -o vm-host.sh
+KWH_BURST_TOKEN=... bash vm-host.sh https://<platform>
+```
+
+It runs the installer, `init`, `fetch`, a first burst, the certified benchmark, then `register --wait`, which waits while the operator invites the key it prints. Then it installs the service and a daily burst from cron. Without the token it sets up a plain host.
 
 ## What talks to what
 
@@ -267,7 +276,8 @@ docs/windows-wsl2.md    hosting on Windows
 tests/                  identity, jobs, verifier, platform state machine, re-benchmark and reliability, status,
                         router, bursts, sandbox (+ fake_engine/ for Docker)
 scripts/                real-GPU milestone runs (pod-m1.sh, pod-m2.sh, vm-m3.sh, vm-m4.sh), the Windows check
-                        (wsl-check.sh in Ubuntu, then wsl-keepalive.ps1 in PowerShell) and ci-sandbox.sh
+                        (wsl-check.sh in Ubuntu, then wsl-keepalive.ps1 in PowerShell), ci-sandbox.sh, and
+                        vm-host.sh, which makes a rented VM a host (and the platform's reference node) in one command
 results/                what those runs wrote, one folder per run
 ```
 

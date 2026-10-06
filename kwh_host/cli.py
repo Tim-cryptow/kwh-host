@@ -144,8 +144,13 @@ def bench(runs, engine_log, ignore_preflight, mock_engine):
 
 
 @main.command()
-def register():
+@click.option("--wait", "wait_minutes", type=float, default=0.0,
+              help="On a platform that registers invited hosts only: keep asking for up to this many minutes "
+                   "while the operator invites this host's key.")
+def register(wait_minutes):
     """Send the signed report to the platform; store host_id and token."""
+    import time as _time
+    import httpx
     from .bench import load_report
     from .platform.client import PlatformClient, PlatformError
     cfg, ident = _load()
@@ -157,11 +162,25 @@ def register():
         async with PlatformClient(cfg.platform_url, ident) as c:
             return await c.register(report)
 
-    try:
-        out = asyncio.run(go())
-    except PlatformError as e:
-        _log(f"registration refused: {e.detail}")
-        sys.exit(1)
+    deadline, said = _time.monotonic() + wait_minutes * 60, None
+    while True:
+        try:
+            out = asyncio.run(go())
+            break
+        except (PlatformError, httpx.HTTPError, OSError) as e:
+            # 403 is a closed platform that has not invited this key yet; the others may be passing
+            waiting = (e.status == 403) if isinstance(e, PlatformError) else True
+            if not (waiting and _time.monotonic() < deadline):
+                _log(f"registration refused: {e.detail}" if isinstance(e, PlatformError)
+                     else f"error: {type(e).__name__}: {e}")
+                sys.exit(1)
+            why = e.detail if isinstance(e, PlatformError) else f"the platform is unreachable ({type(e).__name__})"
+            if why != said:
+                _log(f"waiting: {why}")
+                if isinstance(e, PlatformError):
+                    _log(f"this host's key: {ident.public_key_hex}")
+                said = why
+            _time.sleep(30)
     cfg.host_id, cfg.token = out["host_id"], out["token"]
     cfg.save()
     click.echo(json.dumps({k: out[k] for k in ("host_id", "rate_units_per_hour", "bucket")}, indent=2))
@@ -365,8 +384,9 @@ def _burst_gpu(engine, pause_service: bool):
 
 
 @main.command()
-@click.option("--token", envvar="KWH_BURST_TOKEN", required=True,
-              help="The platform's burst token, from its operator (or set KWH_BURST_TOKEN).")
+@click.option("--token", envvar="KWH_BURST_TOKEN", default=None,
+              help="The platform's burst token, from its operator. Default: KWH_BURST_TOKEN, else the file "
+                   "~/.kwh-host/burst-token.")
 @click.option("--platform", "platform_url", default=None, help="Platform base URL (default: the configured platform).")
 @click.option("--pause-service", is_flag=True,
               help="Stop the kwh-host service for the burst and start it again after: one engine fits on the GPU.")
@@ -390,6 +410,11 @@ def burst(token, platform_url, pause_service, max_continuations, max_verify, con
     platform_url = platform_url or (cfg.platform_url if cfg else None)
     if not platform_url:
         raise click.UsageError("give --platform")
+    token_file = (cfg.dir if cfg else HostConfig().dir) / "burst-token"
+    if not token and token_file.exists():
+        token = token_file.read_text().strip()
+    if not token:
+        raise click.UsageError(f"give --token, or set KWH_BURST_TOKEN, or put the token in {token_file}")
     engine = scorer = gpu = None
     if mock_engine:
         from .mockmodel import ToyLM

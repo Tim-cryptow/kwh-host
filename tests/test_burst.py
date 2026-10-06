@@ -227,3 +227,55 @@ def test_the_cli_pauses_the_service_only_when_asked(cfg, monkeypatch):
     r = CliRunner().invoke(cli.main, ["burst", "--token", TOKEN, "--pause-service"])
     assert r.exit_code == 2 and "the engine died" in r.output
     assert calls == ["stop", "start"] and state["active"]  # the host serves again either way
+
+
+def test_the_token_can_live_in_a_file(cfg, monkeypatch):
+    """The daily burst from cron reads ~/.kwh-host/burst-token, so the token is not on a command line."""
+    seen = []
+
+    async def fake_burst(platform_url, token, **kw):
+        seen.append(token)
+        return {"ok": True}
+    monkeypatch.setattr(burst_mod, "run_burst", fake_burst)
+    monkeypatch.setattr(service, "is_active", lambda: False)
+    monkeypatch.delenv("KWH_BURST_TOKEN", raising=False)
+    r = CliRunner().invoke(cli.main, ["burst"])
+    assert r.exit_code == 2 and "burst-token" in r.output and seen == []
+    (cfg.dir / "burst-token").write_text(TOKEN + "\n")
+    r = CliRunner().invoke(cli.main, ["burst"])
+    assert r.exit_code == 0, r.output
+    assert seen == [TOKEN]
+
+
+def test_register_waits_for_an_invitation(cfg, report, monkeypatch):
+    """A closed platform answers 403 to a key it has not invited; `register --wait` keeps asking."""
+    import time
+    from kwh_host.platform.client import PlatformClient, PlatformError
+    answers = [PlatformError(403, "closed beta: ask the operator to invite this host's key"),
+               httpx.ConnectError("the platform is redeploying"),
+               PlatformError(403, "closed beta: ask the operator to invite this host's key"),
+               {"host_id": "h_1", "token": "t", "rate_units_per_hour": 100.0, "bucket": "b"}]
+    tries, sleeps = [], []
+
+    async def register(self, report):
+        tries.append(1)
+        a = answers[len(tries) - 1]
+        if isinstance(a, Exception):
+            raise a
+        return a
+    monkeypatch.setattr(PlatformClient, "register", register)
+    monkeypatch.setattr(time, "sleep", sleeps.append)
+    r = CliRunner().invoke(cli.main, ["register"])                     # without --wait: refused at once
+    assert r.exit_code == 1 and "registration refused" in r.output and len(tries) == 1
+    tries.clear()
+    r = CliRunner().invoke(cli.main, ["register", "--wait", "60"])
+    assert r.exit_code == 0, r.output
+    assert len(tries) == 4 and sleeps == [30, 30, 30]
+    assert r.output.count("this host's key: ") == 2 and "waiting: the platform is unreachable" in r.output
+    assert json.loads(r.stdout)["host_id"] == "h_1"
+    from kwh_host.config import HostConfig
+    assert HostConfig.load().host_id == "h_1"
+    answers.insert(0, PlatformError(400, "report rejected: uncertified"))
+    tries.clear()
+    r = CliRunner().invoke(cli.main, ["register", "--wait", "60"])     # anything else is final
+    assert r.exit_code == 1 and "report rejected" in r.output and len(tries) == 1
