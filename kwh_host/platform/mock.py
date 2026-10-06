@@ -21,7 +21,7 @@ import random
 import secrets
 import tempfile
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -246,6 +246,23 @@ class HostRecord:
         self.report_image = report_image(report)
         self.rebench_required, self.rebench_reasons, self.microbench_misses = False, [], 0
 
+    def to_dict(self) -> dict:
+        """Everything about this host as plain JSON-able data (a platform's snapshot)."""
+        d = {f.name: getattr(self, f.name) for f in fields(self)}
+        d["pending"] = None if self.pending is None else {
+            "id": self.pending.id, "items": [vars(c) for c in self.pending.items]}
+        d["buckets"] = {str(k): v for k, v in self.buckets.items()}
+        return json.loads(json.dumps(d))
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "HostRecord":
+        known = {f.name for f in fields(cls)}
+        d = {k: v for k, v in d.items() if k in known}
+        pending = d.get("pending")
+        d["pending"] = None if not pending else Challenge(pending["id"], [Continuation(**c) for c in pending["items"]])
+        d["buckets"] = {int(k): v for k, v in (d.get("buckets") or {}).items()}
+        return cls(**d)
+
     def summary(self) -> dict:
         return {"host_id": self.host_id, "state": self.state, "reasons": self.reasons, "state_since": self.state_since,
                 "rate_units_per_hour": self.rate, "bucket": self.bucket, "accrual": round(self.accrual, 4),
@@ -282,6 +299,20 @@ class MockPlatform:
         if self.s.require_engine_version is None and not self.s.accept_uncertified:
             self.s.require_engine_version = self.lock.vllm_version
         self.hosts: Dict[str, HostRecord] = {}
+
+    # -- persistence -----------------------------------------------------
+    def snapshot(self) -> dict:
+        """The hosts as plain data. A real platform saves this and restores it after a restart."""
+        return {"version": 1, "saved_at": self.clock(), "hosts": [rec.to_dict() for rec in self.hosts.values()]}
+
+    def restore(self, data: dict) -> int:
+        """Load hosts saved by snapshot(). Their states stand as saved; a host that missed
+        heartbeats while the platform was down goes offline on the next sweep, as it should."""
+        self.hosts = {}
+        for d in data.get("hosts") or []:
+            rec = HostRecord.from_dict(d)
+            self.hosts[rec.host_id] = rec
+        return len(self.hosts)
 
     # -- helpers -------------------------------------------------------
     def host(self, host_id: str) -> HostRecord:
@@ -568,8 +599,14 @@ class MockPlatform:
                     or now - rec.last_challenge_at >= self.s.challenge_every_seconds)
                 if due:
                     challenge = self.pool.issue()
-                    rec.pending = challenge
-                    rec.event(now, "challenge", id=challenge.id)
+                    if challenge is None:
+                        # The pool ran dry (a platform whose reference model runs in bursts): no
+                        # challenge until it is refilled. Live hosts stay live on their heartbeats.
+                        if not rec.events or rec.events[-1].get("kind") != "challenge_unavailable":
+                            rec.event(now, "challenge_unavailable", reason="challenge pool empty")
+                    else:
+                        rec.pending = challenge
+                        rec.event(now, "challenge", id=challenge.id)
         else:
             b["beats_rejected"] += 1
             if reasons != rec.rejected_reasons:
@@ -902,8 +939,13 @@ class Router:
                "usage": usage, "latency_ms": round((asyncio.get_running_loop().time() - started) * 1000, 1),
                "result_sha256": result["result_sha256"],
                "outputs": [{k: o[k] for k in keep if k in o} for o in result["outputs"]]}
-        # Verification happens after delivery and the host is never told which outputs are
-        # checked (§7). Inline here for visibility; asynchronous on the real platform.
+        await self.after_delivery(conn, rec, job, result, out)
+        self._remember(out)
+        return out
+
+    async def after_delivery(self, conn: HostConnection, rec: HostRecord, job: dict, result: dict, out: dict) -> None:
+        """Verification happens after delivery and the host is never told which outputs are
+        checked (§7). Inline here, with a scorer; a real platform queues them instead."""
         if self.scorer is not None and self.p.s.verify_fraction > 0 and self.rng.random() < self.p.s.verify_fraction:
             pairs = [(i, r["prompt_token_ids"], result["outputs"][i]["token_ids"])
                      for i, r in enumerate(job["requests"]) if r["temperature"] == 0.0][: self.p.s.verify_max_requests]
@@ -916,8 +958,6 @@ class Router:
             else:
                 out["verification"] = {"checked": 0, "pass": None,
                                        "note": "no greedy requests; sampled outputs need a statistical test (step 3)"}
-        self._remember(out)
-        return out
 
     def _remember(self, out: dict) -> None:
         self.recent.append({k: out.get(k) for k in ("job_id", "status", "host_id", "units", "latency_ms", "reason")}
@@ -982,7 +1022,10 @@ def tokenize_requests(requests: List[dict], tokenizer) -> List[dict]:
 
 # --- FastAPI wrapper -------------------------------------------------------------
 
-def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenizer: Any = None) -> FastAPI:
+def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenizer: Any = None,
+               dev_routes: bool = True) -> FastAPI:
+    """The host API (HOST-CLIENT.md §8). `dev_routes` adds the mock's unauthenticated buyer
+    stand-in and host list (`/v1/mock/...`); a real platform leaves them out."""
     app = FastAPI(title="kWh mock platform", version="0")
     router = router or Router(platform)
     app.state.platform, app.state.router = platform, router
@@ -1084,6 +1127,20 @@ def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenize
         finally:
             router.detach(conn)
 
+    if dev_routes:
+        _add_dev_routes(app, platform, router, tokenizer)
+
+    @app.get("/healthz")
+    async def healthz():
+        return {"ok": True, "hosts": len(platform.hosts), "job_channels": len(router.conns),
+                "tokenizer": tokenizer is not None,
+                "chat": tokenizer is not None and not getattr(tokenizer, "chat_error", None),
+                "verifier": router.scorer is not None}
+
+    return app
+
+
+def _add_dev_routes(app: FastAPI, platform: MockPlatform, router: Router, tokenizer: Any) -> None:
     # -- dev / buyer stand-in (not part of the host contract) ---------------------
     @app.post("/v1/mock/jobs")
     async def mock_jobs(request: Request):
@@ -1105,12 +1162,3 @@ def create_app(platform: MockPlatform, router: Optional[Router] = None, tokenize
         rec = platform.host(host_id)
         platform._require_rebench(rec, platform.clock(), ["re-benchmark requested on the mock platform"])
         return rec.summary()
-
-    @app.get("/healthz")
-    async def healthz():
-        return {"ok": True, "hosts": len(platform.hosts), "job_channels": len(router.conns),
-                "tokenizer": tokenizer is not None,
-                "chat": tokenizer is not None and not getattr(tokenizer, "chat_error", None),
-                "verifier": router.scorer is not None}
-
-    return app

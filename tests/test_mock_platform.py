@@ -247,3 +247,77 @@ def test_after_a_failed_challenge_two_passes_in_a_row_restore_live(identity, rep
     clock.advance(30)
     r = p.heartbeat(hid, {"engine": {**healthy(), "instance": "b"}, "gpu_sample": idle_gpu()})
     assert r["state"] == "degraded" and answer(p, hid, r)["state"] == "live"
+
+
+class DryPool(ChallengePool):
+    """A pool that can run out, as a platform's does between reference-model bursts."""
+
+    def __init__(self, n):
+        super().__init__([Continuation(f"c{i}", "word " * 800, 512, list(range(32)), REF) for i in range(4)])
+        self.left = n
+
+    def issue(self):
+        if self.left <= 0:
+            return None
+        self.left -= 1
+        return super().issue()
+
+
+def test_empty_pool_means_no_challenge_not_an_error(identity, report, clock):
+    pool_ = DryPool(1)
+    p = MockPlatform(pool_, settings(), clock=clock)
+    hid = register(p, identity, report)
+    r1 = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert answer(p, hid, r1)["state"] == "live"
+    for _ in range(11):                                 # beating as a host does, until a challenge is due ...
+        clock.advance(30)
+        r2 = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert r2["accepted"] and r2["state"] == "live" and r2["challenge"] is None   # ... and the pool is empty
+    clock.advance(30)
+    p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert [e["kind"] for e in p.hosts[hid].events].count("challenge_unavailable") == 1   # said once, not every beat
+    # a new host cannot go live without a challenge, and goes live once the pool is refilled
+    dry = DryPool(0)
+    p2 = MockPlatform(dry, settings(), clock=clock)
+    hid2 = register(p2, identity, report)
+    r = p2.heartbeat(hid2, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert r["state"] == "registered" and r["challenge"] is None
+    dry.left = 1
+    clock.advance(30)
+    r = p2.heartbeat(hid2, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    assert answer(p2, hid2, r)["state"] == "live"
+
+
+def test_snapshot_restores_hosts_as_they_were(identity, report, clock):
+    import json
+    p = MockPlatform(pool(), settings(), clock=clock)
+    hid = register(p, identity, report)
+    r1 = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    answer(p, hid, r1)
+    for _ in range(12):
+        clock.advance(30)
+        p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})
+    clock.advance(300)
+    pending = p.heartbeat(hid, {"engine": healthy(), "gpu_sample": idle_gpu()})["challenge"]
+    assert pending is not None                          # a challenge in flight across the restart
+    data = json.loads(json.dumps(p.snapshot()))         # as it would come back from a database
+    q = MockPlatform(pool(), settings(), clock=clock)
+    assert q.restore(data) == 1
+    a, b = p.hosts[hid], q.hosts[hid]
+    assert b.to_dict() == a.to_dict()
+    assert b.pending.id == a.pending.id and b.pending.items[0].reference_mean_logprob == REF
+    assert set(b.buckets) == set(a.buckets) and all(isinstance(k, int) for k in b.buckets)
+    # the restored platform carries on: the pending challenge can be answered, the host stays live
+    assert q.reliability(b, clock()) == p.reliability(a, clock())
+    assert answer(q, hid, {"challenge": pending})["state"] == "live"
+
+
+def test_app_without_dev_routes_has_no_mock_endpoints(identity, report, clock):
+    from fastapi.testclient import TestClient
+    from kwh_host.platform.mock import create_app
+    p = MockPlatform(pool(), settings(), clock=clock)
+    paths = {r.path for r in create_app(p, dev_routes=False).routes}
+    assert "/v1/hosts/{host_id}/heartbeat" in paths and "/healthz" in paths
+    assert not any(x.startswith("/v1/mock") for x in paths)
+    assert any(x.startswith("/v1/mock") for x in {r.path for r in create_app(p).routes})
+    assert TestClient(create_app(p, dev_routes=False)).get("/v1/mock/hosts").status_code == 404
