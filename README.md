@@ -203,6 +203,16 @@ On a pod the mock platform finds the reference tokenizer (transformers comes wit
 
 Docker mode (`--engine docker`, the default and the only mode the real platform accepts, D4) launches `vllm/vllm-openai:v0.30.0` with the pinned flags. That build needs a CUDA 13 driver (580 or newer); on an older driver `init` picks the same version's `v0.30.0-cu129` build, and `doctor` flags a mismatch. Both are pinned by registry digest (`sha256:8a69ffad…` and `sha256:a67f8f18…`), so a tag pushed again cannot change the engine under a host. In bare-metal mode the same applies to the vLLM wheel; see the benchmark's `scripts/runpod.sh`.
 
+## For the platform's operator: bursts
+
+The platform keeps no GPU. Its challenges (fresh continuations, HOST-CLIENT.md §4) and its verdicts on delivered outputs (§7) come from the reference model, run now and then on a rented card with this client:
+
+```bash
+KWH_BURST_TOKEN=... kwh-host burst --pause-service
+```
+
+It does nothing unless the platform needs it. Otherwise it pauses the host's own service (one engine fits on the card), runs the certified engine in the sandbox, posts what it made, and starts the service again.
+
 ## What talks to what
 
 ```
@@ -249,11 +259,13 @@ kwh_host/
   platform/client.py    the §8 contract, client side
   platform/mock.py      the §8 contract, server side (in memory, FastAPI), router
   platform/verifier.py  teacher-forced greedy verification (step 3 prototype)
-  cli.py                init | fetch | doctor | bench | register | run | status | events | service | mock-platform | submit
+  burst.py              the reference model working for the platform: fresh challenges, verdicts
+  cli.py                init | fetch | doctor | bench | register | run | status | events | service | burst |
+                        mock-platform | submit
 install.sh              the one-line installer (Ubuntu, WSL2)
 docs/windows-wsl2.md    hosting on Windows
 tests/                  identity, jobs, verifier, platform state machine, re-benchmark and reliability, status,
-                        router, sandbox (+ fake_engine/ for Docker)
+                        router, bursts, sandbox (+ fake_engine/ for Docker)
 scripts/                real-GPU milestone runs (pod-m1.sh, pod-m2.sh, vm-m3.sh, vm-m4.sh), the Windows check
                         (wsl-check.sh in Ubuntu, then wsl-keepalive.ps1 in PowerShell) and ci-sandbox.sh
 results/                what those runs wrote, one folder per run

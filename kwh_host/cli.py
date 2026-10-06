@@ -1,4 +1,4 @@
-"""kwh-host command line: init | fetch | doctor | bench | register | run | status | events | service | mock-platform | submit."""
+"""kwh-host command line: init | fetch | doctor | bench | register | run | status | events | service | burst | mock-platform | submit."""
 
 from __future__ import annotations
 
@@ -328,6 +328,97 @@ def service_uninstall():
 def service_status():
     import subprocess
     subprocess.run(["systemctl", "--user", "status", "--no-pager", "kwh-host.service"])
+
+
+def _burst_gpu(engine, pause_service: bool):
+    """The burst's engine takes this host's GPU and its engine container's name, so nothing else
+    may hold them: the service is paused with --pause-service, and anything else is refused."""
+    from contextlib import asynccontextmanager
+    from . import service as svc
+    from .sandbox import container_pid
+    name = getattr(getattr(engine, "spec", None), "name", None)
+    if svc.is_active():
+        if not pause_service:
+            raise click.ClickException("the kwh-host service is running and its engine holds the GPU; pass "
+                                       "--pause-service to stop it for the burst and start it again after")
+    elif name and container_pid(name):
+        raise click.ClickException(f"the engine container {name} is running; is `kwh-host run` open in a terminal? "
+                                   "Stop it first")
+
+    @asynccontextmanager
+    async def gpu():
+        paused = False
+        if svc.is_active():
+            _log("stopping the kwh-host service for the burst")
+            svc.stop()
+            paused = True
+        try:
+            yield
+        finally:
+            if paused:
+                try:
+                    svc.start()
+                    _log("started the kwh-host service again")
+                except RuntimeError as e:
+                    _log(f"error: the service did not start again ({e}); start it: systemctl --user start kwh-host")
+    return gpu
+
+
+@main.command()
+@click.option("--token", envvar="KWH_BURST_TOKEN", required=True,
+              help="The platform's burst token, from its operator (or set KWH_BURST_TOKEN).")
+@click.option("--platform", "platform_url", default=None, help="Platform base URL (default: the configured platform).")
+@click.option("--pause-service", is_flag=True,
+              help="Stop the kwh-host service for the burst and start it again after: one engine fits on the GPU.")
+@click.option("--max-continuations", type=int, default=3000, show_default=True, help="New challenge continuations, at most.")
+@click.option("--max-verify", type=int, default=2000, show_default=True, help="Queued outputs to judge, at most.")
+@click.option("--concurrency", type=int, default=32, show_default=True)
+@click.option("--engine-url", default=None,
+              help="A vLLM already serving the reference model at the locked version, instead of launching the engine.")
+@click.option("--mock-engine", is_flag=True, hidden=True)
+def burst(token, platform_url, pause_service, max_continuations, max_verify, concurrency, engine_url, mock_engine):
+    """For the platform's operator: run the reference model on this GPU to make fresh challenges and
+    judge the buyer outputs queued for verification. Only does anything if the platform needs it."""
+    from .burst import run_burst
+    try:
+        cfg = HostConfig.load()
+    except FileNotFoundError:
+        cfg = None
+    if cfg is None and not (engine_url or mock_engine):
+        raise click.UsageError("no config yet: run `kwh-host init` and `kwh-host fetch` first; the burst launches "
+                               "the same engine as `kwh-host bench`")
+    platform_url = platform_url or (cfg.platform_url if cfg else None)
+    if not platform_url:
+        raise click.UsageError("give --platform")
+    engine = scorer = gpu = None
+    if mock_engine:
+        from .mockmodel import ToyLM
+        from .platform.verifier import ToyScorer
+        engine, scorer = _engine(cfg, None, True), ToyScorer(ToyLM())
+    elif not engine_url:
+        engine = _engine(cfg, str(cfg.dir / "engine-burst.log"), False)
+        gpu = _burst_gpu(engine, pause_service)
+    try:
+        out = asyncio.run(run_burst(platform_url, token, engine=engine, scorer=scorer, engine_url=engine_url,
+                                    max_continuations=max_continuations, max_verify=max_verify,
+                                    concurrency=concurrency, log=_log, gpu=gpu))
+    except click.ClickException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        import httpx
+        if isinstance(e, httpx.HTTPStatusError):
+            try:
+                body = e.response.json()
+                said = body.get("detail", body) if isinstance(body, dict) else body
+            except ValueError:
+                said = e.response.text[:200]
+            _log(f"error: the platform answered {e.response.status_code} to {e.request.method} {e.request.url.path}: {said}")
+        else:
+            _log(f"error: {type(e).__name__}: {e}")
+        sys.exit(2)
+    click.echo(json.dumps(out, indent=2))
+    if not out.get("ok"):
+        sys.exit(1)
 
 
 @main.command("mock-platform")

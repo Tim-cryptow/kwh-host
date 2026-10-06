@@ -54,8 +54,19 @@ WantedBy=default.target
 """
 
 
-def systemctl(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["systemctl", "--user", *args], capture_output=True, text=True, timeout=60)
+def _user_env() -> dict:
+    """`systemctl --user` finds the user's systemd through XDG_RUNTIME_DIR, which a login sets and
+    cron does not: set it when the directory is there (it is with lingering on)."""
+    env = dict(os.environ)
+    run_dir = Path(f"/run/user/{os.getuid()}") if hasattr(os, "getuid") else None
+    if not env.get("XDG_RUNTIME_DIR") and run_dir and run_dir.is_dir():
+        env["XDG_RUNTIME_DIR"] = str(run_dir)
+    return env
+
+
+def systemctl(*args: str, timeout: float = 60) -> subprocess.CompletedProcess:
+    return subprocess.run(["systemctl", "--user", *args], capture_output=True, text=True, timeout=timeout,
+                          env=_user_env())
 
 
 def install(start: bool = True) -> List[str]:
@@ -83,6 +94,34 @@ def uninstall() -> List[str]:
         done.append(f"removed {path}")
     systemctl("daemon-reload")
     return done
+
+
+def is_active() -> Optional[bool]:
+    """Whether the service is running, or about to (restarting after a failure). None when there
+    is no systemd to ask."""
+    if not shutil.which("systemctl"):
+        return None
+    try:
+        r = systemctl("is-active", UNIT_NAME)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    state = r.stdout.strip()
+    if not state:
+        return None                                   # no user bus: systemctl could not ask
+    return state in ("active", "activating", "reloading", "deactivating", "refreshing")
+
+
+def stop() -> None:
+    """Stop the service and wait for it: the daemon stops its engine on the way out (90 s at most)."""
+    r = systemctl("stop", UNIT_NAME, timeout=150)
+    if r.returncode != 0:
+        raise RuntimeError(f"systemctl --user stop {UNIT_NAME} failed: {(r.stderr or r.stdout).strip()}")
+
+
+def start() -> None:
+    r = systemctl("start", UNIT_NAME)
+    if r.returncode != 0:
+        raise RuntimeError(f"systemctl --user start {UNIT_NAME} failed: {(r.stderr or r.stdout).strip()}")
 
 
 def lingering() -> Optional[bool]:
