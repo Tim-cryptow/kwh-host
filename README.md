@@ -8,7 +8,7 @@ The program a GPU owner installs to sell work on the kWh Exchange. It benchmarks
 curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/install.sh | bash
 ```
 
-It checks for an NVIDIA card with 16 GB or more, asks before installing Docker Engine and the NVIDIA Container Toolkit, runs a test container on the GPU (and repairs the toolkit if that fails), and installs `kwh-host` for your user. It also offers to keep the NVIDIA driver out of Ubuntu's automatic updates: an update under a running GPU stops it working until a reboot. Then:
+It checks for an NVIDIA card with 16 GB or more, asks before installing Docker Engine and the NVIDIA Container Toolkit, runs a test container on the GPU (and repairs the toolkit if that fails), and installs `kwh-host` for your user. It also offers to keep the NVIDIA driver out of Ubuntu's automatic updates (an update under a running GPU stops it working until a reboot), and to keep hosting running after you log out and start it at boot (`loginctl enable-linger`). Then:
 
 ```bash
 kwh-host join <platform URL> --payout 0x...   # all of the below in one go, waiting while the operator approves

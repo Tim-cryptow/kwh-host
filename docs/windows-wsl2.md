@@ -47,7 +47,7 @@ In Ubuntu:
 curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/install.sh | bash
 ```
 
-The installer checks the card, then asks before each system change: Docker Engine (inside Ubuntu, not Docker Desktop), the NVIDIA Container Toolkit, and adding you to the `docker` group. Answer `y`. Two things look alarming and are not:
+The installer checks the card, then asks before each system change: Docker Engine (inside Ubuntu, not Docker Desktop), the NVIDIA Container Toolkit, adding you to the `docker` group, and keeping your background services running after you log out (`loginctl enable-linger`; without it, hosting stops when the Ubuntu window closes). Answer `y`. Two things look alarming and are not:
 
 - Docker's script recommends Docker Desktop and waits 20 seconds. Let it carry on.
 - A red line about `systemd-binfmt.service` failing. WSL handles that part itself.
@@ -75,7 +75,7 @@ kwh-host service install   # hosting starts, and restarts on its own if it crash
 
 ## 5. Keep Ubuntu running
 
-WSL stops Ubuntu about 15 seconds after its last window closes, background services or not, and hosting stops with it. Two settings fix that: one keeps Ubuntu running with no window open, the other starts it when you log on to Windows. Both are done in PowerShell, as yourself (not as administrator).
+WSL stops Ubuntu about 15 seconds after its last window closes, background services or not, and hosting stops with it. (Inside Ubuntu, the installer's lingering keeps the service itself running with no window open; these settings keep Ubuntu running around it.) Two settings fix that: one keeps Ubuntu running with no window open, the other starts it when you log on to Windows. Both are done in PowerShell, as yourself (not as administrator).
 
 **Keep Ubuntu running** (WSL 2.5.4 or later; `wsl --version` shows yours). Open WSL's settings file:
 

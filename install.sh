@@ -13,6 +13,8 @@
 #   - the NVIDIA Container Toolkit (NVIDIA's apt repository), so Docker can hand the GPU to the engine
 #   - python3-venv and git, if missing
 #   - a rule keeping the NVIDIA driver out of Ubuntu's automatic updates (/etc/apt/apt.conf.d/52kwh-host-nvidia)
+#   - lingering for your user (loginctl enable-linger), so hosting keeps running after you log out
+#     or close the window, and starts at boot
 # It never installs a GPU driver: on Linux that needs a reboot, and on WSL2 the Windows driver does it.
 #
 # Options (pass through the pipe as: ... | bash -s -- --yes):
@@ -267,6 +269,30 @@ if command -v python3 >/dev/null 2>&1; then
   pyv="$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
   python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' || die "Python $pyv is too old; 3.10 or newer is needed"
   ok "Python $pyv"
+fi
+
+# --- running in the background ----------------------------------------------------------
+# The host runs as a systemd service of the user's own. Those stop when the user's last session
+# ends (a logout, a closed terminal, a closed Ubuntu window on Windows) and start only at their
+# next login, unless the user lingers. Without it, "hosting stops when you log out" is a surprise
+# found days later; declining is allowed (a desktop that stays logged in does without).
+if has_systemd && command -v loginctl >/dev/null 2>&1; then
+  say "Running in the background"
+  if [ "$(loginctl show-user "$USER" -p Linger --value 2>/dev/null)" = yes ]; then
+    ok "your background services keep running after you log out, and start at boot"
+  elif [ "$CHECK" = 1 ]; then
+    warn "your background services stop when you log out (would ask to change that)"
+  elif ask "Keep hosting running after you log out, and start it at boot (loginctl enable-linger, needs sudo)?"; then
+    if sudo loginctl enable-linger "$USER"; then
+      ok "your background services keep running after you log out, and start at boot"
+    else
+      failed+=("Keep hosting running after you log out")
+      warn "failed: sudo loginctl enable-linger $USER"
+    fi
+  else
+    warn "hosting will stop when you log out, and start again only when you log in"
+    warn "(to change that later: sudo loginctl enable-linger $USER)"
+  fi
 fi
 
 # --- kwh-host --------------------------------------------------------------------------
