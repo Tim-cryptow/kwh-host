@@ -73,7 +73,8 @@ def init(platform_url, engine_mode, docker_image, port, gpu_index, hf_cache, all
                      extra={"no_gpu": True} if no_gpu else {})
     if cfg.path.exists():
         old = HostConfig.load()
-        cfg.host_id, cfg.token = old.host_id, old.token
+        if old.platform_url.rstrip("/") == cfg.platform_url.rstrip("/"):   # a registration is with one platform
+            cfg.host_id, cfg.token = old.host_id, old.token
     cfg.save()
     ident = Identity.load_or_create(cfg.identity_path)
     out = {"dir": str(cfg.dir), "platform": cfg.platform_url, "engine": cfg.engine_mode,
@@ -264,7 +265,17 @@ def status(remote, as_json):
     local = read_state(cfg)
     platform_view = None
     if remote and cfg.registered:
-        platform_view, err = _platform_call(cfg, ident, lambda c: c.status())
+        from .platform.client import PlatformError
+
+        async def view_and_pay(c):
+            view = await c.status()
+            try:
+                view["pay"] = await c.earnings()
+            except PlatformError as e:          # 404: a platform that does not pay hosts
+                if e.status != 404:
+                    view["pay_error"] = f"{e.status}: {e.detail}"
+            return view
+        platform_view, err = _platform_call(cfg, ident, view_and_pay)
         if err:
             platform_view = {"error": err}
     if as_json:
@@ -347,6 +358,152 @@ def service_uninstall():
 def service_status():
     import subprocess
     subprocess.run(["systemctl", "--user", "status", "--no-pager", "kwh-host.service"])
+
+
+def _pay_lines(pay: dict) -> str:
+    when = pay.get("payouts") or {}
+    out = [f"Earned   {pay['earned_usdc']} USDC ({pay['share'] * 100:.0f}% of each job this GPU delivers)",
+           f"Paid     {pay['paid_usdc']} USDC",
+           f"Owed     {pay['owed_usdc']} USDC; paid {when.get('cadence', 'weekly')} once it reaches "
+           f"{when.get('min_usdc')} USDC",
+           f"Payout   {pay.get('payout_address') or 'not set: kwh-host payout 0x...'}"
+           + (f" ({when.get('token', 'USDC')} on {when.get('chain')})" if pay.get("payout_address") else "")]
+    recent = pay.get("recent") or []
+    if recent:
+        import time as _time
+        out.append("Recent")
+        for r in recent[:10]:
+            amount = r["amount_usdc"] if r["amount_usdc"].startswith("-") else "+" + r["amount_usdc"]
+            out.append(f"  {_time.strftime('%Y-%m-%d %H:%M', _time.localtime(r['at']))}  {r['kind']:<10} "
+                       f"{amount:>12}  {r.get('ref') or r.get('note') or ''}")
+    return "\n".join(out)
+
+
+@main.command()
+@click.argument("address", required=False)
+@click.option("--json", "as_json", is_flag=True, help="Machine-readable output.")
+def payout(address, as_json):
+    """What this GPU earned, was paid and is owed. With ADDRESS: where payouts go (USDC on the
+    platform's chain, Base for the kWh beta)."""
+    import re
+    cfg, ident = _load()
+    if not cfg.registered:
+        raise click.UsageError("not registered yet: kwh-host join <platform URL>")
+    if address is not None and not re.fullmatch(r"0x[0-9a-fA-F]{40}", address.strip()):
+        raise click.UsageError(f"not an address (0x and 40 hex digits): {address}")
+    call = (lambda c: c.set_payout_address(address.strip())) if address else (lambda c: c.earnings())
+    out, err = _platform_call(cfg, ident, call)
+    if err:
+        _log("this platform does not pay hosts" if err.startswith("404") else f"platform: {err}")
+        sys.exit(1)
+    click.echo(json.dumps(out, indent=2) if as_json else _pay_lines(out))
+
+
+def _docker_reachable() -> bool:
+    import subprocess
+    try:
+        return subprocess.run(["docker", "info"], capture_output=True, timeout=30).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def _in_docker_group() -> bool:
+    import getpass
+    import grp
+    try:
+        return getpass.getuser() in grp.getgrnam("docker").gr_mem
+    except KeyError:
+        return False
+
+
+@main.command()
+@click.argument("platform_url")
+@click.option("--payout", "payout_address", default=None, metavar="0x...",
+              help="Where your earnings go: an address for USDC on Base (or later: kwh-host payout 0x...).")
+@click.option("--wait", "wait_minutes", type=float, default=1440.0, show_default=True,
+              help="Minutes to wait while the platform's operator approves this GPU.")
+@click.option("--no-service", is_flag=True, help="Stop once registered; start serving yourself with kwh-host run.")
+@click.option("--engine-transport", type=click.Choice(["uds", "tcp"]), default=None,
+              help="As for init: tcp only for Docker Desktop.")
+@click.option("--mock-engine", is_flag=True, hidden=True)
+@click.pass_context
+def join(ctx, platform_url, payout_address, wait_minutes, no_service, engine_transport, mock_engine):
+    """Add this GPU to a platform in one go: set up, fetch the model, check the machine, run the
+    certified benchmark, register (waiting while the operator approves it), set the payout address,
+    and start the background service. Run it again and it does only what is left."""
+    import os
+    import re
+    import shlex
+    import time as _time
+    if payout_address and not re.fullmatch(r"0x[0-9a-fA-F]{40}", payout_address.strip()):
+        raise click.UsageError(f"--payout is not an address (0x and 40 hex digits): {payout_address}")
+
+    def step(text):
+        click.echo(f"\n==> {text}", err=True)
+
+    try:
+        cfg = HostConfig.load()
+    except FileNotFoundError:
+        cfg = None
+    if cfg is None or cfg.platform_url.rstrip("/") != platform_url.rstrip("/"):
+        step(f"setting up for {platform_url}")
+        kw = {"platform_url": platform_url}
+        if engine_transport:
+            kw["engine_transport"] = engine_transport
+        if mock_engine:
+            kw.update(engine_mode="bare-metal", allow_bare_metal=True)
+        ctx.invoke(init, **kw)
+        cfg = HostConfig.load()
+    else:
+        step(f"set up for {platform_url} already")
+    if cfg.engine_mode == "docker" and not mock_engine and not _docker_reachable():
+        # The installer just added this user to the docker group, which this login does not have yet.
+        if _in_docker_group() and not os.environ.get("KWH_JOIN_SG"):
+            os.environ["KWH_JOIN_SG"] = "1"
+            command = shlex.join([sys.executable, "-m", "kwh_host.cli", *sys.argv[1:]])
+            os.execvp("sg", ["sg", "docker", "-c", command])
+        raise click.ClickException("Docker is not reachable: run kwh-host doctor, which names the fix")
+    if not mock_engine:
+        step("the model at the locked revision, hash-checked, and the engine image")
+        ctx.invoke(fetch)
+        step("checking this machine")
+        ctx.invoke(doctor)
+    if not HostConfig.load().registered:
+        step("the certified benchmark, in the sandbox (about 15 minutes)")
+        ctx.invoke(bench, mock_engine=mock_engine)
+        step("registering; if the platform approves hosts one by one, this waits for the operator")
+        ctx.invoke(register, wait_minutes=wait_minutes)
+    else:
+        step("registered already")
+    cfg, ident = _load()
+    if payout_address:
+        step("payout address")
+        out, err = _platform_call(cfg, ident, lambda c: c.set_payout_address(payout_address.strip()))
+        if err:
+            _log(f"not set ({err}); set it later with: kwh-host payout {payout_address}")
+        else:
+            click.echo(f"payouts go to {out.get('payout_address')}")
+    if no_service or mock_engine:
+        step("registered: start serving with  kwh-host run  (or  kwh-host service install)")
+        return
+    step("the background service: starts with the machine, restarts after a failure")
+    ctx.invoke(service_install)
+    step("waiting for the platform to put this GPU live")
+    state = None
+    for _ in range(90):
+        view, _err = _platform_call(cfg, ident, lambda c: c.status())
+        state = (view or {}).get("state")
+        if state == "live":
+            break
+        _time.sleep(10)
+    ctx.invoke(status)
+    from .doctor import is_wsl
+    if state == "live":
+        click.echo("\nThis GPU is live. kwh-host status shows how it is doing; kwh-host payout shows its earnings.")
+    else:
+        click.echo(f"\nNot live yet (state: {state or 'unknown'}). kwh-host status and kwh-host events show why.")
+    if is_wsl():
+        click.echo("On Windows: to keep hosting with no Ubuntu window open, and from logon on, see docs/windows-wsl2.md, step 5.")
 
 
 def _burst_gpu(engine, pause_service: bool):

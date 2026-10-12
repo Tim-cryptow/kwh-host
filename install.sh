@@ -3,6 +3,10 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/install.sh | bash
 #
+# or, to add this GPU to a platform in the same go (kwh-host join):
+#
+#   curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/install.sh | bash -s -- --join https://<platform>
+#
 # It checks the machine, asks before changing anything system-wide, and installs kwh-host for the
 # current user in ~/.kwh-host/venv. What it may install, each only with your yes (or --yes):
 #   - Docker Engine (Docker's own script, get.docker.com) and docker-group membership for you
@@ -16,6 +20,7 @@
 #   --check           check only; change nothing
 #   --ref REF         install this branch or tag of kwh-host (default: main)
 #   --skip-gpu-check  continue without a usable NVIDIA GPU (CI, or preparing a machine)
+#   --join URL        then add this GPU to the platform at URL: kwh-host join URL
 set -euo pipefail
 
 REPO="Tim-cryptow/kwh-host"
@@ -23,6 +28,7 @@ REF="main"
 YES=0
 CHECK=0
 SKIP_GPU=0
+JOIN=""
 KWH_DIR="${KWH_HOST_HOME:-$HOME/.kwh-host}"
 VENV="$KWH_DIR/venv"
 MIN_VRAM_MIB=15872
@@ -33,7 +39,8 @@ while [ $# -gt 0 ]; do
     --check) CHECK=1 ;;
     --ref) REF="${2:?--ref needs a value}"; shift ;;
     --skip-gpu-check) SKIP_GPU=1 ;;
-    -h|--help) sed -n '2,20p' "$0" 2>/dev/null || true; exit 0 ;;
+    --join) JOIN="${2:?--join needs the platform URL}"; shift ;;
+    -h|--help) sed -n '2,23p' "$0" 2>/dev/null || true; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -293,7 +300,13 @@ if [ ${#failed[@]} -gt 0 ] || [ ${#need_change[@]} -gt 0 ]; then
   [ "$CHECK" = 1 ] && [ ${#failed[@]} -eq 0 ] && exit 0
   exit 1
 fi
-say "Ready. Next:"
+if [ -n "$JOIN" ] && [ "$CHECK" = 0 ]; then
+  say "Adding this GPU to $JOIN"
+  exec "$VENV/bin/kwh-host" join "$JOIN" ${DESKTOP:+--engine-transport tcp}
+fi
+say "Ready. Next, in one command: set up, fetch the model, check, benchmark, register and serve:"
+echo "    kwh-host join <platform URL>${DESKTOP:+ --engine-transport tcp}"
+say "Or step by step:"
 cat <<EOF
     kwh-host init --platform <platform URL>${DESKTOP:+ --engine-transport tcp}
     kwh-host doctor            # every check should say ok

@@ -245,8 +245,15 @@ def render_status(host: dict, local: Optional[dict], remote: Optional[dict], now
     rate = (view or {}).get("rate_units_per_hour") or ((local or {}).get("report") or {}).get("units_per_hour")
     if rate:
         row("Rate", f"{num(float(rate))} units/hour" + (f" (bucket {view['bucket']})" if view and view.get("bucket") else ""))
+    pay = (view or {}).get("pay")
+    if pay:
+        to = pay.get("payout_address")
+        when = pay.get("payouts") or {}
+        row("Earnings", f"{pay['earned_usdc']} USDC earned, {pay['paid_usdc']} paid, {pay['owed_usdc']} owed\n"
+                        + (f"paid to {to}, {when.get('cadence', 'weekly')} from {when.get('min_usdc')} USDC" if to
+                           else "no payout address yet: kwh-host payout 0x..."))
     if src.get("balance") is not None:
-        row("Earnings", f"{num(src.get('balance'))} units minted, {num(src.get('accrual') or 0.0, 2)} accruing")
+        row("Minted", f"{num(src.get('balance'))} units, {num(src.get('accrual') or 0.0, 2)} accruing")
 
     eng = (local or {}).get("engine") or {}
     if eng:

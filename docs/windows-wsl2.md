@@ -56,6 +56,14 @@ Afterwards, **run `wsl --shutdown` in PowerShell and open Ubuntu again**, so the
 
 ## 4. Set up and certify
 
+One command does all of it: the model, the checks, the certified benchmark, registration (waiting while the platform's operator approves the card), and the background service. With `--payout`, it also sets where your earnings go:
+
+```bash
+kwh-host join <platform URL> --payout 0xYourAddress
+```
+
+Or step by step:
+
 ```bash
 kwh-host init --platform <platform URL>
 kwh-host doctor            # every line should say ok

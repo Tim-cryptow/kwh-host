@@ -11,14 +11,21 @@ curl -fsSL https://raw.githubusercontent.com/Tim-cryptow/kwh-host/main/install.s
 It checks for an NVIDIA card with 16 GB or more, asks before installing Docker Engine and the NVIDIA Container Toolkit, runs a test container on the GPU (and repairs the toolkit if that fails), and installs `kwh-host` for your user. It also offers to keep the NVIDIA driver out of Ubuntu's automatic updates: an update under a running GPU stops it working until a reboot. Then:
 
 ```bash
+kwh-host join <platform URL> --payout 0x...   # all of the below in one go, waiting while the operator approves
+kwh-host status            # state, rate, earnings, engine, GPU, last checks, reliability
+kwh-host payout            # what this GPU earned, was paid and is owed (kwh-host payout 0x... sets the address)
+kwh-host events            # what happened: challenges, jobs, re-benchmarks, state changes
+```
+
+The installer can go straight on to that: `curl ... install.sh | bash -s -- --join <platform URL>`. Step by step, `join` is:
+
+```bash
 kwh-host init --platform <platform URL>
 kwh-host doctor            # driver, GPU, Docker, GPU in containers, image, checkpoint
 kwh-host fetch             # the model at the locked revision, hash-checked, and the engine image
 kwh-host bench             # the certified benchmark, in the sandbox
-kwh-host register
+kwh-host register --wait 1440   # on a platform that approves hosts, it waits for the operator
 kwh-host service install   # runs in the background, restarts on failure
-kwh-host status            # state, rate, earnings, engine, GPU, last checks, reliability
-kwh-host events            # what happened: challenges, jobs, re-benchmarks, state changes
 ```
 
 On Windows, start with [docs/windows-wsl2.md](docs/windows-wsl2.md). The engine runs in a locked-down container: no network (the daemon reaches it through a Unix socket), read-only, no privileges, bounded memory and processes (HOST-CLIENT.md §3).
@@ -269,8 +276,8 @@ kwh_host/
   platform/mock.py      the §8 contract, server side (in memory, FastAPI), router
   platform/verifier.py  teacher-forced greedy verification (step 3 prototype)
   burst.py              the reference model working for the platform: fresh challenges, verdicts
-  cli.py                init | fetch | doctor | bench | register | run | status | events | service | burst |
-                        mock-platform | submit
+  cli.py                join | init | fetch | doctor | bench | register | run | status | payout | events |
+                        service | burst | mock-platform | submit
 install.sh              the one-line installer (Ubuntu, WSL2)
 docs/windows-wsl2.md    hosting on Windows
 tests/                  identity, jobs, verifier, platform state machine, re-benchmark and reliability, status,

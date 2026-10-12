@@ -34,8 +34,10 @@ def executable() -> str:
     return f"{sys.executable} -m kwh_host.cli"
 
 
-def unit_text(exe: str, kwh_home: Optional[str] = None) -> str:
+def unit_text(exe: str, kwh_home: Optional[str] = None, sg: Optional[str] = None) -> str:
+    """`sg`: the path of sg, when the unit must take the docker group itself (see docker_via_sg)."""
     env = f"Environment=KWH_HOST_HOME={kwh_home}\n" if kwh_home else ""
+    start = f"{sg} docker -c 'exec {exe} run'" if sg else f"{exe} run"
     return f"""[Unit]
 Description=kWh Exchange host client (sells this GPU's work; see kwh-host status)
 Documentation=https://github.com/Tim-cryptow/kwh-host
@@ -44,7 +46,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart={exe} run
+ExecStart={start}
 Restart=on-failure
 RestartSec=30
 TimeoutStopSec=90
@@ -69,12 +71,46 @@ def systemctl(*args: str, timeout: float = 60) -> subprocess.CompletedProcess:
                           env=_user_env())
 
 
+def manager_groups() -> Optional[List[str]]:
+    """The supplementary groups of this user's systemd, which its services inherit; None if unknown."""
+    try:
+        r = subprocess.run(["systemctl", "show", f"user@{os.getuid()}.service", "--property=MainPID", "--value"],
+                           capture_output=True, text=True, timeout=10)
+        pid = int(r.stdout.strip() or 0)
+        if pid <= 0:
+            return None
+        for line in Path(f"/proc/{pid}/status").read_text().splitlines():
+            if line.startswith("Groups:"):
+                return line.split()[1:]
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None
+    return None
+
+
+def docker_via_sg() -> Optional[str]:
+    """The path of sg when the service must take the docker group itself, else None. The installer
+    adds the user to the docker group, but a systemd that started before (a desktop login, WSL's)
+    keeps its old groups until the next login, and the service could not reach Docker."""
+    import getpass
+    import grp
+    try:
+        g = grp.getgrnam("docker")
+    except KeyError:
+        return None
+    sg = shutil.which("sg")
+    groups = manager_groups()
+    if not sg or groups is None or getpass.getuser() not in g.gr_mem or str(g.gr_gid) in groups:
+        return None
+    return sg
+
+
 def install(start: bool = True) -> List[str]:
     """Write the unit, enable it, start it. Returns what was done, line by line."""
     path = unit_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(unit_text(executable(), os.environ.get("KWH_HOST_HOME")), encoding="utf-8")
-    done = [f"wrote {path}"]
+    sg = docker_via_sg()
+    path.write_text(unit_text(executable(), os.environ.get("KWH_HOST_HOME"), sg), encoding="utf-8")
+    done = [f"wrote {path}" + (" (the service takes the docker group with sg until your next login)" if sg else "")]
     for args in (("daemon-reload",), ("enable", "--now", UNIT_NAME) if start else ("enable", UNIT_NAME)):
         r = systemctl(*args)
         if r.returncode != 0:

@@ -121,6 +121,15 @@ class PlatformClient:
     async def status(self) -> dict:
         return await self._call("GET", self._hp())
 
+    async def earnings(self) -> dict:
+        """What this host earned, was paid and is owed, and where payouts go. A platform that does
+        not pay hosts answers 404."""
+        return await self._call("GET", self._hp("/earnings"))
+
+    async def set_payout_address(self, address: str) -> dict:
+        """Where payouts go: an address for USDC on the platform's chain."""
+        return await self._call("POST", self._hp("/payout-address"), {"address": address})
+
     async def events(self, since: Optional[float] = None, limit: int = 200, kinds: Optional[List[str]] = None) -> dict:
         """The platform's own log of this host: state changes, challenges, re-benchmarks, failures."""
         return await self._call("GET", self._hp("/events"), params={

@@ -83,7 +83,7 @@ def test_status_reads_like_a_page():
     for line in ("Daemon       running (pid 4242), up 24 h",
                  "State        live for 2 h 13 min",
                  "Rate         101.51 units/hour (bucket I-1/100)",
-                 "Earnings     214 units minted, 0.62 accruing",
+                 "Minted       214 units, 0.62 accruing",
                  "Engine       vLLM 0.30.0, in Docker, vllm/vllm-openai:v0.30.0 (sha256:8a69ffad…), healthy",
                  "GPU          NVIDIA GeForce RTX 4090: 31% busy, 287 W, 21.3 of 24.0 GB, 61 °C, no other processes",
                  "Last checks  challenge 3 min ago: passed, mean delta 0.0000",
